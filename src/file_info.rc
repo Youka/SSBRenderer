@@ -1,0 +1,39 @@
+#include <winresrc.h>
+#include "file_info.hpp"
+
+// Build type
+#ifdef _DEBUG
+    #define BUILD_TYPE VS_FF_DEBUG
+#else
+    #define BUILD_TYPE VS_FF_PRERELEASE
+#endif
+
+// File information
+VS_VERSION_INFO VERSIONINFO
+FILEVERSION SSB_VERSION_NUMBER
+PRODUCTVERSION SSB_VERSION_NUMBER
+FILEFLAGSMASK  	VS_FFI_FILEFLAGSMASK
+FILEFLAGS      	BUILD_TYPE
+FILEOS         	VOS__WINDOWS32
+FILETYPE       	VFT_DLL
+FILESUBTYPE    	VFT2_UNKNOWN
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904E4"
+        BEGIN
+            VALUE "FileDescription", SSB_DESCRIPTION
+            VALUE "CompanyName", SSB_AUTHOR
+            VALUE "FileVersion", SSB_VERSION_STRING
+            VALUE "InternalName", SSB_NAME
+            VALUE "LegalCopyright", SSB_COPYRIGHT
+            VALUE "OriginalFilename", SSB_FILENAME
+            VALUE "ProductName", SSB_NAME
+            VALUE "ProductVersion", SSB_VERSION_STRING
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+		VALUE "Translation", SSB_LANGUAGE
+    END
+END
