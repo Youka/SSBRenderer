@@ -2,7 +2,7 @@
 #include "file_info.hpp"
 
 // Build type
-#ifdef _DEBUG
+#ifdef DEBUG
     #define BUILD_TYPE VS_FF_DEBUG
 #else
     #define BUILD_TYPE VS_FF_PRERELEASE

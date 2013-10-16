@@ -30,6 +30,8 @@
 				<Linker>
 					<Add option="-s" />
 					<Add library="user32" />
+					<Add library="avisynth" />
+					<Add directory="libs" />
 				</Linker>
 			</Target>
 		</Build>
