@@ -1,3 +1,7 @@
 - Logo creation
+- Dialogs
 - Plugin interfaces
+	* VirtualDub
+	* DirectShow
+	* Avxsynth
 - SSB design
