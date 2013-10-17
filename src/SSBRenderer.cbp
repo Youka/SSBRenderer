@@ -5,7 +5,7 @@
 		<Option title="SSBRenderer" />
 		<Option pch_mode="2" />
 		<Option compiler="gcc" />
-		<Option virtualFolders="Meta\;Interfaces\;Filter\;" />
+		<Option virtualFolders="Meta\;Interfaces\;Filter\;Utils\;" />
 		<Build>
 			<Target title="Release">
 				<Option output="bin/Release/SSBRenderer" prefix_auto="1" extension_auto="1" />
@@ -27,9 +27,12 @@
 					<Add option="-DWIN32_EXTRA_LEAN" />
 					<Add directory="include" />
 				</Compiler>
+				<ResourceCompiler>
+					<Add directory="res" />
+				</ResourceCompiler>
 				<Linker>
 					<Add option="-s" />
-					<Add library="user32" />
+					<Add library="comdlg32" />
 					<Add library="avisynth" />
 					<Add directory="libs" />
 				</Linker>
@@ -50,21 +53,20 @@
 		<Unit filename="file_info.hpp">
 			<Option virtualFolder="Meta/" />
 		</Unit>
-		<Unit filename="file_info.rc">
+		<Unit filename="module.hpp">
+			<Option virtualFolder="Interfaces/" />
+		</Unit>
+		<Unit filename="resources.rc">
 			<Option compilerVar="WINDRES" />
 			<Option virtualFolder="Meta/" />
 		</Unit>
-		<Unit filename="module.hpp">
-			<Option virtualFolder="Interfaces/" />
+		<Unit filename="textconv.hpp">
+			<Option virtualFolder="Utils/" />
 		</Unit>
 		<Unit filename="virtualdub.cpp">
 			<Option virtualFolder="Interfaces/" />
 		</Unit>
 		<Unit filename="virtualdub_dialog.hpp">
-			<Option virtualFolder="Interfaces/" />
-		</Unit>
-		<Unit filename="virtualdub_dialog.rc">
-			<Option compilerVar="WINDRES" />
 			<Option virtualFolder="Interfaces/" />
 		</Unit>
 		<Extensions>

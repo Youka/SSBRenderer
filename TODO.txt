@@ -1,6 +1,4 @@
-- Dialogs
 - Plugin interfaces
-	* VirtualDub
 	* DirectShow
 	* Avxsynth
 - Logo creation

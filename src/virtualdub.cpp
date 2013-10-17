@@ -4,10 +4,12 @@
 #pragma GCC diagnostic pop
 #include "file_info.hpp"
 #include "Renderer.hpp"
-#include <cstdio>   // _snprintf for description filling
 #include "virtualdub_dialog.hpp"
 #include <windows.h>    // Dialog presentation
+#include <commdlg.h>    // File selection dialog
 #include "module.hpp" // Module needed for windows
+#include "textconv.hpp" // Unicode conversion for dialog in-&output
+#include <cstdio>   // _snprintf for description filling
 
 namespace VDub{
     // Filter instance data
@@ -47,7 +49,63 @@ namespace VDub{
     INT_PTR CALLBACK config_message_handler(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam){
         // Evaluate message
         switch(msg){
-            #pragma message "Implent config message handling"
+            // Dialog initialization
+            case WM_INITDIALOG:{
+                Userdata* inst_data = reinterpret_cast<Userdata*>(lParam);
+                // Set dialog default content
+                HWND edit = GetDlgItem(wnd, VDUB_DIALOG_FILENAME);
+                SendMessageW(edit, WM_SETTEXT, 0, reinterpret_cast<LPARAM>(utf8_to_utf16(*inst_data->script).c_str()));
+                SendMessageW(edit, EM_SETSEL, 0, -1);
+                SendMessageW(GetDlgItem(wnd, VDUB_DIALOG_CHECK), BM_SETCHECK, inst_data->warnings, 0);
+                // Store userdata to window
+                SetWindowLongPtrA(wnd, DWLP_USER, reinterpret_cast<LONG_PTR>(inst_data));
+            }break;
+            // Dialog action
+            case WM_COMMAND:
+                // Evaluate action command
+                switch(wParam){
+                    // '...' button
+                    case VDUB_DIALOG_FILENAME_CHOOSE:{
+                        wchar_t file[256]; file[0] = '\0';
+                        #pragma GCC diagnostic push
+                        #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+                        OPENFILENAMEW ofn = {0};
+                        #pragma GCC diagnostic pop
+                        ofn.lStructSize = sizeof(OPENFILENAMEW);
+                        ofn.hwndOwner = wnd;
+                        ofn.hInstance = reinterpret_cast<HINSTANCE>(module);
+                        ofn.lpstrFilter = L"SSB file (*.ssb)\0*.ssb\0\0";
+                        ofn.nFilterIndex = 1;
+                        ofn.lpstrFile = file;
+                        ofn.nMaxFile = sizeof(file);
+                        ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+                        // Show file selection dialog
+                        if(GetOpenFileNameW(&ofn)){
+                            // Save filename input to dialog
+                            HWND edit = GetDlgItem(wnd, VDUB_DIALOG_FILENAME);
+                            SendMessageW(edit, WM_SETTEXT, 0, reinterpret_cast<LPARAM>(ofn.lpstrFile));
+                            SendMessageW(edit, EM_SETSEL, 0, -1);
+                        }
+                    }break;
+                    // 'OK' button
+                    case IDOK:{
+                        Userdata* inst_data = reinterpret_cast<Userdata*>(GetWindowLongPtrA(wnd, DWLP_USER));
+                        // Save dialog content to userdata
+                        HWND edit = GetDlgItem(wnd, VDUB_DIALOG_FILENAME);
+                        std::wstring filename(static_cast<int>(SendMessageW(edit, WM_GETTEXTLENGTH, 0, 0))+1, L'\0');
+                        SendMessageW(edit, WM_GETTEXT, filename.length(), reinterpret_cast<LPARAM>(filename.data()));
+                        *inst_data->script = utf16_to_utf8(filename);
+                        inst_data->warnings = SendMessageW(GetDlgItem(wnd, VDUB_DIALOG_CHECK), BM_GETCHECK, 0, 0);
+                        // Successful end
+                        EndDialog(wnd, 0);
+                    }break;
+                    // 'Cancel' button
+                    case IDCANCEL:
+                        // Unsuccessful end
+                        EndDialog(wnd, 1);
+                        break;
+                }
+                break;
             // Closed dialog with 'X' button
             case WM_CLOSE:
                 // Unsuccessful end
@@ -62,16 +120,12 @@ namespace VDub{
     }
     int configProc(VDXFilterActivation* fdata, const VDXFilterFunctions*, VDXHWND wnd){
         // Show modal dialog for filter configuration
-        DialogBoxParamW(reinterpret_cast<HINSTANCE>(module), MAKEINTRESOURCEW(VDUB_DIALOG), reinterpret_cast<HWND>(wnd), config_message_handler, reinterpret_cast<LPARAM>(fdata->filter_data));
-        char err_msg[128];
-        FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM, NULL, GetLastError(), 0, err_msg, sizeof(err_msg), NULL);
-        MessageBoxA(NULL, err_msg, "TEST", MB_OK);
-        return 0;
+        return DialogBoxParamW(reinterpret_cast<HINSTANCE>(module), MAKEINTRESOURCEW(VDUB_DIALOG), reinterpret_cast<HWND>(wnd), config_message_handler, reinterpret_cast<LPARAM>(fdata->filter_data));
     }
     // Filter description
     void fill_description(Userdata* inst_data, char* buf, int maxlen = 128){
         // Fill description buffer with script and warnings information
-        _snprintf(buf, maxlen, " Script:\"%s\" - Warnings:%s", inst_data->script->c_str(), inst_data->warnings ? "On" : "Off");
+        _snprintf(buf, maxlen, " Script:\"%s\" - Warnings:%s", inst_data->script->c_str(), inst_data->warnings ? "on" : "off");
     }
     void stringProc(const VDXFilterActivation* fdata, const VDXFilterFunctions*, char* buf){
         fill_description(reinterpret_cast<Userdata*>(fdata->filter_data), buf);
