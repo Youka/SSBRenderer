@@ -4,7 +4,10 @@
 #pragma GCC diagnostic pop
 #include "file_info.hpp"
 #include "Renderer.hpp"
-#include <cstdio>
+#include <cstdio>   // _snprintf for description filling
+#include "virtualdub_dialog.hpp"
+#include <windows.h>    // Dialog presentation
+#include "module.hpp" // Module needed for windows
 
 namespace VDub{
     // Filter instance data
@@ -29,9 +32,9 @@ namespace VDub{
         delete inst_data->script; inst_data->script = nullptr;
     }
     // Filter run/frame processing
-    int runProc(const VDXFilterActivation* fdata, const VDXFilterFunctions* ffuncs){
+    int runProc(const VDXFilterActivation* fdata, const VDXFilterFunctions*){
         Userdata* inst_data = reinterpret_cast<Userdata*>(fdata->filter_data);
-        inst_data->renderer->Render(reinterpret_cast<unsigned char*>(fdata->src.data), fdata->src.pitch, fdata->src.mFrameTimestampStart * 10, fdata->src.mFrameTimestampEnd * 10);
+        inst_data->renderer->Render(reinterpret_cast<unsigned char*>(fdata->src.data), fdata->src.pitch, fdata->src.mFrameTimestampStart / 10, fdata->src.mFrameTimestampEnd / 10);
         // Success
         return 0;
     }
@@ -41,9 +44,28 @@ namespace VDub{
         return 0;
     }
     // Filter configuration
+    INT_PTR CALLBACK config_message_handler(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam){
+        // Evaluate message
+        switch(msg){
+            #pragma message "Implent config message handling"
+            // Closed dialog with 'X' button
+            case WM_CLOSE:
+                // Unsuccessful end
+                EndDialog(wnd, 1);
+                break;
+            // Message not handled (continue with default behaviour)
+            default:
+                return FALSE;
+        }
+        // Message handled
+        return TRUE;
+    }
     int configProc(VDXFilterActivation* fdata, const VDXFilterFunctions*, VDXHWND wnd){
-        #pragma message "Implent config function"
-        // Success
+        // Show modal dialog for filter configuration
+        DialogBoxParamW(reinterpret_cast<HINSTANCE>(module), MAKEINTRESOURCEW(VDUB_DIALOG), reinterpret_cast<HWND>(wnd), config_message_handler, reinterpret_cast<LPARAM>(fdata->filter_data));
+        char err_msg[128];
+        FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM, NULL, GetLastError(), 0, err_msg, sizeof(err_msg), NULL);
+        MessageBoxA(NULL, err_msg, "TEST", MB_OK);
         return 0;
     }
     // Filter description
@@ -88,9 +110,9 @@ namespace VDub{
         nullptr,	// _prev
         nullptr,	// _module
 
-        SSB_NAME,	// name
-        SSB_DESCRIPTION,	// desc
-        SSB_AUTHOR,	// maker
+        FILTER_NAME,	// name
+        FILTER_DESCRIPTION,	// desc
+        FILTER_AUTHOR,	// maker
         nullptr,	// private data
         sizeof(Userdata),	// inst_data_size
 

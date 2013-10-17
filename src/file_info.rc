@@ -1,4 +1,4 @@
-#include <winresrc.h>
+#include <winver.h>
 #include "file_info.hpp"
 
 // Build type
@@ -10,8 +10,8 @@
 
 // File information
 VS_VERSION_INFO VERSIONINFO
-FILEVERSION SSB_VERSION_NUMBER
-PRODUCTVERSION SSB_VERSION_NUMBER
+FILEVERSION FILTER_VERSION_NUMBER
+PRODUCTVERSION FILTER_VERSION_NUMBER
 FILEFLAGSMASK  	VS_FFI_FILEFLAGSMASK
 FILEFLAGS      	BUILD_TYPE
 FILEOS         	VOS__WINDOWS32
@@ -20,20 +20,20 @@ FILESUBTYPE    	VFT2_UNKNOWN
 BEGIN
     BLOCK "StringFileInfo"
     BEGIN
-        BLOCK "040904E4"
+        BLOCK "040904E4"    // Language (see below)
         BEGIN
-            VALUE "FileDescription", SSB_DESCRIPTION
-            VALUE "CompanyName", SSB_AUTHOR
-            VALUE "FileVersion", SSB_VERSION_STRING
-            VALUE "InternalName", SSB_NAME
-            VALUE "LegalCopyright", SSB_COPYRIGHT
-            VALUE "OriginalFilename", SSB_FILENAME
-            VALUE "ProductName", SSB_NAME
-            VALUE "ProductVersion", SSB_VERSION_STRING
+            VALUE "FileDescription", FILTER_DESCRIPTION
+            VALUE "CompanyName", FILTER_AUTHOR
+            VALUE "FileVersion", FILTER_VERSION_STRING
+            VALUE "InternalName", FILTER_NAME
+            VALUE "LegalCopyright", FILTER_COPYRIGHT
+            VALUE "OriginalFilename", FILTER_FILENAME
+            VALUE "ProductName", FILTER_NAME
+            VALUE "ProductVersion", FILTER_VERSION_STRING
         END
     END
     BLOCK "VarFileInfo"
     BEGIN
-		VALUE "Translation", SSB_LANGUAGE
+		VALUE "Translation", 0x409,1252	// U.S. English, Multilingual codepage
     END
 END

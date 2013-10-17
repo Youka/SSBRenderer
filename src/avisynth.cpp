@@ -76,7 +76,7 @@ AVSC_EXPORT const char* avisynth_c_plugin_init(AVS_ScriptEnvironment* env){
     // Valid Avisynth interface version?
     avs_check_version(env, AVISYNTH_INTERFACE_VERSION);
     // Register functin to Avisynth scripting environment
-    avs_add_function(env, SSB_NAME, "cs[warnings]b", AVS::apply_filter, nullptr);
+    avs_add_function(env, FILTER_NAME, "cs[warnings]b", AVS::apply_filter, nullptr);
     // Return plugin description
-    return SSB_DESCRIPTION;
+    return FILTER_DESCRIPTION;
 }

@@ -44,6 +44,9 @@
 		<Unit filename="avisynth.cpp">
 			<Option virtualFolder="Interfaces/" />
 		</Unit>
+		<Unit filename="directshow.cpp">
+			<Option virtualFolder="Interfaces/" />
+		</Unit>
 		<Unit filename="file_info.hpp">
 			<Option virtualFolder="Meta/" />
 		</Unit>
@@ -51,7 +54,17 @@
 			<Option compilerVar="WINDRES" />
 			<Option virtualFolder="Meta/" />
 		</Unit>
+		<Unit filename="module.hpp">
+			<Option virtualFolder="Interfaces/" />
+		</Unit>
 		<Unit filename="virtualdub.cpp">
+			<Option virtualFolder="Interfaces/" />
+		</Unit>
+		<Unit filename="virtualdub_dialog.hpp">
+			<Option virtualFolder="Interfaces/" />
+		</Unit>
+		<Unit filename="virtualdub_dialog.rc">
+			<Option compilerVar="WINDRES" />
 			<Option virtualFolder="Interfaces/" />
 		</Unit>
 		<Extensions>

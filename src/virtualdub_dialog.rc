@@ -1,0 +1,13 @@
+#include <winresrc.h>
+#include "virtualdub_dialog.hpp"
+#include "file_info.hpp"
+
+VDUB_DIALOG DIALOGEX 0,0,150,30
+CAPTION FILTER_NAME
+EXSTYLE WS_EX_ACCEPTFILES
+FONT 10,"MS Shell Dlg",400,0,1
+LANGUAGE 0x409, 0x1 // United States, English US
+STYLE WS_CAPTION|WS_POPUP|WS_TABSTOP|DS_FIXEDSYS|DS_MODALFRAME|DS_SETFONT
+BEGIN
+    LTEXT "Script:", -1, 3, 3, 25, 10
+END

@@ -1,0 +1,6 @@
+#pragma once
+
+#define VDUB_DIALOG 101
+#define VDUB_DIALOG_FILE 102
+#define VDUB_DIALOG_FILE_CHOOSE 103
+#define VDUB_DIALOG_CHECK 104
