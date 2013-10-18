@@ -10,7 +10,7 @@ class FileReader{
         HANDLE file;
         // Read buffer
         char buffer[4096];
-        char* buffer_start = buffer + sizeof(buffer), *const buffer_end = buffer_start;
+        char* buffer_start, *buffer_end = buffer_start;
     public:
         // Constructors
         FileReader()
@@ -50,32 +50,37 @@ class FileReader{
         }
         // Read one line from file
         bool getline(std::string& line){
-            // Clear old line content
-            line.clear();
-            // Fill line content
-            while(true){
-                // Check for buffer content
-                if(buffer_start == buffer_end){
-                    // Fill buffer
-                    DWORD read;
-                    if(!ReadFile(this->file, this->buffer, sizeof(this->buffer), &read, NULL) || read == 0)
-                        // Error or EOF
-                        break;
-                    this->buffer_start = this->buffer;
+            if(this->file != INVALID_HANDLE_VALUE){
+                // Clear old line content
+                line.clear();
+                // Fill line content
+                while(true){
+                    // Check for buffer content
+                    if(this->buffer_start == this->buffer_end){
+                        // Fill buffer
+                        DWORD read;
+                        if(!ReadFile(this->file, this->buffer, sizeof(this->buffer), &read, NULL) || read == 0)
+                            // Error or EOF
+                            break;
+                        this->buffer_start = this->buffer;
+                        this->buffer_end = this->buffer + read;
+                    }
+                    // Search newline
+                    char* newline = std::find(this->buffer_start, this->buffer_end, '\n');
+                    // Assign content to line
+                    if(newline == this->buffer_end){
+                        line.append(this->buffer_start, this->buffer_end);
+                        this->buffer_start = this->buffer_end;
+                    }else{
+                        line.append(this->buffer_start, newline);
+                        this->buffer_start = newline + 1;
+                        return true;
+                    }
                 }
-                // Search newline
-                char* newline = std::find(this->buffer_start, this->buffer_end, '\n');
-                // Append current line
-                if(newline == this->buffer_end){
-                    line.append(this->buffer_start, this->buffer_end);
-                    this->buffer_start = this->buffer_end;
-                }else{
-                    line.append(this->buffer_start, newline);
-                    this->buffer_start = newline + 1;
-                    return true;
-                }
+                // Read anything?
+                return !line.empty();
             }
-            // Read anything?
-            return !line.empty();
+            // File handle invalid
+            return false;
         }
 };
