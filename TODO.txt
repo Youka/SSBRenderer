@@ -1,5 +1,5 @@
-- Plugin interfaces
-	* DirectShow
-	* Avxsynth
 - Logo creation
+- Plugin interfaces
+	* Avxsynth
+	* User
 - SSB design

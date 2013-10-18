@@ -44,14 +44,20 @@
 		<Unit filename="Renderer.hpp">
 			<Option virtualFolder="Filter/" />
 		</Unit>
-		<Unit filename="avisynth.cpp">
-			<Option virtualFolder="Interfaces/" />
+		<Unit filename="SSBParser.cpp">
+			<Option virtualFolder="Filter/" />
 		</Unit>
-		<Unit filename="directshow.cpp">
+		<Unit filename="SSBParser.hpp">
+			<Option virtualFolder="Filter/" />
+		</Unit>
+		<Unit filename="avisynth.cpp">
 			<Option virtualFolder="Interfaces/" />
 		</Unit>
 		<Unit filename="file_info.hpp">
 			<Option virtualFolder="Meta/" />
+		</Unit>
+		<Unit filename="main.cpp">
+			<Option virtualFolder="Interfaces/" />
 		</Unit>
 		<Unit filename="module.hpp">
 			<Option virtualFolder="Interfaces/" />

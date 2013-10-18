@@ -1,5 +1,6 @@
 #include <winresrc.h>
 #include "file_info.hpp"
+#include "virtualdub_dialog.hpp"
 
 // Build type
 #ifdef DEBUG
@@ -37,8 +38,6 @@ BEGIN
 		VALUE "Translation", 0x409,1252	// U.S. English, Multilingual codepage
     END
 END
-
-#include "virtualdub_dialog.hpp"
 
 // SSB Logo
 SSB_LOGO BITMAP "logo.bmp"

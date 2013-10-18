@@ -1,8 +1,6 @@
 #include <windows.h>
 #include "module.hpp"
 
-#pragma message "Implent directshow complete!"
-
 // See "module.hpp"
 void* module;
 // DLL entry point

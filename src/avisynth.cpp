@@ -28,7 +28,8 @@ namespace AVS{
         // Make frame writable
         avs_make_writable(filter_info->env, &frame);
         // Render on frame
-        reinterpret_cast<Renderer*>(filter_info->user_data)->Render(avs_get_write_ptr(frame), avs_get_pitch(frame), n);
+        double ms_per_frame = static_cast<double>(filter_info->vi.fps_denominator * 1000) / filter_info->vi.fps_numerator;
+        reinterpret_cast<Renderer*>(filter_info->user_data)->render(avs_get_write_ptr(frame), avs_get_pitch(frame), n * ms_per_frame, (n+1) * ms_per_frame);
         // Pass frame further in processing chain
         return frame;
     }
@@ -36,7 +37,7 @@ namespace AVS{
     // Filter finished
     void AVSC_CC free_filter(AVS_FilterInfo* filter_info){
         // Free renderer
-        delete reinterpret_cast<Renderer*>(filter_info->user_data);
+        delete reinterpret_cast<Renderer*>(filter_info->user_data); filter_info->user_data = nullptr;
     }
 
     // Filter call
@@ -57,7 +58,7 @@ namespace AVS{
             AVS_FilterInfo* filter_info = clip.info();
             // Allocate renderer
             try{
-                filter_info->user_data = new Renderer(video_info->width, video_info->height, avs_is_rgb32(video_info), static_cast<double>(video_info->fps_numerator) / video_info->fps_denominator, script, warnings);
+                filter_info->user_data = new Renderer(video_info->width, video_info->height, avs_is_rgb32(video_info), false, script, warnings);
             }catch(std::string err){
                 return avs_new_value_error(err.c_str());
             }
