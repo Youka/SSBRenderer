@@ -23,6 +23,7 @@
 					<Add option="-Wall" />
 					<Add option="-static" />
 					<Add option="-DBUILD_DLL" />
+					<Add option="-D_WIN32" />
 					<Add option="-DWIN32_LEAN_AND_MEAN" />
 					<Add option="-DWIN32_EXTRA_LEAN" />
 					<Add directory="include" />
@@ -38,6 +39,9 @@
 				</Linker>
 			</Target>
 		</Build>
+		<Unit filename="FileReader.hpp">
+			<Option virtualFolder="Utils/" />
+		</Unit>
 		<Unit filename="Renderer.cpp">
 			<Option virtualFolder="Filter/" />
 		</Unit>
@@ -57,10 +61,10 @@
 			<Option virtualFolder="Meta/" />
 		</Unit>
 		<Unit filename="main.cpp">
-			<Option virtualFolder="Interfaces/" />
+			<Option virtualFolder="Utils/" />
 		</Unit>
 		<Unit filename="module.hpp">
-			<Option virtualFolder="Interfaces/" />
+			<Option virtualFolder="Utils/" />
 		</Unit>
 		<Unit filename="resources.rc">
 			<Option compilerVar="WINDRES" />
