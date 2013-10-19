@@ -73,6 +73,12 @@
 		<Unit filename="textconv.hpp">
 			<Option virtualFolder="Utils/" />
 		</Unit>
+		<Unit filename="user.cpp">
+			<Option virtualFolder="Interfaces/" />
+		</Unit>
+		<Unit filename="user.hpp">
+			<Option virtualFolder="Interfaces/" />
+		</Unit>
 		<Unit filename="virtualdub.cpp">
 			<Option virtualFolder="Interfaces/" />
 		</Unit>

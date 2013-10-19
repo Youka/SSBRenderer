@@ -14,7 +14,7 @@ void SSBParser::parse(std::string& script, bool warnings){
     // File line buffer
     std::string line;
     // File reading
-#if defined _WIN32   // Windows
+#ifdef _WIN32   // Windows
     std::wstring scriptW = utf8_to_utf16(script);
     FileReader file(scriptW);
     if(file)

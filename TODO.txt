@@ -1,7 +1,5 @@
-- Build cairo
-- Build freetype2
-- Logo creation
 - SSB design
+- Logo creation
+- Renderer
 - Plugin interfaces
 	* Avxsynth
-	* User
