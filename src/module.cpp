@@ -4,7 +4,7 @@
 // See "module.hpp"
 void* module;
 // DLL entry point
-extern "C" BOOL APIENTRY DllMain(HANDLE dll_module, DWORD reason, LPVOID){
+BOOL APIENTRY DllMain(HANDLE dll_module, DWORD reason, LPVOID){
     // Save module handle for global access
     if(reason == DLL_PROCESS_ATTACH)
         module = dll_module;

@@ -60,7 +60,7 @@
 		<Unit filename="file_info.hpp">
 			<Option virtualFolder="Meta/" />
 		</Unit>
-		<Unit filename="main.cpp">
+		<Unit filename="module.cpp">
 			<Option virtualFolder="Utils/" />
 		</Unit>
 		<Unit filename="module.hpp">
