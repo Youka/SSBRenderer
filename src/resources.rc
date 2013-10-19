@@ -4,9 +4,9 @@
 
 // Build type
 #ifdef DEBUG
-    #define BUILD_TYPE VS_FF_DEBUG
+#   define BUILD_TYPE VS_FF_DEBUG
 #else
-    #define BUILD_TYPE VS_FF_PRERELEASE
+#   define BUILD_TYPE VS_FF_PRERELEASE
 #endif
 
 // File information

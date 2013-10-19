@@ -7,13 +7,13 @@
 #endif
 
 #ifdef _WIN32
-    #ifdef BUILD_DLL
-        #define DLL_EXPORT EXTERN_C __declspec(dllexport)
-    #else
-        #define DLL_EXPORT EXTERN_C __declspec(dllimport)
-    #endif
+#   ifdef BUILD_DLL
+#       define DLL_EXPORT EXTERN_C __declspec(dllexport)
+#   else
+#       define DLL_EXPORT EXTERN_C __declspec(dllimport)
+#   endif
 #else
-    #define DLL_EXPORT __attribute__ ((visibility("default")))
+#   define DLL_EXPORT EXTERN_C __attribute__ ((visibility("default")))
 #endif
 
 // Maximal length for output warning of ssb_create_renderer

@@ -1,6 +1,6 @@
 #include "user.hpp"
 #include "Renderer.hpp"
-#include <string.h>
+#include <cstring>
 
 ssb_renderer ssb_create_renderer(int width, int height, int has_alpha, int aligned, const char* script, char* warning){
     try{

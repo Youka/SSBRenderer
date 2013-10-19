@@ -1,6 +1,6 @@
 #pragma once
 
-#include "SSBParser.hpp"
+#include "SSBData.hpp"
 
 class Renderer{
     private:
@@ -8,7 +8,7 @@ class Renderer{
         int width, height;
         bool has_alpha, aligned;
         // SSB data
-        SSBParser ssb;
+        SSBData ssb;
     public:
         // SSB parsing & frame meta informations saving
         Renderer(int width, int height, bool has_alpha, bool aligned, std::string& script, bool warnings);

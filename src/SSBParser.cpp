@@ -1,13 +1,17 @@
 #include "SSBParser.hpp"
-#if defined _WIN32
-    #include "textconv.hpp"
-    #include "FileReader.hpp"
+#ifdef _WIN32
+#   include "textconv.hpp"
+#   include "FileReader.hpp"
 #else
-    #include <fstream>
+#   include <fstream>
 #endif
 
 SSBParser::SSBParser(std::string& script, bool warnings){
     this->parse(script, warnings);
+}
+
+SSBData SSBParser::data(){
+    return this->ssb;
 }
 
 void SSBParser::parse(std::string& script, bool warnings){
