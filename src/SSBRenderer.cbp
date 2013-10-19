@@ -3,11 +3,13 @@
 	<FileVersion major="1" minor="6" />
 	<Project>
 		<Option title="SSBRenderer" />
+		<Option platforms="Windows;Unix;" />
 		<Option pch_mode="2" />
 		<Option compiler="gcc" />
 		<Option virtualFolders="Meta\;Interfaces\;Filter\;Utils\;" />
 		<Build>
-			<Target title="Release">
+			<Target title="Release - Windows">
+				<Option platforms="Windows;" />
 				<Option output="bin/Release/SSBRenderer" prefix_auto="1" extension_auto="1" />
 				<Option object_output="obj/Release/" />
 				<Option type="3" />
@@ -46,6 +48,9 @@
 			<Option virtualFolder="Filter/" />
 		</Unit>
 		<Unit filename="Renderer.hpp">
+			<Option virtualFolder="Filter/" />
+		</Unit>
+		<Unit filename="SSBData.hpp">
 			<Option virtualFolder="Filter/" />
 		</Unit>
 		<Unit filename="SSBParser.cpp">

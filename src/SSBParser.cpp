@@ -28,7 +28,7 @@ void SSBParser::parse(std::string& script, bool warnings){
     if(file)
         while(std::getline(file, line)){
 #endif
-            #pragma message "Evaluate file line"
+#pragma message "Evaluate file line"
         }
     // File couldn't be read
     else if(warnings)

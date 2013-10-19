@@ -40,10 +40,10 @@ namespace VDub{
                     // '...' button
                     case VDUB_DIALOG_FILENAME_CHOOSE:{
                         wchar_t file[256]; file[0] = '\0';
-                        #pragma GCC diagnostic push
-                        #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
                         OPENFILENAMEW ofn = {0};
-                        #pragma GCC diagnostic pop
+#pragma GCC diagnostic pop
                         ofn.lStructSize = sizeof(OPENFILENAMEW);
                         ofn.hwndOwner = wnd;
                         ofn.hInstance = reinterpret_cast<HINSTANCE>(module);
