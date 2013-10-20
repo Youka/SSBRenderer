@@ -6,6 +6,8 @@
 #   include <fstream>
 #endif
 
+SSBParser::SSBParser(SSBData& ssb) : ssb(ssb){}
+
 SSBParser::SSBParser(std::string& script, bool warnings){
     this->parse(script, warnings);
 }
