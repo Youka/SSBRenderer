@@ -1,5 +1,6 @@
-- SSB design
 - Logo creation
+- SSB design
 - Renderer
 - Plugin interfaces
+	* DirectShow
 	* Avxsynth
