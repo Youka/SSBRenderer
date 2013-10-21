@@ -29,6 +29,7 @@
 					<Add option="-DWIN32_LEAN_AND_MEAN" />
 					<Add option="-DWIN32_EXTRA_LEAN" />
 					<Add directory="include" />
+					<Add directory="include/cairo" />
 				</Compiler>
 				<ResourceCompiler>
 					<Add directory="res" />
@@ -37,6 +38,7 @@
 					<Add option="-s" />
 					<Add library="comdlg32" />
 					<Add library="avisynth" />
+					<Add library="cairo" />
 					<Add directory="libs" />
 				</Linker>
 			</Target>
@@ -62,6 +64,7 @@
 					<Add option="-DWIN32_LEAN_AND_MEAN" />
 					<Add option="-DWIN32_EXTRA_LEAN" />
 					<Add directory="include" />
+					<Add directory="include/cairo" />
 				</Compiler>
 				<ResourceCompiler>
 					<Add directory="res" />
@@ -70,6 +73,7 @@
 					<Add option="-pg -lgmon" />
 					<Add library="comdlg32" />
 					<Add library="avisynth" />
+					<Add library="cairo" />
 					<Add directory="libs" />
 				</Linker>
 			</Target>
