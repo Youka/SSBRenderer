@@ -1,7 +1,15 @@
-- README
-- Logo creation
-- SSB design
-- Renderer
-- Plugin interfaces
-	* DirectShow
-	* Avxsynth
+- Design
+	* Logo
+	* SSB
+- Implementation
+	* Parser
+	* Renderer
+	* Plugin interfaces
+		+ DirectShow
+		+ Avxsynth
+		+ GStreamer
+- Documentation
+	* LICENSE
+	* README
+	* examples
+	* references
