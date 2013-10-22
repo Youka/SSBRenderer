@@ -13,12 +13,15 @@ void Renderer::set_target(int width, int height, Colorspace format){
 
 void Renderer::render(unsigned char* image, int pitch, signed long long start_ms, signed long long end_ms){
 #pragma message "Implent SSB rendering"
-    if(this->format == Colorspace::BGRA){
-        cairo_surface_t* surface = cairo_image_surface_create_for_data(image, CAIRO_FORMAT_ARGB32, this->width, this->height, this->width << 2);
+    if((this->format == Colorspace::BGRA || this->format == Colorspace::BGRX) &&
+       start_ms >= 0 && end_ms < 3000){
+        cairo_surface_t* surface = cairo_image_surface_create_for_data(image, this->format == Colorspace::BGRA ? CAIRO_FORMAT_ARGB32 : CAIRO_FORMAT_RGB24, this->width, this->height, pitch);
         cairo_t* ctx = cairo_create(surface);
-        cairo_set_source_rgba(ctx, 1, 1, 0, 0.75);
+        cairo_scale(ctx, 1, -1);
+        cairo_translate(ctx, 0, -height);
         cairo_move_to(ctx, 0, 0);
         cairo_line_to(ctx, 200, 200);
+        cairo_set_source_rgba(ctx, 1, 1, 0, 0.75);
         const double dashes[3] = {1,5,3};
         cairo_set_dash(ctx, dashes, sizeof(dashes) / sizeof(*dashes), 0.0L);
         cairo_set_line_width(ctx, 5);

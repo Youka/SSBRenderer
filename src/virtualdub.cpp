@@ -126,7 +126,7 @@ namespace VDub{
         // runProc (Filter run/frame processing)
         [](const VDXFilterActivation* fdata, const VDXFilterFunctions*) -> int{
             Userdata* inst_data = reinterpret_cast<Userdata*>(fdata->filter_data);
-            inst_data->renderer->render(reinterpret_cast<unsigned char*>(fdata->src.data), fdata->src.pitch, fdata->src.mFrameTimestampStart / 10, fdata->src.mFrameTimestampEnd / 10);
+            inst_data->renderer->render(reinterpret_cast<unsigned char*>(fdata->src.data), fdata->src.pitch, fdata->src.mFrameTimestampStart / 10000, fdata->src.mFrameTimestampEnd / 10000);
             // Success
             return 0;
         },
