@@ -58,7 +58,7 @@ namespace AVS{
             AVS_FilterInfo* filter_info = clip.info();
             // Allocate renderer
             try{
-                filter_info->user_data = new Renderer(video_info->width, video_info->height, avs_is_rgb32(video_info), false, script, warnings);
+                filter_info->user_data = new Renderer(video_info->width, video_info->height, avs_is_rgb32(video_info) ? Renderer::Colorspace::BGRA : Renderer::Colorspace::BGR, script, warnings);
             }catch(std::string err){
                 return avs_new_value_error(err.c_str());
             }

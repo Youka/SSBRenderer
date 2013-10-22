@@ -3,17 +3,19 @@
 #include "SSBData.hpp"
 
 class Renderer{
+    public:
+        enum class Colorspace : char{BGR, BGRX, BGRA};
     private:
         // Frame data
         int width, height;
-        bool has_alpha, aligned;
+        Colorspace format;
         // SSB data
         SSBData ssb;
     public:
         // SSB parsing & frame meta informations saving
-        Renderer(int width, int height, bool has_alpha, bool aligned, std::string& script, bool warnings);
+        Renderer(int width, int height, Colorspace format, std::string& script, bool warnings);
         // Change frame meta informations
-        void set_target(int width, int height, bool has_alpha, bool aligned);
+        void set_target(int width, int height, Colorspace format);
         // Render SSB contents on frame
         void render(unsigned char* image, int pitch, signed long long start_ms, signed long long end_ms);
 };

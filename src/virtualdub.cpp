@@ -154,7 +154,7 @@ namespace VDub{
             delete inst_data->renderer; inst_data->renderer = nullptr;
             // Allocate renderer
             try{
-                inst_data->renderer = new Renderer(fdata->src.w, fdata->src.h, false, true, *inst_data->script, inst_data->warnings);
+                inst_data->renderer = new Renderer(fdata->src.w, fdata->src.h, Renderer::Colorspace::BGRX, *inst_data->script, inst_data->warnings);
             }catch(std::string err){
                 ffuncs->Except(err.c_str());
                 return 1;

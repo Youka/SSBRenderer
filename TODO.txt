@@ -1,3 +1,4 @@
+- README
 - Logo creation
 - SSB design
 - Renderer

@@ -124,7 +124,7 @@
 		<Unit filename="user.cpp">
 			<Option virtualFolder="Interfaces/" />
 		</Unit>
-		<Unit filename="user.hpp">
+		<Unit filename="user.h">
 			<Option virtualFolder="Interfaces/" />
 		</Unit>
 		<Unit filename="virtualdub.cpp">
