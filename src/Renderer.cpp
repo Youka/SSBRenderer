@@ -11,7 +11,7 @@ void Renderer::set_target(int width, int height, Colorspace format){
     this->format = format;
 }
 
-void Renderer::render(unsigned char* image, int pitch, unsigned long long start_ms, unsigned long long end_ms){
+void Renderer::render(unsigned char* image, int pitch, unsigned long long start_ms, unsigned long long end_ms) noexcept{
 #pragma message "Implent SSB rendering"
     if((this->format == Colorspace::BGRA || this->format == Colorspace::BGRX) &&
        start_ms >= 1000 && end_ms < 5000){

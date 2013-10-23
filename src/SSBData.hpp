@@ -3,6 +3,7 @@
 #include <string>
 #include <map>
 #include <vector>
+#include <memory>
 
 // Meta information (no effect on rendering)
 struct SSBMeta{
@@ -15,26 +16,29 @@ struct SSBFrame{
     int width = -1, height = -1;
 };
 
-// State or geometry for rendering
+// Any state or geometry for rendering
 class SSBObject{
     public:
-        enum class Type{TAG, GEOMETRY}type;
+        enum class Type : char{TAG, GEOMETRY}type;
+        virtual ~SSBObject(){}
     protected:
         SSBObject(Type type) : type(type){}
 };
 
-// State for rendering
+// Any state for rendering
 class SSBTag : protected SSBObject{
     public:
-        enum class Type{FONT_FAMILY}type;
+        enum class Type : char{FONT_FAMILY}type;
+        virtual ~SSBTag(){}
     protected:
         SSBTag(Type type) : SSBObject(SSBObject::Type::TAG), type(type){}
 };
 
-// Geometry for rendering
+// Any geometry for rendering
 class SSBGeometry : protected SSBObject{
     public:
-        enum class Type{TEXT}type;
+        enum class Type : char{TEXT, SHAPE}type;
+        virtual ~SSBGeometry(){}
     protected:
         SSBGeometry(Type type) : SSBObject(SSBObject::Type::GEOMETRY), type(type){}
 };
@@ -57,6 +61,6 @@ class SSBText : protected SSBGeometry{
 struct SSBData{
     SSBMeta meta;
     SSBFrame frame;
-    std::map<std::string, std::string> styles;
-    std::vector<std::vector<SSBObject*>> lines;
+    std::map<std::string, std::string>/*Name, Content*/ styles;
+    std::vector<std::vector<std::shared_ptr<SSBObject>>>/*Line objects*/ lines;
 };
