@@ -20,7 +20,7 @@ void ssb_set_target(ssb_renderer renderer, int width, int height, char format){
         reinterpret_cast<Renderer*>(renderer)->set_target(width, height, format == SSB_BGR ? Renderer::Colorspace::BGR : (format == SSB_BGRX ? Renderer::Colorspace::BGRX : Renderer::Colorspace::BGRA));
 }
 
-void ssb_render(ssb_renderer renderer, unsigned char* image, int pitch, signed long long start_ms, signed long long end_ms){
+void ssb_render(ssb_renderer renderer, unsigned char* image, int pitch, unsigned long long start_ms, unsigned long long end_ms){
     if(renderer)
         reinterpret_cast<Renderer*>(renderer)->render(image, pitch, start_ms, end_ms);
 }

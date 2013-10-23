@@ -56,7 +56,7 @@ Render on image.
 @param start_ms Start time of frame in milliseconds
 @param end_ms End time of frame in milliseconds
 */
-DLL_EXPORT void ssb_render(ssb_renderer renderer, unsigned char* image, int pitch, signed long long start_ms, signed long long end_ms);
+DLL_EXPORT void ssb_render(ssb_renderer renderer, unsigned char* image, int pitch, unsigned long long start_ms, unsigned long long end_ms);
 
 /**
 Destroy renderer handle.

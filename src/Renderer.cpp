@@ -11,10 +11,10 @@ void Renderer::set_target(int width, int height, Colorspace format){
     this->format = format;
 }
 
-void Renderer::render(unsigned char* image, int pitch, signed long long start_ms, signed long long end_ms){
+void Renderer::render(unsigned char* image, int pitch, unsigned long long start_ms, unsigned long long end_ms){
 #pragma message "Implent SSB rendering"
     if((this->format == Colorspace::BGRA || this->format == Colorspace::BGRX) &&
-       start_ms >= 0 && end_ms < 3000){
+       start_ms >= 1000 && end_ms < 5000){
         cairo_surface_t* surface = cairo_image_surface_create_for_data(image, this->format == Colorspace::BGRA ? CAIRO_FORMAT_ARGB32 : CAIRO_FORMAT_RGB24, this->width, this->height, pitch);
         cairo_t* ctx = cairo_create(surface);
         cairo_scale(ctx, 1, -1);

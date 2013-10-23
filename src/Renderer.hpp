@@ -17,5 +17,5 @@ class Renderer{
         // Change frame meta informations
         void set_target(int width, int height, Colorspace format);
         // Render SSB contents on frame
-        void render(unsigned char* image, int pitch, signed long long start_ms, signed long long end_ms);
+        void render(unsigned char* image, int pitch, unsigned long long start_ms, unsigned long long end_ms);
 };
