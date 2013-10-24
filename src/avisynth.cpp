@@ -17,8 +17,8 @@ namespace AVS{
             AVSClip(AVS_ScriptEnvironment* env, AVS_Value val) : clip(avs_new_c_filter(env, &this->filter_info, val, 1)){}
             ~AVSClip(){avs_release_clip(this->clip);}
             // Data access
-            AVS_FilterInfo* info(){return this->filter_info;}
-            operator AVS_Clip*(){return this->clip;}
+            AVS_FilterInfo* info() const {return this->filter_info;}
+            operator AVS_Clip*() const {return this->clip;}
     };
 
     // Frame filtering

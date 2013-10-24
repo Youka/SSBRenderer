@@ -10,5 +10,5 @@
 - Documentation
 	* LICENSE
 	* README
-	* examples
-	* references
+	* Examples
+	* References

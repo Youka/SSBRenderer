@@ -12,7 +12,7 @@ class SSBParser{
         SSBParser(SSBData& ssb);
         SSBParser(std::string& script, bool warnings) throw(std::string);
         // Get SSB data
-        SSBData data();
+        SSBData data() const;
         // Parse script & fill data
         void parse(std::string& script, bool warnings) throw(std::string);
 };

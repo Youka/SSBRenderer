@@ -13,7 +13,7 @@ SSBParser::SSBParser(std::string& script, bool warnings) throw(std::string){
     this->parse(script, warnings);
 }
 
-SSBData SSBParser::data(){
+SSBData SSBParser::data() const {
     return this->ssb;
 }
 
@@ -280,7 +280,7 @@ void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
                                 }
                                 // Parse text
                                 std::string text = style_content + s.str();
-    #pragma message "Parse SSB line"
+#pragma message "Parse SSB line"
                                 // Parsing successfull without exception -> commit output
                                 this->ssb.lines.push_back(ssb_line);
                             }

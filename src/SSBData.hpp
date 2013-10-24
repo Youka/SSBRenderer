@@ -18,7 +18,7 @@ class SSBObject{
 class SSBTag : protected SSBObject{
     public:
         enum class Type : char{FONT_FAMILY, FONT_STYLE, FONT_SIZE}type;
-        virtual ~SSBTag(){}
+        virtual ~SSBTag() = default;
     protected:
         SSBTag(Type type) : SSBObject(SSBObject::Type::TAG), type(type){}
 };
@@ -27,7 +27,7 @@ class SSBTag : protected SSBObject{
 class SSBGeometry : protected SSBObject{
     public:
         enum class Type : char{POINTS, LINES, SHAPE, TEXT}type;
-        virtual ~SSBGeometry(){}
+        virtual ~SSBGeometry() = default;
     protected:
         SSBGeometry(Type type) : SSBObject(SSBObject::Type::GEOMETRY), type(type){}
 };
