@@ -38,11 +38,108 @@ namespace{
         // Reset accumulator
         t = 0;
         // Time position
-
+        enum class TimeUnit{MS, MS_10, MS_100, MS_LIMIT, SEC, SEC_10, SEC_LIMIT, MIN, MIN_10, MIN_LIMIT, H, H_10, END} unit = TimeUnit::MS;
         // Iterate through characters
-        for(auto it = s.crbegin(); it != s.crend(); ++it){
-            #pragma message "Implent SSB time parser"
-        }
+        for(auto it = s.crbegin(); it != s.crend(); ++it)
+            switch(unit){
+                case TimeUnit::MS:
+                    if(*it >= '0' && *it <= '9'){
+                        t += *it - '0';
+                        unit = TimeUnit::MS_10;
+                    }else if(*it == '.')
+                        unit = TimeUnit::SEC;
+                    else
+                        return false;
+                    break;
+                case TimeUnit::MS_10:
+                    if(*it >= '0' && *it <= '9'){
+                        t += (*it - '0') * 10;
+                        unit = TimeUnit::MS_100;
+                    }else if(*it == '.')
+                        unit = TimeUnit::SEC;
+                    else
+                        return false;
+                    break;
+                case TimeUnit::MS_100:
+                    if(*it >= '0' && *it <= '9'){
+                        t += (*it - '0') * 100;
+                        unit = TimeUnit::MS_LIMIT;
+                    }else if(*it == '.')
+                        unit = TimeUnit::SEC;
+                    else
+                        return false;
+                    break;
+                case TimeUnit::MS_LIMIT:
+                    if(*it == '.')
+                        unit = TimeUnit::SEC;
+                    else
+                        return false;
+                    break;
+                case TimeUnit::SEC:
+                    if(*it >= '0' && *it <= '9'){
+                        t += (*it - '0') * 1000;
+                        unit = TimeUnit::SEC_10;
+                    }else if(*it == ':')
+                        unit = TimeUnit::MIN;
+                    else
+                        return false;
+                    break;
+                case TimeUnit::SEC_10:
+                    if(*it >= '0' && *it <= '5'){
+                        t += (*it - '0') * 10 * 1000;
+                        unit = TimeUnit::SEC_LIMIT;
+                    }else if(*it == ':')
+                        unit = TimeUnit::MIN;
+                    else
+                        return false;
+                    break;
+                case TimeUnit::SEC_LIMIT:
+                    if(*it == ':')
+                        unit = TimeUnit::MIN;
+                    else
+                        return false;
+                    break;
+                case TimeUnit::MIN:
+                    if(*it >= '0' && *it <= '9'){
+                        t += (*it - '0') * 60 * 1000;
+                        unit = TimeUnit::MIN_10;
+                    }else if(*it == ':')
+                        unit = TimeUnit::H;
+                    else
+                        return false;
+                    break;
+                case TimeUnit::MIN_10:
+                    if(*it >= '0' && *it <= '5'){
+                        t += (*it - '0') * 10 * 60 * 1000;
+                        unit = TimeUnit::MIN_LIMIT;
+                    }else if(*it == ':')
+                        unit = TimeUnit::H;
+                    else
+                        return false;
+                    break;
+                case TimeUnit::MIN_LIMIT:
+                    if(*it == ':')
+                        unit = TimeUnit::H;
+                    else
+                        return false;
+                    break;
+                case TimeUnit::H:
+                    if(*it >= '0' && *it <= '9'){
+                        t += (*it - '0') * 60 * 60 * 1000;
+                        unit = TimeUnit::H_10;
+                    }else
+                        return false;
+                    break;
+                case TimeUnit::H_10:
+                    if(*it >= '0' && *it <= '9'){
+                        t += (*it - '0') * 10 * 60 * 60 * 1000;
+                        unit = TimeUnit::END;
+                    }else
+                        return false;
+                    break;
+                case TimeUnit::END:
+                    return false;
+            }
         // Success
         return true;
     }
@@ -140,7 +237,7 @@ void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
                                 std::istringstream s(line);
                                 std::string token;
                                 // Get start time
-                                if(!std::getline(s, token, '|')){
+                                if(!std::getline(s, token, '-')){
                                     if(warnings)
                                         throw_parse_error(line_i, "Couldn't find start time");
                                     break;
