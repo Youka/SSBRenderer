@@ -9,7 +9,7 @@
 
 SSBParser::SSBParser(SSBData& ssb) : ssb(ssb){}
 
-SSBParser::SSBParser(std::string& script, bool warnings){
+SSBParser::SSBParser(std::string& script, bool warnings) throw(std::string){
     this->parse(script, warnings);
 }
 
@@ -17,7 +17,16 @@ SSBData SSBParser::data(){
     return this->ssb;
 }
 
-void SSBParser::parse(std::string& script, bool warnings){
+namespace{
+    // Throws string in parse error message format
+    inline void throw_parse_error(unsigned int line, const char* message){
+        std::ostringstream s;
+        s << line << ": " << message;
+        throw s.str();
+    }
+}
+
+void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
     // File reading
 #ifdef _WIN32   // Windows
     std::wstring scriptW = utf8_to_utf16(script);
@@ -29,7 +38,7 @@ void SSBParser::parse(std::string& script, bool warnings){
     if(file){
         // Current SSB section
         enum class SSBSection{NONE, META, FRAME, STYLES, LINES} section = SSBSection::NONE;
-        // File line index (needed for warnings)
+        // File line number (needed for warnings)
         unsigned int line_i = 0;
         // File line buffer
         std::string line;
@@ -39,8 +48,13 @@ void SSBParser::parse(std::string& script, bool warnings){
 #else   // Unix
         while(std::getline(file, line)){
 #endif
+            // Update line number
+            line_i++;
+            // Remove windows carriage return at end of lines
+            if(!line.empty() && line.back() == '\r')
+                line.pop_back();
             // No skippable line
-            if(!line.empty() && !(line.length() >= 2 && line[0] == '/' && line[1] == '/')){
+            if(!line.empty() && line.compare(0, 2, "//") != 0){
                 // Got section
                 if(line.front() == '#'){
                     std::string section_name = line.substr(1);
@@ -52,34 +66,50 @@ void SSBParser::parse(std::string& script, bool warnings){
                         section = SSBSection::STYLES;
                     else if(section_name == "LINES")
                         section = SSBSection::LINES;
-                    else if(warnings){
-                        std::stringstream s;
-                        s << line_i << ": Invalid section name";
-                        throw s.str();
-                    }
+                    else if(warnings)
+                        throw_parse_error(line_i, "Invalid section name");
                 // Got section value
                 }else
                     switch(section){
-#pragma message "Parse SSB line"
                         case SSBSection::META:
+                            if(line.compare(0, 7, "Title: ") == 0)
+                                this->ssb.meta.title = line.substr(7);
+                            else if(line.compare(0, 8, "Author: ") == 0)
+                                this->ssb.meta.author = line.substr(8);
+                            else if(line.compare(0, 13, "Description: ") == 0)
+                                this->ssb.meta.description = line.substr(13);
+                            else if(line.compare(0, 9, "Version: ") == 0)
+                                this->ssb.meta.version = line.substr(9);
+                            else if(warnings)
+                                throw_parse_error(line_i, "Invalid meta field");
                             break;
+#pragma message "Parse SSB line"
                         case SSBSection::FRAME:
+                            if(line.compare(0, 7, "Width: ") == 0){
+                                std::istringstream s(line.substr(7));
+                                if(!(s >> this->ssb.frame.width) || this->ssb.frame.width < 0 || !s.eof()){
+                                    this->ssb.frame.width = -1;
+                                    throw_parse_error(line_i, "Invalid frame width");
+                                }
+                            }else if(line.compare(0, 8, "Height: ") == 0){
+                                std::istringstream s(line.substr(8));
+                                if(!(s >> this->ssb.frame.height) || this->ssb.frame.height < 0 || !s.eof()){
+                                    this->ssb.frame.height = -1;
+                                    throw_parse_error(line_i, "Invalid frame height");
+                                }
+                            }else if(warnings)
+                                throw_parse_error(line_i, "Invalid frame field");
                             break;
                         case SSBSection::STYLES:
                             break;
                         case SSBSection::LINES:
                             break;
                         case SSBSection::NONE:
-                            if(warnings){
-                                std::stringstream s;
-                                s << line_i << ": No section set";
-                                throw s.str();
-                            }
+                            if(warnings)
+                                throw_parse_error(line_i, "No section set");
                             break;
                     }
             }
-            // Increase line index for next one
-            line_i++;
         }
     // File couldn't be read
     }else if(warnings)

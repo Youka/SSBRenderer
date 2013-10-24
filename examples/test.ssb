@@ -1,0 +1,16 @@
+#META
+Title: Test
+Author: Youka
+Description: Check semantic and syntax.
+Version: 1
+
+#FRAME
+Width: 1280
+Height: 720
+
+#STYLES
+List: -
+
+#LINES
+//I'm a comment!
+1.0-1:20.0|List|Just a simple list entry|Hello world

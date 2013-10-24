@@ -10,9 +10,9 @@ class SSBParser{
         // Constructors
         SSBParser() = default;
         SSBParser(SSBData& ssb);
-        SSBParser(std::string& script, bool warnings);
+        SSBParser(std::string& script, bool warnings) throw(std::string);
         // Get SSB data
         SSBData data();
         // Parse script & fill data
-        void parse(std::string& script, bool warnings);
+        void parse(std::string& script, bool warnings) throw(std::string);
 };
