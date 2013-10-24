@@ -24,6 +24,14 @@ namespace{
         s << line << ": " << message;
         throw s.str();
     }
+    // Converts string to number
+    template<class T>
+    inline bool string_to_number(std::string src, T& dst){
+        std::istringstream s(src);
+        if(!(s >> std::noskipws >> dst) || !s.eof())
+            return false;
+        return true;
+    }
 }
 
 void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
@@ -83,26 +91,29 @@ void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
                             else if(warnings)
                                 throw_parse_error(line_i, "Invalid meta field");
                             break;
-#pragma message "Parse SSB line"
                         case SSBSection::FRAME:
                             if(line.compare(0, 7, "Width: ") == 0){
-                                std::istringstream s(line.substr(7));
-                                if(!(s >> this->ssb.frame.width) || this->ssb.frame.width < 0 || !s.eof()){
+                                if(!string_to_number(line.substr(7), this->ssb.frame.width) || this->ssb.frame.width < 0){
                                     this->ssb.frame.width = -1;
                                     throw_parse_error(line_i, "Invalid frame width");
                                 }
                             }else if(line.compare(0, 8, "Height: ") == 0){
-                                std::istringstream s(line.substr(8));
-                                if(!(s >> this->ssb.frame.height) || this->ssb.frame.height < 0 || !s.eof()){
+                                if(!string_to_number(line.substr(8), this->ssb.frame.height) || this->ssb.frame.height < 0){
                                     this->ssb.frame.height = -1;
                                     throw_parse_error(line_i, "Invalid frame height");
                                 }
                             }else if(warnings)
                                 throw_parse_error(line_i, "Invalid frame field");
                             break;
-                        case SSBSection::STYLES:
-                            break;
+                        case SSBSection::STYLES:{
+                            std::string::size_type pos = line.find(": ");
+                            if(pos != std::string::npos){
+                                this->ssb.styles[line.substr(0, pos)] = line.substr(pos+2);
+                            }else if(warnings)
+                                throw_parse_error(line_i, "Invalid style");
+                        }break;
                         case SSBSection::LINES:
+#pragma message "Parse SSB line"
                             break;
                         case SSBSection::NONE:
                             if(warnings)

@@ -27,7 +27,7 @@ class SSBObject{
 // Any state for rendering
 class SSBTag : protected SSBObject{
     public:
-        enum class Type : char{FONT_FAMILY, FONT_SIZE}type;
+        enum class Type : char{FONT_FAMILY, FONT_STYLE, FONT_SIZE}type;
         virtual ~SSBTag(){}
     protected:
         SSBTag(Type type) : SSBObject(SSBObject::Type::TAG), type(type){}
@@ -47,6 +47,13 @@ class SSBFontFamily : protected SSBTag{
     public:
         std::string family;
         SSBFontFamily(std::string family) : SSBTag(SSBTag::Type::FONT_FAMILY), family(family){}
+};
+
+// Font style state
+class SSBFontStyle : protected SSBTag{
+    public:
+        bool bold, italic, underline, strikeout;
+        SSBFontStyle(bool bold, bool italic, bool underline, bool strikeout) : SSBTag(SSBTag::Type::FONT_STYLE), bold(bold), italic(italic), underline(underline), strikeout(strikeout){}
 };
 
 // Font size state
