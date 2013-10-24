@@ -46,9 +46,7 @@ namespace{
                     if(*it >= '0' && *it <= '9'){
                         t += *it - '0';
                         unit = TimeUnit::MS_10;
-                    }else if(*it == '.')
-                        unit = TimeUnit::SEC;
-                    else
+                    }else
                         return false;
                     break;
                 case TimeUnit::MS_10:
@@ -79,9 +77,7 @@ namespace{
                     if(*it >= '0' && *it <= '9'){
                         t += (*it - '0') * 1000;
                         unit = TimeUnit::SEC_10;
-                    }else if(*it == ':')
-                        unit = TimeUnit::MIN;
-                    else
+                    }else
                         return false;
                     break;
                 case TimeUnit::SEC_10:
@@ -103,9 +99,7 @@ namespace{
                     if(*it >= '0' && *it <= '9'){
                         t += (*it - '0') * 60 * 1000;
                         unit = TimeUnit::MIN_10;
-                    }else if(*it == ':')
-                        unit = TimeUnit::H;
-                    else
+                    }else
                         return false;
                     break;
                 case TimeUnit::MIN_10:
@@ -280,7 +274,28 @@ void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
                                 }
                                 // Parse text
                                 std::string text = style_content + s.str();
-#pragma message "Parse SSB line"
+                                SSBGeometry::Type geometry = SSBGeometry::Type::TEXT;
+                                bool in_tags = false;
+                                std::string::size_type pos_start = 0, pos_end;
+                                do{
+                                    // Evaluate either tags or geometry
+                                    if(in_tags){
+                                        pos_end = text.find('}', pos_start);
+                                        if(pos_end == std::string::npos){
+                                            if(warnings)
+                                                throw_parse_error(line_i, "Tags closing brace not found");
+                                            break;
+                                        }else
+                                            pos_end = pos_end - 1;
+#pragma message "Parse SSB tags"
+                                    }else{
+                                        pos_end = text.find('{', pos_start);
+                                        pos_end = pos_end == std::string::npos ? text.length() - 1 : pos_end - 1;
+#pragma message "Parse SSB geometry"
+                                    }
+                                    pos_start = pos_end + 2;
+                                    in_tags = !in_tags;
+                                }while(pos_end < text.length() - 1);
                                 // Parsing successfull without exception -> commit output
                                 this->ssb.lines.push_back(ssb_line);
                             }
