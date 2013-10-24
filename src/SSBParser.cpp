@@ -17,6 +17,7 @@ SSBData SSBParser::data(){
     return this->ssb;
 }
 
+// Helper functions for parsing
 namespace{
     // Throws string in parse error message format
     inline void throw_parse_error(unsigned int line, const char* message){
@@ -30,6 +31,19 @@ namespace{
         std::istringstream s(src);
         if(!(s >> std::noskipws >> dst) || !s.eof())
             return false;
+        return true;
+    }
+    // Parses SSB time and converts to milliseconds
+    inline bool parse_time(std::string& s, unsigned long long& t){
+        // Reset accumulator
+        t = 0;
+        // Time position
+
+        // Iterate through characters
+        for(auto it = s.crbegin(); it != s.crend(); ++it){
+            #pragma message "Implent SSB time parser"
+        }
+        // Success
         return true;
     }
 }
@@ -95,25 +109,84 @@ void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
                             if(line.compare(0, 7, "Width: ") == 0){
                                 if(!string_to_number(line.substr(7), this->ssb.frame.width) || this->ssb.frame.width < 0){
                                     this->ssb.frame.width = -1;
-                                    throw_parse_error(line_i, "Invalid frame width");
+                                    if(warnings)
+                                        throw_parse_error(line_i, "Invalid frame width");
+                                    break;
                                 }
                             }else if(line.compare(0, 8, "Height: ") == 0){
                                 if(!string_to_number(line.substr(8), this->ssb.frame.height) || this->ssb.frame.height < 0){
                                     this->ssb.frame.height = -1;
-                                    throw_parse_error(line_i, "Invalid frame height");
+                                    if(warnings)
+                                        throw_parse_error(line_i, "Invalid frame height");
+                                    break;
                                 }
                             }else if(warnings)
                                 throw_parse_error(line_i, "Invalid frame field");
                             break;
-                        case SSBSection::STYLES:{
-                            std::string::size_type pos = line.find(": ");
-                            if(pos != std::string::npos){
-                                this->ssb.styles[line.substr(0, pos)] = line.substr(pos+2);
-                            }else if(warnings)
-                                throw_parse_error(line_i, "Invalid style");
-                        }break;
+                        case SSBSection::STYLES:
+                            {
+                                std::string::size_type pos = line.find(": ");
+                                if(pos != std::string::npos){
+                                    this->ssb.styles[line.substr(0, pos)] = line.substr(pos+2);
+                                }else if(warnings)
+                                    throw_parse_error(line_i, "Invalid style");
+                            }
+                            break;
                         case SSBSection::LINES:
-#pragma message "Parse SSB line"
+                            {
+                                // Output buffer
+                                SSBLine ssb_line;
+                                // Split line into tokens
+                                std::istringstream s(line);
+                                std::string token;
+                                // Get start time
+                                if(!std::getline(s, token, '|')){
+                                    if(warnings)
+                                        throw_parse_error(line_i, "Couldn't find start time");
+                                    break;
+                                }
+                                if(!parse_time(token, ssb_line.start_ms)){
+                                    if(warnings)
+                                        throw_parse_error(line_i, "Couldn't parse start time");
+                                    break;
+                                }
+                                // Get end time
+                                if(!std::getline(s, token, '|')){
+                                    if(warnings)
+                                        throw_parse_error(line_i, "Couldn't find end time");
+                                    break;
+                                }
+                                if(!parse_time(token, ssb_line.end_ms)){
+                                    if(warnings)
+                                        throw_parse_error(line_i, "Couldn't parse end time");
+                                    break;
+                                }
+                                // Get style content for later text insertion
+                                if(!std::getline(s, token, '|')){
+                                    if(warnings)
+                                        throw_parse_error(line_i, "Couldn't find style");
+                                    break;
+                                }
+                                std::string style_content;
+                                if(this->ssb.styles.count(token))
+                                    style_content = this->ssb.styles[token];
+                                else{
+                                    if(warnings)
+                                        throw_parse_error(line_i, "Style identifier not found");
+                                    break;
+                                }
+                                // Skip note
+                                if(!std::getline(s, token, '|')){
+                                    if(warnings)
+                                        throw_parse_error(line_i, "Couldn't find note");
+                                    break;
+                                }
+                                // Parse text
+                                std::string text = style_content + s.str();
+    #pragma message "Parse SSB line"
+                                // Parsing successfull without exception -> commit output
+                                this->ssb.lines.push_back(ssb_line);
+                            }
                             break;
                         case SSBSection::NONE:
                             if(warnings)

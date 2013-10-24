@@ -23,55 +23,61 @@ namespace VDub{
         // Evaluate message
         switch(msg){
             // Dialog initialization
-            case WM_INITDIALOG:{
-                Userdata* inst_data = reinterpret_cast<Userdata*>(lParam);
-                // Set dialog default content
-                HWND edit = GetDlgItem(wnd, VDUB_DIALOG_FILENAME);
-                SendMessageW(edit, WM_SETTEXT, 0, reinterpret_cast<LPARAM>(utf8_to_utf16(*inst_data->script).c_str()));
-                SendMessageW(edit, EM_SETSEL, 0, -1);
-                SendMessageW(GetDlgItem(wnd, VDUB_DIALOG_CHECK), BM_SETCHECK, inst_data->warnings, 0);
-                // Store userdata to window
-                SetWindowLongPtrA(wnd, DWLP_USER, reinterpret_cast<LONG_PTR>(inst_data));
-            }break;
+            case WM_INITDIALOG:
+                {
+                    Userdata* inst_data = reinterpret_cast<Userdata*>(lParam);
+                    // Set dialog default content
+                    HWND edit = GetDlgItem(wnd, VDUB_DIALOG_FILENAME);
+                    SendMessageW(edit, WM_SETTEXT, 0, reinterpret_cast<LPARAM>(utf8_to_utf16(*inst_data->script).c_str()));
+                    SendMessageW(edit, EM_SETSEL, 0, -1);
+                    SendMessageW(GetDlgItem(wnd, VDUB_DIALOG_CHECK), BM_SETCHECK, inst_data->warnings, 0);
+                    // Store userdata to window
+                    SetWindowLongPtrA(wnd, DWLP_USER, reinterpret_cast<LONG_PTR>(inst_data));
+                }
+                break;
             // Dialog action
             case WM_COMMAND:
                 // Evaluate action command
                 switch(wParam){
                     // '...' button
-                    case VDUB_DIALOG_FILENAME_CHOOSE:{
-                        wchar_t file[256]; file[0] = '\0';
+                    case VDUB_DIALOG_FILENAME_CHOOSE:
+                        {
+                            wchar_t file[256]; file[0] = '\0';
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
-                        OPENFILENAMEW ofn = {0};
+                            OPENFILENAMEW ofn = {0};
 #pragma GCC diagnostic pop
-                        ofn.lStructSize = sizeof(OPENFILENAMEW);
-                        ofn.hwndOwner = wnd;
-                        ofn.hInstance = reinterpret_cast<HINSTANCE>(module);
-                        ofn.lpstrFilter = L"SSB file (*.ssb)\0*.ssb\0\0";
-                        ofn.nFilterIndex = 1;
-                        ofn.lpstrFile = file;
-                        ofn.nMaxFile = sizeof(file);
-                        ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
-                        // Show file selection dialog
-                        if(GetOpenFileNameW(&ofn)){
-                            // Save filename input to dialog
-                            HWND edit = GetDlgItem(wnd, VDUB_DIALOG_FILENAME);
-                            SendMessageW(edit, WM_SETTEXT, 0, reinterpret_cast<LPARAM>(ofn.lpstrFile));
-                            SendMessageW(edit, EM_SETSEL, 0, -1);
+                            ofn.lStructSize = sizeof(OPENFILENAMEW);
+                            ofn.hwndOwner = wnd;
+                            ofn.hInstance = reinterpret_cast<HINSTANCE>(module);
+                            ofn.lpstrFilter = L"SSB file (*.ssb)\0*.ssb\0\0";
+                            ofn.nFilterIndex = 1;
+                            ofn.lpstrFile = file;
+                            ofn.nMaxFile = sizeof(file);
+                            ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+                            // Show file selection dialog
+                            if(GetOpenFileNameW(&ofn)){
+                                // Save filename input to dialog
+                                HWND edit = GetDlgItem(wnd, VDUB_DIALOG_FILENAME);
+                                SendMessageW(edit, WM_SETTEXT, 0, reinterpret_cast<LPARAM>(ofn.lpstrFile));
+                                SendMessageW(edit, EM_SETSEL, 0, -1);
+                            }
                         }
-                    }break;
+                        break;
                     // 'OK' button
-                    case IDOK:{
-                        Userdata* inst_data = reinterpret_cast<Userdata*>(GetWindowLongPtrA(wnd, DWLP_USER));
-                        // Save dialog content to userdata
-                        HWND edit = GetDlgItem(wnd, VDUB_DIALOG_FILENAME);
-                        std::wstring filename(static_cast<int>(SendMessageW(edit, WM_GETTEXTLENGTH, 0, 0))+1, L'\0');
-                        SendMessageW(edit, WM_GETTEXT, filename.length(), reinterpret_cast<LPARAM>(filename.data()));
-                        *inst_data->script = utf16_to_utf8(filename);
-                        inst_data->warnings = SendMessageW(GetDlgItem(wnd, VDUB_DIALOG_CHECK), BM_GETCHECK, 0, 0);
-                        // Successful end
-                        EndDialog(wnd, 0);
-                    }break;
+                    case IDOK:
+                        {
+                            Userdata* inst_data = reinterpret_cast<Userdata*>(GetWindowLongPtrA(wnd, DWLP_USER));
+                            // Save dialog content to userdata
+                            HWND edit = GetDlgItem(wnd, VDUB_DIALOG_FILENAME);
+                            std::wstring filename(static_cast<int>(SendMessageW(edit, WM_GETTEXTLENGTH, 0, 0))+1, L'\0');
+                            SendMessageW(edit, WM_GETTEXT, filename.length(), reinterpret_cast<LPARAM>(filename.data()));
+                            *inst_data->script = utf16_to_utf8(filename);
+                            inst_data->warnings = SendMessageW(GetDlgItem(wnd, VDUB_DIALOG_CHECK), BM_GETCHECK, 0, 0);
+                            // Successful end
+                            EndDialog(wnd, 0);
+                        }
+                        break;
                     // 'Cancel' button
                     case IDCANCEL:
                         // Unsuccessful end

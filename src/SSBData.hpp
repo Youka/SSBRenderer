@@ -5,16 +5,6 @@
 #include <vector>
 #include <memory>
 
-// Meta information (no effect on rendering)
-struct SSBMeta{
-    std::string title, description, author, version;
-};
-
-// Destination frame (for scaling to different frame sizes than the intended one)
-struct SSBFrame{
-    int width = -1, height = -1;
-};
-
 // Any state or geometry for rendering
 class SSBObject{
     public:
@@ -99,10 +89,26 @@ class SSBText : protected SSBGeometry{
         SSBText(std::string text) : SSBGeometry(SSBGeometry::Type::TEXT), text(text){}
 };
 
+// Meta information (no effect on rendering)
+struct SSBMeta{
+    std::string title, description, author, version;
+};
+
+// Destination frame (for scaling to different frame sizes than the intended one)
+struct SSBFrame{
+    int width = -1, height = -1;
+};
+
+// Line with rendering data
+struct SSBLine{
+    unsigned long long start_ms = 0, end_ms = 0;
+    std::vector<std::shared_ptr<SSBObject>> objects;
+};
+
 // Relevant SSB data for rendering & feedback
 struct SSBData{
     SSBMeta meta;
     SSBFrame frame;
     std::map<std::string, std::string>/*Name, Content*/ styles;
-    std::vector<std::vector<std::shared_ptr<SSBObject>>>/*Line objects*/ lines;
+    std::vector<SSBLine> lines;
 };
