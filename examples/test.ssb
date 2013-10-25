@@ -2,14 +2,14 @@
 Title: Test
 Author: Youka
 Description: Check semantic and syntax.
-Version: 1
+Version: 1a
 
 #FRAME
 Width: 1280
 Height: 720
 
 #STYLES
-List: -
+List: - 
 
 #LINES
 //I'm a comment!

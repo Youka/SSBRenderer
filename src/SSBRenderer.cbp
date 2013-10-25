@@ -19,9 +19,11 @@
 				<Compiler>
 					<Add option="-Os" />
 					<Add option="-O3" />
+					<Add option="-Winit-self" />
 					<Add option="-Wredundant-decls" />
 					<Add option="-Wundef" />
 					<Add option="-Wfloat-equal" />
+					<Add option="-Wunreachable-code" />
 					<Add option="-Wmissing-include-dirs" />
 					<Add option="-Wswitch-enum" />
 					<Add option="-pedantic" />
@@ -61,9 +63,11 @@
 				<Option createDefFile="1" />
 				<Option createStaticLib="1" />
 				<Compiler>
+					<Add option="-Winit-self" />
 					<Add option="-Wredundant-decls" />
 					<Add option="-Wundef" />
 					<Add option="-Wfloat-equal" />
+					<Add option="-Wunreachable-code" />
 					<Add option="-Wmissing-include-dirs" />
 					<Add option="-Wswitch-enum" />
 					<Add option="-pedantic" />

@@ -1,6 +1,10 @@
+# Builds
 /src/bin
 /src/obj
-/src/SSBRenderer.depend
-/src/SSBRenderer.layout
 
+# Code::Blocks project files
+*.depend
+*.layout
+
+# Backups for development
 /TODO

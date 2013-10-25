@@ -4,11 +4,11 @@
 	* Parser
 	* Renderer
 	* Plugin interfaces
-		+ DirectShow
+		+ (DirectShow)
 		+ Avxsynth
 		+ GStreamer
 - Documentation
 	* LICENSE
 	* README
 	* Examples
-	* References
+	* Reference card
