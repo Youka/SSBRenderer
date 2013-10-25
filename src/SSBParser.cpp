@@ -274,12 +274,13 @@ void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
                                 }
                                 // Parse text
                                 std::string text = style_content + s.str();
-                                SSBGeometry::Type geometry = SSBGeometry::Type::TEXT;
-                                bool in_tags = false;
                                 std::string::size_type pos_start = 0, pos_end;
+                                bool in_tags = false;
+                                SSBGeometry::Type geometry_type = SSBGeometry::Type::TEXT;
                                 do{
                                     // Evaluate either tags or geometry
                                     if(in_tags){
+                                        // Search tags end at closing bracket or cause error
                                         pos_end = text.find('}', pos_start);
                                         if(pos_end == std::string::npos){
                                             if(warnings)
@@ -287,11 +288,29 @@ void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
                                             break;
                                         }else
                                             pos_end = pos_end - 1;
+                                        // Parse single tags
+                                        std::string tags = text.substr(pos_start, pos_end - pos_start);
+                                        if(!tags.empty()){
 #pragma message "Parse SSB tags"
+                                        }
                                     }else{
+                                        // Search geometry end at tags bracket or text end
                                         pos_end = text.find('{', pos_start);
                                         pos_end = pos_end == std::string::npos ? text.length() - 1 : pos_end - 1;
-#pragma message "Parse SSB geometry"
+                                        // Parse geometry by type
+                                        std::string geometry = text.substr(pos_start, pos_end - pos_start);
+                                        if(!geometry.empty())
+                                            switch(geometry_type){
+    #pragma message "Parse SSB geometry"
+                                                case SSBGeometry::Type::POINTS:
+                                                    break;
+                                                case SSBGeometry::Type::LINES:
+                                                    break;
+                                                case SSBGeometry::Type::SHAPE:
+                                                    break;
+                                                case SSBGeometry::Type::TEXT:
+                                                    break;
+                                            }
                                     }
                                     pos_start = pos_end + 2;
                                     in_tags = !in_tags;
