@@ -1,6 +1,7 @@
 #include "Renderer.hpp"
 #include "SSBParser.hpp"
 #include <cairo.h>
+#include <muParser.h>
 
 Renderer::Renderer(int width, int height, Colorspace format, std::string& script, bool warnings)
 : width(width), height(height), format(format), ssb(SSBParser(script, warnings).data()){}
@@ -13,6 +14,15 @@ void Renderer::set_target(int width, int height, Colorspace format){
 
 void Renderer::render(unsigned char* image, int pitch, unsigned long long start_ms, unsigned long long) noexcept{
 #pragma message "Implent SSB rendering"
+    // Test muParser
+    mu::Parser parser;
+    parser.DefineConst("x", start_ms);
+    parser.SetExpr("(sin(x/100)+1)*2");
+    double mu_var = 2;
+    try{
+        mu_var = parser.Eval();
+    }catch(mu::Parser::exception_type& e){}
+    // Test cairo
     if(this->format == Colorspace::BGRA || this->format == Colorspace::BGRX)
         for(auto it = this->ssb.lines.begin(); it != this->ssb.lines.end(); it++)
             if(start_ms >= (*it).start_ms && start_ms < (*it).end_ms){
@@ -25,7 +35,7 @@ void Renderer::render(unsigned char* image, int pitch, unsigned long long start_
                 cairo_set_source_rgba(ctx, 1, 1, 0, 0.75);
                 const double dashes[3] = {1,5,3};
                 cairo_set_dash(ctx, dashes, sizeof(dashes) / sizeof(*dashes), 0.0L);
-                cairo_set_line_width(ctx, 5);
+                cairo_set_line_width(ctx, mu_var);
                 cairo_stroke(ctx);
                 cairo_destroy(ctx);
                 cairo_surface_destroy(surface);

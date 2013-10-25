@@ -35,18 +35,20 @@
 					<Add option="-DWIN32_EXTRA_LEAN" />
 					<Add directory="include" />
 					<Add directory="include/cairo" />
+					<Add directory="include/muparser" />
 				</Compiler>
 				<ResourceCompiler>
 					<Add directory="res" />
 				</ResourceCompiler>
 				<Linker>
 					<Add option="-s" />
-					<Add library="comdlg32" />
 					<Add library="avisynth" />
+					<Add library="comdlg32" />
 					<Add library="cairo" />
 					<Add library="pixman-1" />
 					<Add library="png" />
 					<Add library="z" />
+					<Add library="libmuparser.a" />
 					<Add directory="libs" />
 				</Linker>
 			</Target>
@@ -78,18 +80,20 @@
 					<Add option="-DWIN32_EXTRA_LEAN" />
 					<Add directory="include" />
 					<Add directory="include/cairo" />
+					<Add directory="include/muparser" />
 				</Compiler>
 				<ResourceCompiler>
 					<Add directory="res" />
 				</ResourceCompiler>
 				<Linker>
 					<Add option="-pg -lgmon" />
-					<Add library="comdlg32" />
 					<Add library="avisynth" />
+					<Add library="comdlg32" />
 					<Add library="cairo" />
 					<Add library="pixman-1" />
 					<Add library="png" />
 					<Add library="z" />
+					<Add library="libmuparser.a" />
 					<Add directory="libs" />
 				</Linker>
 			</Target>
