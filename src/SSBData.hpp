@@ -15,7 +15,7 @@ class SSBObject{
 };
 
 // Any state for rendering
-class SSBTag : protected SSBObject{
+class SSBTag : public SSBObject{
     public:
         enum class Type : char{FONT_FAMILY, FONT_STYLE, FONT_SIZE}type;
         virtual ~SSBTag() = default;
@@ -24,7 +24,7 @@ class SSBTag : protected SSBObject{
 };
 
 // Any geometry for rendering
-class SSBGeometry : protected SSBObject{
+class SSBGeometry : public SSBObject{
     public:
         enum class Type : char{POINTS, PATH, TEXT}type;
         virtual ~SSBGeometry() = default;
@@ -33,21 +33,21 @@ class SSBGeometry : protected SSBObject{
 };
 
 // Font family state
-class SSBFontFamily : protected SSBTag{
+class SSBFontFamily : public SSBTag{
     public:
         std::string family;
         SSBFontFamily(std::string family) : SSBTag(SSBTag::Type::FONT_FAMILY), family(family){}
 };
 
 // Font style state
-class SSBFontStyle : protected SSBTag{
+class SSBFontStyle : public SSBTag{
     public:
         bool bold, italic, underline, strikeout;
         SSBFontStyle(bool bold, bool italic, bool underline, bool strikeout) : SSBTag(SSBTag::Type::FONT_STYLE), bold(bold), italic(italic), underline(underline), strikeout(strikeout){}
 };
 
 // Font size state
-class SSBFontSize : protected SSBTag{
+class SSBFontSize : public SSBTag{
     public:
         unsigned int size;
         SSBFontSize(unsigned int size) : SSBTag(SSBTag::Type::FONT_SIZE), size(size){}
@@ -57,14 +57,14 @@ class SSBFontSize : protected SSBTag{
 struct Point{float x,y;};
 
 // Points geometry
-class SSBPoints : protected SSBGeometry{
+class SSBPoints : public SSBGeometry{
     public:
         std::vector<Point> points;
         SSBPoints() : SSBGeometry(SSBGeometry::Type::POINTS){}
 };
 
 // Path geometry
-class SSBPath : protected SSBGeometry{
+class SSBPath : public SSBGeometry{
     public:
         enum class SegmentType : char{MOVE_TO, LINE_TO, CURVE_TO, ARC_TO, CLOSE};
         struct Segment{
@@ -79,7 +79,7 @@ class SSBPath : protected SSBGeometry{
 };
 
 // Text geometry
-class SSBText : protected SSBGeometry{
+class SSBText : public SSBGeometry{
     public:
         std::string text;
         SSBText(std::string text) : SSBGeometry(SSBGeometry::Type::TEXT), text(text){}
@@ -98,6 +98,7 @@ struct SSBFrame{
 // Line with rendering data
 struct SSBLine{
     unsigned long long start_ms = 0, end_ms = 0;
+    bool static_tags = false;
     std::vector<std::shared_ptr<SSBObject>> objects;
 };
 

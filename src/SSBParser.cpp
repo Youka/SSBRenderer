@@ -305,12 +305,59 @@ void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
                                         std::string geometry = text.substr(pos_start, pos_end - pos_start);
                                         if(!geometry.empty())
                                             switch(geometry_type){
-#pragma message "Parse SSB geometry"
                                                 case SSBGeometry::Type::POINTS:
+                                                    {
+                                                        // SSBPoints buffer
+                                                        SSBPoints ssb_points;
+                                                        // Iterate through numbers
+                                                        std::istringstream points_stream(geometry);
+                                                        Point point;
+                                                        while(points_stream){
+                                                            points_stream >> point.x;
+                                                            points_stream >> point.y;
+                                                            ssb_points.points.push_back(point);
+                                                        }
+                                                        // Check for streaming error
+                                                        if(!(points_stream >> std::ws).eof()){
+                                                            if(warnings)
+                                                                throw_parse_error(line_i, "Points are invalid");
+                                                            break;
+                                                        }
+                                                        // Points collection successfull without exception -> insert SSBPoints as SSBObject to SSBLine
+                                                        ssb_line.objects.push_back(std::shared_ptr<SSBObject>(new SSBPoints(ssb_points)));
+                                                    }
                                                     break;
                                                 case SSBGeometry::Type::PATH:
+                                                    {
+                                                        // SSBPath buffer
+                                                        SSBPath ssb_path;
+                                                        // Iterate through path segments
+                                                        std::istringstream path_stream(geometry);
+                                                        while(path_stream){
+                                                            break;
+#pragma message "Parse SSB geometry"
+                                                        }
+                                                        // Check for streaming error
+                                                        if(!(path_stream >> std::ws).eof()){
+                                                            if(warnings)
+                                                                throw_parse_error(line_i, "Path is invalid");
+                                                            break;
+                                                        }
+                                                        // Segments collection successfull without exception -> insert SSBPath as SSBObject to SSBLine
+                                                        ssb_line.objects.push_back(std::shared_ptr<SSBObject>(new SSBPath(ssb_path)));
+                                                    }
                                                     break;
                                                 case SSBGeometry::Type::TEXT:
+                                                    {
+                                                        // Replace in string \n to real line breaks
+                                                        std::string::size_type pos = 0;
+                                                        while((pos = geometry.find("\\n", pos)) != std::string::npos){
+                                                            geometry.replace(pos, 2, 1, '\n');
+                                                            pos++;
+                                                        }
+                                                        // Insert SSBText as SSBObject to SSBLine
+                                                        ssb_line.objects.push_back(std::shared_ptr<SSBObject>(new SSBText(geometry)));
+                                                    }
                                                     break;
                                             }
                                     }
