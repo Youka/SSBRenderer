@@ -26,7 +26,7 @@ class SSBTag : protected SSBObject{
 // Any geometry for rendering
 class SSBGeometry : protected SSBObject{
     public:
-        enum class Type : char{POINTS, LINES, SHAPE, TEXT}type;
+        enum class Type : char{POINTS, PATH, TEXT}type;
         virtual ~SSBGeometry() = default;
     protected:
         SSBGeometry(Type type) : SSBObject(SSBObject::Type::GEOMETRY), type(type){}
@@ -63,23 +63,19 @@ class SSBPoints : protected SSBGeometry{
         SSBPoints() : SSBGeometry(SSBGeometry::Type::POINTS){}
 };
 
-// Lines geometry
-class SSBLines : protected SSBGeometry{
+// Path geometry
+class SSBPath : protected SSBGeometry{
     public:
-        std::vector<Point> points;
-        SSBLines() : SSBGeometry(SSBGeometry::Type::LINES){}
-};
-
-// Shape geometry
-class SSBShape : protected SSBGeometry{
-    public:
-        enum class PointType : char{MOVE_TO, LINE_TO, CURVE_TO, CLOSE};
+        enum class SegmentType : char{MOVE_TO, LINE_TO, CURVE_TO, ARC_TO, CLOSE};
         struct Segment{
-            PointType type;
-            Point point;
+            SegmentType type;
+            union{
+                Point point;
+                double angle;
+            } value;
         };
         std::vector<Segment> segments;
-        SSBShape() : SSBGeometry(SSBGeometry::Type::SHAPE){}
+        SSBPath() : SSBGeometry(SSBGeometry::Type::PATH){}
 };
 
 // Text geometry

@@ -5,10 +5,9 @@
 #include "file_info.hpp"
 #include "Renderer.hpp"
 #include "virtualdub_dialog.hpp"
-#include <windows.h>    // Dialog presentation
+#include "textconv.hpp" // Unicode conversion for dialog in-&output
 #include <commdlg.h>    // File selection dialog
 #include "module.hpp" // Module needed for windows
-#include "textconv.hpp" // Unicode conversion for dialog in-&output
 #include <cstdio>   // _snprintf for description filling
 
 namespace VDub{

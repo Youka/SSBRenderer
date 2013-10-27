@@ -35,8 +35,9 @@ namespace{
     }
     // Parses SSB time and converts to milliseconds
     inline bool parse_time(std::string& s, unsigned long long& t){
-        // Reset accumulator
-        t = 0;
+        // Test for empty timestamp
+        if(s.empty())
+            return false;
         // Time position
         enum class TimeUnit{MS, MS_10, MS_100, MS_LIMIT, SEC, SEC_10, SEC_LIMIT, MIN, MIN_10, MIN_LIMIT, H, H_10, END} unit = TimeUnit::MS;
         // Iterate through characters
@@ -44,7 +45,7 @@ namespace{
             switch(unit){
                 case TimeUnit::MS:
                     if(*it >= '0' && *it <= '9'){
-                        t += *it - '0';
+                        t = *it - '0';
                         unit = TimeUnit::MS_10;
                     }else
                         return false;
@@ -228,10 +229,10 @@ void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
                                 // Output buffer
                                 SSBLine ssb_line;
                                 // Split line into tokens
-                                std::istringstream s(line);
+                                std::istringstream line_stream(line);
                                 std::string token;
                                 // Get start time
-                                if(!std::getline(s, token, '-')){
+                                if(!std::getline(line_stream, token, '-')){
                                     if(warnings)
                                         throw_parse_error(line_i, "Couldn't find start time");
                                     break;
@@ -242,7 +243,7 @@ void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
                                     break;
                                 }
                                 // Get end time
-                                if(!std::getline(s, token, '|')){
+                                if(!std::getline(line_stream, token, '|')){
                                     if(warnings)
                                         throw_parse_error(line_i, "Couldn't find end time");
                                     break;
@@ -253,7 +254,7 @@ void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
                                     break;
                                 }
                                 // Get style content for later text insertion
-                                if(!std::getline(s, token, '|')){
+                                if(!std::getline(line_stream, token, '|')){
                                     if(warnings)
                                         throw_parse_error(line_i, "Couldn't find style");
                                     break;
@@ -267,13 +268,13 @@ void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
                                     break;
                                 }
                                 // Skip note
-                                if(!std::getline(s, token, '|')){
+                                if(!std::getline(line_stream, token, '|')){
                                     if(warnings)
                                         throw_parse_error(line_i, "Couldn't find note");
                                     break;
                                 }
                                 // Parse text
-                                std::string text = style_content + s.str();
+                                std::string text = style_content + line_stream.str();
                                 std::string::size_type pos_start = 0, pos_end;
                                 bool in_tags = false;
                                 SSBGeometry::Type geometry_type = SSBGeometry::Type::TEXT;
@@ -291,7 +292,10 @@ void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
                                         // Parse single tags
                                         std::string tags = text.substr(pos_start, pos_end - pos_start);
                                         if(!tags.empty()){
+                                            std::istringstream tags_stream(tags);
+                                            while(std::getline(tags_stream, token, ';')){
 #pragma message "Parse SSB tags"
+                                            }
                                         }
                                     }else{
                                         // Search geometry end at tags bracket or text end
@@ -301,12 +305,10 @@ void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
                                         std::string geometry = text.substr(pos_start, pos_end - pos_start);
                                         if(!geometry.empty())
                                             switch(geometry_type){
-    #pragma message "Parse SSB geometry"
+#pragma message "Parse SSB geometry"
                                                 case SSBGeometry::Type::POINTS:
                                                     break;
-                                                case SSBGeometry::Type::LINES:
-                                                    break;
-                                                case SSBGeometry::Type::SHAPE:
+                                                case SSBGeometry::Type::PATH:
                                                     break;
                                                 case SSBGeometry::Type::TEXT:
                                                     break;

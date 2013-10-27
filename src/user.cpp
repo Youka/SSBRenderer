@@ -1,16 +1,13 @@
 #include "user.h"
 #include "Renderer.hpp"
-#include <cstring>
 
 ssb_renderer ssb_create_renderer(int width, int height, char format, const char* script, char* warning){
     try{
         std::string script_string = script;
         return new Renderer(width, height, format == SSB_BGR ? Renderer::Colorspace::BGR : (format == SSB_BGRX ? Renderer::Colorspace::BGRX : Renderer::Colorspace::BGRA), script_string, warning != 0);
     }catch(std::string err){
-        if(warning){
-            strncpy(warning, err.c_str(), SSB_WARNING_LENGTH);
-            warning[SSB_WARNING_LENGTH-1] = '\0';   // Prevent from missing termination character (see strncpy problem)
-        }
+        if(warning)
+            warning[err.copy(warning, SSB_WARNING_LENGTH - 1)] = '\0';
         return 0;
     }
 }
