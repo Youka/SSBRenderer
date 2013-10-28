@@ -24,8 +24,8 @@ void Renderer::render(unsigned char* image, int pitch, unsigned long long start_
     }catch(mu::Parser::exception_type& e){}
     // Test cairo
     if(this->format == Colorspace::BGRA || this->format == Colorspace::BGRX)
-        for(auto it = this->ssb.lines.begin(); it != this->ssb.lines.end(); it++)
-            if(start_ms >= (*it).start_ms && start_ms < (*it).end_ms){
+        for(SSBLine& line : this->ssb.lines)
+            if(start_ms >= line.start_ms && start_ms < line.end_ms){
                 cairo_surface_t* surface = cairo_image_surface_create_for_data(image, this->format == Colorspace::BGRA ? CAIRO_FORMAT_ARGB32 : CAIRO_FORMAT_RGB24, this->width, this->height, pitch);
                 cairo_t* ctx = cairo_create(surface);
                 cairo_scale(ctx, 1, -1);

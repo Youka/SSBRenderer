@@ -13,4 +13,4 @@ List: -
 
 #LINES
 //I'm a comment!
-1.0-1:20.0|List|Just a simple list entry|{}Hello world
+1.0-1:20.0|List|Just a simple list entry|{font-family=Arial;font-size=24}Hello world\nひらがな{geometry=points}0.5 2 -20.125 1
