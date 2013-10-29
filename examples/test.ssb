@@ -9,7 +9,7 @@ Width: 1280
 Height: 720
 
 #STYLES
-List: - 
+List: {font-family=Arial;font-size=80;font-style=bi}- 
 
 #LINES
 //I'm a comment!

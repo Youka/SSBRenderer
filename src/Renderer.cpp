@@ -82,15 +82,7 @@ namespace{
 
 void Renderer::render(unsigned char* image, int pitch, unsigned long long start_ms, unsigned long long) noexcept{
 #pragma message "Implent SSB rendering"
-    // Test muParser
-    mu::Parser parser;
-    parser.DefineConst("x", start_ms);
-    parser.SetExpr("(sin(x/100)+1)*2");
-    double mu_var = 2;
-    try{
-        mu_var = parser.Eval();
-    }catch(mu::Parser::exception_type& e){}
-    // Test cairo
+    // Test rendering
     if(this->format == Colorspace::BGRA || this->format == Colorspace::BGRX)
         // Iterate through SSB lines
         for(SSBLine& line : this->ssb.lines)
@@ -105,7 +97,7 @@ void Renderer::render(unsigned char* image, int pitch, unsigned long long start_
                 for(std::shared_ptr<SSBObject>& obj : line.objects)
                     if(obj->type == SSBObject::Type::GEOMETRY){
                         geometry_to_path(ctx, dynamic_cast<SSBGeometry*>(obj.get()));
-                        cairo_set_source_rgb(ctx, 1, mu_var/4, 0);
+                        cairo_set_source_rgb(ctx, 1, 1, 0);
                         cairo_fill(ctx);
                     }
                 // Free reference image + context
