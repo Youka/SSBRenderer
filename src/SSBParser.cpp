@@ -203,14 +203,12 @@ void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
                                     this->ssb.frame.width = -1;
                                     if(warnings)
                                         throw_parse_error(line_i, "Invalid frame width");
-                                    break;
                                 }
                             }else if(line.compare(0, 8, "Height: ") == 0){
                                 if(!string_to_number(line.substr(8), this->ssb.frame.height) || this->ssb.frame.height < 0){
                                     this->ssb.frame.height = -1;
                                     if(warnings)
                                         throw_parse_error(line_i, "Invalid frame height");
-                                    break;
                                 }
                             }else if(warnings)
                                 throw_parse_error(line_i, "Invalid frame field");
@@ -306,7 +304,30 @@ void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
                                                         geometry_type = SSBGeometry::Type::TEXT;
                                                     else if(warnings)
                                                         throw_parse_error(line_i, "Wrong geometry tag value");
-                                                }
+                                                }else if(token.compare(0, 12, "font-family=") == 0)
+                                                    ssb_line.objects.push_back(std::shared_ptr<SSBObject>(new SSBFontFamily(token.substr(12))));
+                                                else if(token.compare(0, 11, "font-style=") == 0){
+                                                    bool bold = false, italic = false, underline = false, strikeout = false;
+                                                    for(char c : token.substr(11))
+                                                        if(c == 'b' && !bold)
+                                                            bold = true;
+                                                        else if(c == 'i' && !italic)
+                                                            italic = true;
+                                                        else if(c == 'u' && !underline)
+                                                            underline = true;
+                                                        else if(c == 's' && !strikeout)
+                                                            strikeout = true;
+                                                        else if(warnings)
+                                                            throw_parse_error(line_i, "Invalid font style");
+                                                    ssb_line.objects.push_back(std::shared_ptr<SSBObject>(new SSBFontStyle(bold, italic, underline, strikeout)));
+                                                }else if(token.compare(0, 10, "font-size=") == 0){
+                                                    unsigned int size;
+                                                    if(string_to_number(token.substr(10), size))
+                                                        ssb_line.objects.push_back(std::shared_ptr<SSBObject>(new SSBFontSize(size)));
+                                                    else if(warnings)
+                                                        throw_parse_error(line_i, "Invalid font size");
+                                                }else if(warnings)
+                                                    throw_parse_error(line_i, "Invalid tag");
 #pragma message "Parse SSB tags"
                                         }
                                     }else{
