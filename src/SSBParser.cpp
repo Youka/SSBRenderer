@@ -151,7 +151,7 @@ void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
     // File valid?
     if(file){
         // Current SSB section
-        enum class SSBSection{NONE, META, FRAME, STYLES, LINES} section = SSBSection::NONE;
+        enum class SSBSection{NONE, META, FRAME, STYLES, EVENTS} section = SSBSection::NONE;
         // File line number (needed for warnings)
         unsigned int line_i = 0;
         // File line buffer
@@ -178,8 +178,8 @@ void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
                         section = SSBSection::FRAME;
                     else if(section_name == "STYLES")
                         section = SSBSection::STYLES;
-                    else if(section_name == "LINES")
-                        section = SSBSection::LINES;
+                    else if(section_name == "EVENTS")
+                        section = SSBSection::EVENTS;
                     else if(warnings)
                         throw_parse_error(line_i, "Invalid section name");
                 // Got section value
@@ -222,37 +222,37 @@ void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
                                     throw_parse_error(line_i, "Invalid style");
                             }
                             break;
-                        case SSBSection::LINES:
+                        case SSBSection::EVENTS:
                             {
                                 // Output buffer
-                                SSBLine ssb_line;
+                                SSBEvent ssb_event;
                                 // Split line into tokens
-                                std::istringstream line_stream(line);
+                                std::istringstream event_stream(line);
                                 std::string token;
                                 // Get start time
-                                if(!std::getline(line_stream, token, '-')){
+                                if(!std::getline(event_stream, token, '-')){
                                     if(warnings)
                                         throw_parse_error(line_i, "Couldn't find start time");
                                     break;
                                 }
-                                if(!parse_time(token, ssb_line.start_ms)){
+                                if(!parse_time(token, ssb_event.start_ms)){
                                     if(warnings)
                                         throw_parse_error(line_i, "Couldn't parse start time");
                                     break;
                                 }
                                 // Get end time
-                                if(!std::getline(line_stream, token, '|')){
+                                if(!std::getline(event_stream, token, '|')){
                                     if(warnings)
                                         throw_parse_error(line_i, "Couldn't find end time");
                                     break;
                                 }
-                                if(!parse_time(token, ssb_line.end_ms)){
+                                if(!parse_time(token, ssb_event.end_ms)){
                                     if(warnings)
                                         throw_parse_error(line_i, "Couldn't parse end time");
                                     break;
                                 }
                                 // Get style content for later text insertion
-                                if(!std::getline(line_stream, token, '|')){
+                                if(!std::getline(event_stream, token, '|')){
                                     if(warnings)
                                         throw_parse_error(line_i, "Couldn't find style");
                                     break;
@@ -266,13 +266,13 @@ void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
                                     break;
                                 }
                                 // Skip note
-                                if(!std::getline(line_stream, token, '|')){
+                                if(!std::getline(event_stream, token, '|')){
                                     if(warnings)
                                         throw_parse_error(line_i, "Couldn't find note");
                                     break;
                                 }
                                 // Get text
-                                if(!std::getline(line_stream, token))
+                                if(!std::getline(event_stream, token))
                                     token = "";
                                 std::string text = style_content + token;
                                 // Parse text
@@ -305,7 +305,7 @@ void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
                                                     else if(warnings)
                                                         throw_parse_error(line_i, "Wrong geometry tag value");
                                                 }else if(token.compare(0, 12, "font-family=") == 0)
-                                                    ssb_line.objects.push_back(std::shared_ptr<SSBObject>(new SSBFontFamily(token.substr(12))));
+                                                    ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBFontFamily(token.substr(12))));
                                                 else if(token.compare(0, 11, "font-style=") == 0){
                                                     bool bold = false, italic = false, underline = false, strikeout = false;
                                                     for(char c : token.substr(11))
@@ -319,11 +319,11 @@ void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
                                                             strikeout = true;
                                                         else if(warnings)
                                                             throw_parse_error(line_i, "Invalid font style");
-                                                    ssb_line.objects.push_back(std::shared_ptr<SSBObject>(new SSBFontStyle(bold, italic, underline, strikeout)));
+                                                    ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBFontStyle(bold, italic, underline, strikeout)));
                                                 }else if(token.compare(0, 10, "font-size=") == 0){
                                                     unsigned int size;
                                                     if(string_to_number(token.substr(10), size))
-                                                        ssb_line.objects.push_back(std::shared_ptr<SSBObject>(new SSBFontSize(size)));
+                                                        ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBFontSize(size)));
                                                     else if(warnings)
                                                         throw_parse_error(line_i, "Invalid font size");
                                                 }else if(warnings)
@@ -353,7 +353,7 @@ void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
                                                                 throw_parse_error(line_i, "Points must have 2 numbers");
                                                         // Check for successfull streaming end
                                                         if((points_stream >> std::ws).eof())
-                                                            ssb_line.objects.push_back(std::shared_ptr<SSBObject>(new SSBPoints(ssb_points)));
+                                                            ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBPoints(ssb_points)));
                                                         else if(warnings)
                                                             throw_parse_error(line_i, "Points are invalid");
                                                     }
@@ -424,8 +424,8 @@ void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
                                                                         break;
                                                                 }
                                                             }
-                                                        // Segments collection successfull without exception -> insert SSBPath as SSBObject to SSBLine
-                                                        ssb_line.objects.push_back(std::shared_ptr<SSBObject>(new SSBPath(ssb_path)));
+                                                        // Segments collection successfull without exception -> insert SSBPath as SSBObject to SSBEvent
+                                                        ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBPath(ssb_path)));
                                                     }
                                                     break;
                                                 case SSBGeometry::Type::TEXT:
@@ -436,8 +436,8 @@ void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
                                                             geometry.replace(pos, 2, 1, '\n');
                                                             pos++;
                                                         }
-                                                        // Insert SSBText as SSBObject to SSBLine
-                                                        ssb_line.objects.push_back(std::shared_ptr<SSBObject>(new SSBText(geometry)));
+                                                        // Insert SSBText as SSBObject to SSBEvent
+                                                        ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBText(geometry)));
                                                     }
                                                     break;
                                             }
@@ -446,7 +446,7 @@ void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
                                     in_tags = !in_tags;
                                 }while(pos_end < text.length());
                                 // Parsing successfull without exception -> commit output
-                                this->ssb.lines.push_back(ssb_line);
+                                this->ssb.events.push_back(ssb_event);
                             }
                             break;
                         case SSBSection::NONE:

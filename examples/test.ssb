@@ -11,6 +11,6 @@ Height: 720
 #STYLES
 List: {font-family=Arial;font-size=80;font-style=bi}- 
 
-#LINES
+#EVENTS
 //I'm a comment!
 1.0-1:20.0|List|Just a simple list entry|Hello world\nひらがな{geometry=points}20 20 50.5 35{geometry=path}m 0 50 l 200 50 b 200 100 0 100 0 50 c m 300.5 50 a 270 50 150 c

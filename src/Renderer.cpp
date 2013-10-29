@@ -84,17 +84,17 @@ void Renderer::render(unsigned char* image, int pitch, unsigned long long start_
 #pragma message "Implent SSB rendering"
     // Test rendering
     if(this->format == Colorspace::BGRA || this->format == Colorspace::BGRX)
-        // Iterate through SSB lines
-        for(SSBLine& line : this->ssb.lines)
-            // Process active SSB line
-            if(start_ms >= line.start_ms && start_ms < line.end_ms){
+        // Iterate through SSB events
+        for(SSBEvent& event : this->ssb.events)
+            // Process active SSB event
+            if(start_ms >= event.start_ms && start_ms < event.end_ms){
                 // Create reference image + context
                 cairo_surface_t* surface = cairo_image_surface_create_for_data(image, this->format == Colorspace::BGRA ? CAIRO_FORMAT_ARGB32 : CAIRO_FORMAT_RGB24, this->width, this->height, pitch);
                 cairo_t* ctx = cairo_create(surface);
                 cairo_scale(ctx, 1, -1);
                 cairo_translate(ctx, 0, -this->height);
                 // Draw geometries
-                for(std::shared_ptr<SSBObject>& obj : line.objects)
+                for(std::shared_ptr<SSBObject>& obj : event.objects)
                     if(obj->type == SSBObject::Type::GEOMETRY){
                         geometry_to_path(ctx, dynamic_cast<SSBGeometry*>(obj.get()));
                         cairo_set_source_rgb(ctx, 1, 1, 0);

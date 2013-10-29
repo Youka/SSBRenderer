@@ -95,8 +95,8 @@ struct SSBFrame{
     int width = -1, height = -1;
 };
 
-// Line with rendering data
-struct SSBLine{
+// Event with rendering data
+struct SSBEvent{
     unsigned long long start_ms = 0, end_ms = 0;
     bool static_tags = false;
     std::vector<std::shared_ptr<SSBObject>> objects;
@@ -107,5 +107,5 @@ struct SSBData{
     SSBMeta meta;
     SSBFrame frame;
     std::map<std::string, std::string>/*Name, Content*/ styles;
-    std::vector<SSBLine> lines;
+    std::vector<SSBEvent> events;
 };
