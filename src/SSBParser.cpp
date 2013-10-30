@@ -356,6 +356,33 @@ void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
                                                         ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBLineWidth(width)));
                                                     else if(warnings)
                                                         throw_parse_error(line_i, "Invalid line width");
+                                                }else if(token.compare(0, 11, "line-style=") == 0){
+                                                    std::string tag_value = token.substr(11);
+                                                    std::string::size_type pos;
+                                                    if((pos = tag_value.find(',')) != std::string::npos){
+                                                        std::string join_string = tag_value.substr(0, pos), cap_string = tag_value.substr(pos+1);
+                                                        SSBLineStyle::Join join = SSBLineStyle::Join::ROUND;
+                                                        if(join_string == "miter")
+                                                            join = SSBLineStyle::Join::MITER;
+                                                        else if(join_string == "round")
+                                                            join = SSBLineStyle::Join::ROUND;
+                                                        else if(join_string == "bevel")
+                                                            join = SSBLineStyle::Join::BEVEL;
+                                                        else
+                                                            throw_parse_error(line_i, "Invalid line style join");
+                                                        SSBLineStyle::Cap cap = SSBLineStyle::Cap::ROUND;
+                                                        if(cap_string == "flat")
+                                                            cap = SSBLineStyle::Cap::FLAT;
+                                                        else if(cap_string == "round")
+                                                            cap = SSBLineStyle::Cap::ROUND;
+                                                        else if(cap_string == "square")
+                                                            cap = SSBLineStyle::Cap::SQUARE;
+                                                        else
+                                                            throw_parse_error(line_i, "Invalid line style cap");
+                                                        ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBLineStyle(join, cap)));
+                                                    }else if(warnings)
+                                                        throw_parse_error(line_i, "Invalid line style");
+                                                }else if(token.compare(0, 10, "line-dash=") == 0){
 #pragma message "Parse SSB tags"
                                                 }else if(warnings)
                                                     throw_parse_error(line_i, "Invalid tag");
@@ -372,27 +399,27 @@ void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
                                             switch(geometry_type){
                                                 case SSBGeometry::Type::POINTS:
                                                     {
-                                                        // SSBPoints buffer
-                                                        SSBPoints ssb_points;
+                                                        // Points buffer
+                                                        std::vector<Point> points;
                                                         // Iterate through numbers
                                                         std::istringstream points_stream(geometry);
                                                         Point point;
                                                         while(points_stream >> point.x)
                                                             if(points_stream >> point.y)
-                                                                ssb_points.points.push_back(point);
+                                                                points.push_back(point);
                                                             else if(warnings)
                                                                 throw_parse_error(line_i, "Points must have 2 numbers");
                                                         // Check for successfull streaming end
                                                         if((points_stream >> std::ws).eof())
-                                                            ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBPoints(ssb_points)));
+                                                            ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBPoints(points)));
                                                         else if(warnings)
                                                             throw_parse_error(line_i, "Points are invalid");
                                                     }
                                                     break;
                                                 case SSBGeometry::Type::PATH:
                                                     {
-                                                        // SSBPath buffer
-                                                        SSBPath ssb_path;
+                                                        // Path buffer
+                                                        std::vector<SSBPath::Segment> path;
                                                         // Iterate through words
                                                         std::istringstream path_stream(geometry);
                                                         SSBPath::Segment segments[3];
@@ -410,7 +437,7 @@ void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
                                                                 segments[0].type = SSBPath::SegmentType::CLOSE;
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
-                                                                ssb_path.segments.push_back({SSBPath::SegmentType::CLOSE});
+                                                                path.push_back({SSBPath::SegmentType::CLOSE});
 #pragma GCC diagnostic pop
                                                             }
                                                             // Get complete segment
@@ -423,7 +450,7 @@ void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
                                                                     case SSBPath::SegmentType::LINE_TO:
                                                                         if(path_stream >> segments[0].value.point.x &&
                                                                            path_stream >> segments[0].value.point.y)
-                                                                            ssb_path.segments.push_back(segments[0]);
+                                                                            path.push_back(segments[0]);
                                                                         else if(warnings)
                                                                             throw_parse_error(line_i, segments[0].type == SSBPath::SegmentType::MOVE_TO ? "Path (move) is invalid" : "Path (line) is invalid");
                                                                         break;
@@ -434,9 +461,9 @@ void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
                                                                             path_stream >> segments[1].value.point.y &&
                                                                             path_stream >> segments[2].value.point.x &&
                                                                             path_stream >> segments[2].value.point.y){
-                                                                            ssb_path.segments.push_back(segments[0]);
-                                                                            ssb_path.segments.push_back(segments[1]);
-                                                                            ssb_path.segments.push_back(segments[2]);
+                                                                            path.push_back(segments[0]);
+                                                                            path.push_back(segments[1]);
+                                                                            path.push_back(segments[2]);
                                                                         }else if(warnings)
                                                                             throw_parse_error(line_i, "Path (curve) is invalid");
                                                                         break;
@@ -444,8 +471,8 @@ void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
                                                                         if(path_stream >> segments[0].value.point.x &&
                                                                            path_stream >> segments[0].value.point.y &&
                                                                            path_stream >> segments[1].value.angle){
-                                                                            ssb_path.segments.push_back(segments[0]);
-                                                                            ssb_path.segments.push_back(segments[1]);
+                                                                            path.push_back(segments[0]);
+                                                                            path.push_back(segments[1]);
                                                                         }else if(warnings)
                                                                             throw_parse_error(line_i, "Path (arc) is invalid");
                                                                         break;
@@ -456,7 +483,7 @@ void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
                                                                 }
                                                             }
                                                         // Segments collection successfull without exception -> insert SSBPath as SSBObject to SSBEvent
-                                                        ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBPath(ssb_path)));
+                                                        ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBPath(path)));
                                                     }
                                                     break;
                                                 case SSBGeometry::Type::TEXT:

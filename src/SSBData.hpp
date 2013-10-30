@@ -20,7 +20,7 @@ class SSBObject{
 // Any state for rendering
 class SSBTag : public SSBObject{
     public:
-        enum class Type : char{FONT_FAMILY, FONT_STYLE, FONT_SIZE, FONT_SPACE, LINE_WIDTH} type;
+        enum class Type : char{FONT_FAMILY, FONT_STYLE, FONT_SIZE, FONT_SPACE, LINE_WIDTH, LINE_STYLE, LINE_DASH} type;
         virtual ~SSBTag() = default;
     protected:
         SSBTag(Type type) : SSBObject(SSBObject::Type::TAG), type(type){}
@@ -78,6 +78,22 @@ class SSBLineWidth : public SSBTag{
         SSBLineWidth(SSBCoord width) : SSBTag(SSBTag::Type::LINE_WIDTH), width(width){}
 };
 
+// Line style state
+class SSBLineStyle : public SSBTag{
+    public:
+        enum class Join{MITER, ROUND, BEVEL} join;
+        enum class Cap{FLAT, ROUND, SQUARE} cap;
+        SSBLineStyle(Join join, Cap cap) : SSBTag(SSBTag::Type::LINE_STYLE), join(join), cap(cap){}
+};
+
+// Line dash pattern state
+class SSBLineDash : public SSBTag{
+    public:
+        SSBCoord offset;
+        std::vector<SSBCoord> dashes;
+        SSBLineDash(SSBCoord offset, std::vector<SSBCoord> dashes) : SSBTag(SSBTag::Type::LINE_DASH), offset(offset), dashes(dashes){}
+};
+
 // Point structure for geometries
 struct Point{SSBCoord x,y;};
 
@@ -85,7 +101,7 @@ struct Point{SSBCoord x,y;};
 class SSBPoints : public SSBGeometry{
     public:
         std::vector<Point> points;
-        SSBPoints() : SSBGeometry(SSBGeometry::Type::POINTS){}
+        SSBPoints(std::vector<Point> points) : SSBGeometry(SSBGeometry::Type::POINTS), points(points){}
 };
 
 // Path geometry
@@ -100,7 +116,7 @@ class SSBPath : public SSBGeometry{
             } value;
         };
         std::vector<Segment> segments;
-        SSBPath() : SSBGeometry(SSBGeometry::Type::PATH){}
+        SSBPath(std::vector<Segment> segments) : SSBGeometry(SSBGeometry::Type::PATH), segments(segments){}
 };
 
 // Text geometry
