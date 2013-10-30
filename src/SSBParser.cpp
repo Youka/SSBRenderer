@@ -236,41 +236,25 @@ void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
                                 std::istringstream event_stream(line);
                                 std::string token;
                                 // Get start time
-                                if(!std::getline(event_stream, token, '-')){
+                                if(!std::getline(event_stream, token, '-') || !parse_time(token, ssb_event.start_ms)){
                                     if(warnings)
                                         throw_parse_error(line_i, "Couldn't find start time");
                                     break;
                                 }
-                                if(!parse_time(token, ssb_event.start_ms)){
-                                    if(warnings)
-                                        throw_parse_error(line_i, "Couldn't parse start time");
-                                    break;
-                                }
                                 // Get end time
-                                if(!std::getline(event_stream, token, '|')){
+                                if(!std::getline(event_stream, token, '|') || !parse_time(token, ssb_event.end_ms)){
                                     if(warnings)
                                         throw_parse_error(line_i, "Couldn't find end time");
                                     break;
                                 }
-                                if(!parse_time(token, ssb_event.end_ms)){
-                                    if(warnings)
-                                        throw_parse_error(line_i, "Couldn't parse end time");
-                                    break;
-                                }
                                 // Get style content for later text insertion
-                                if(!std::getline(event_stream, token, '|')){
+                                std::string style_content;
+                                if(!std::getline(event_stream, token, '|') || !this->ssb.styles.count(token)){
                                     if(warnings)
                                         throw_parse_error(line_i, "Couldn't find style");
                                     break;
-                                }
-                                std::string style_content;
-                                if(this->ssb.styles.count(token))
+                                }else
                                     style_content = this->ssb.styles[token];
-                                else{
-                                    if(warnings)
-                                        throw_parse_error(line_i, "Style identifier not found");
-                                    break;
-                                }
                                 // Skip note
                                 if(!std::getline(event_stream, token, '|')){
                                     if(warnings)
@@ -300,17 +284,7 @@ void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
                                         if(!tags.empty()){
                                             std::istringstream tags_stream(tags);
                                             while(std::getline(tags_stream, token, ';'))
-                                                if(token.compare(0, 9, "geometry=") == 0){
-                                                    std::string tag_value = token.substr(9);
-                                                    if(tag_value == "points")
-                                                        geometry_type = SSBGeometry::Type::POINTS;
-                                                    else if(tag_value == "path")
-                                                        geometry_type = SSBGeometry::Type::PATH;
-                                                    else if(tag_value == "text")
-                                                        geometry_type = SSBGeometry::Type::TEXT;
-                                                    else if(warnings)
-                                                        throw_parse_error(line_i, "Wrong geometry tag value");
-                                                }else if(token.compare(0, 12, "font-family=") == 0)
+                                                if(token.compare(0, 12, "font-family=") == 0)
                                                     ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBFontFamily(token.substr(12))));
                                                 else if(token.compare(0, 11, "font-style=") == 0){
                                                     bool bold = false, italic = false, underline = false, strikeout = false;
@@ -368,7 +342,7 @@ void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
                                                             join = SSBLineStyle::Join::ROUND;
                                                         else if(join_string == "bevel")
                                                             join = SSBLineStyle::Join::BEVEL;
-                                                        else
+                                                        else if(warnings)
                                                             throw_parse_error(line_i, "Invalid line style join");
                                                         SSBLineStyle::Cap cap = SSBLineStyle::Cap::ROUND;
                                                         if(cap_string == "flat")
@@ -377,12 +351,85 @@ void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
                                                             cap = SSBLineStyle::Cap::ROUND;
                                                         else if(cap_string == "square")
                                                             cap = SSBLineStyle::Cap::SQUARE;
-                                                        else
+                                                        else if(warnings)
                                                             throw_parse_error(line_i, "Invalid line style cap");
                                                         ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBLineStyle(join, cap)));
                                                     }else if(warnings)
                                                         throw_parse_error(line_i, "Invalid line style");
                                                 }else if(token.compare(0, 10, "line-dash=") == 0){
+                                                    SSBCoord offset;
+                                                    std::istringstream dash_stream(token.substr(10));
+                                                    std::string dash_token;
+                                                    if(std::getline(dash_stream, dash_token, ',') && string_to_number(dash_token, offset)){
+                                                        std::vector<SSBCoord> dashes;
+                                                        SSBCoord dash;
+                                                        while(std::getline(dash_stream, dash_token, ','))
+                                                            if(string_to_number(dash_token, dash))
+                                                                dashes.push_back(dash);
+                                                            else if(warnings)
+                                                                throw_parse_error(line_i, "Invalid line dash");
+                                                        ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBLineDash(offset, dashes)));
+                                                    }else if(warnings)
+                                                        throw_parse_error(line_i, "Invalid line dashes");
+                                                }else if(token.compare(0, 9, "geometry=") == 0){
+                                                    std::string tag_value = token.substr(9);
+                                                    if(tag_value == "points")
+                                                        geometry_type = SSBGeometry::Type::POINTS;
+                                                    else if(tag_value == "path")
+                                                        geometry_type = SSBGeometry::Type::PATH;
+                                                    else if(tag_value == "text")
+                                                        geometry_type = SSBGeometry::Type::TEXT;
+                                                    else if(warnings)
+                                                        throw_parse_error(line_i, "Invalid geometry");
+                                                }else if(token.compare(0, 5, "mode=") == 0){
+                                                    std::string tag_value = token.substr(5);
+                                                    if(tag_value == "fill")
+                                                        ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBMode(SSBMode::Mode::FILL)));
+                                                    else if(tag_value == "wire")
+                                                        ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBMode(SSBMode::Mode::WIRE)));
+                                                    else if(warnings)
+                                                        throw_parse_error(line_i, "Invalid mode");
+                                                }else if(token.compare(0, 7, "deform=") == 0){
+                                                    ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBDeform(token.substr(7))));
+                                                }else if(token.compare(0, 9, "position=") == 0){
+                                                    SSBCoord x, y;
+                                                    if(string_to_number_pair(token.substr(9), x, y))
+                                                        ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBPosition(x, y)));
+                                                    else if(warnings)
+                                                        throw_parse_error(line_i, "Invalid position");
+                                                }else if(token.compare(0, 6, "align=") == 0){
+                                                    std::string tag_value = token.substr(6);
+                                                    if(tag_value.length() == 1 && tag_value[0] >= '1' && tag_value[0] <= '9')
+                                                        ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBAlign(static_cast<SSBAlign::Align>(tag_value[0] - '0'))));
+                                                    else if(warnings)
+                                                        throw_parse_error(line_i, "Invalid alignment");
+                                                }else if(token.compare(0, 7, "margin=")){
+                                                    std::string tag_value = token.substr(7);
+                                                    SSBCoord x, y;
+                                                    if(string_to_number(tag_value, x))
+                                                        ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBMargin(SSBMargin::Type::BOTH, x)));
+                                                    else if(string_to_number_pair(tag_value, x, y))
+                                                        ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBMargin(x, y)));
+                                                    else if(warnings)
+                                                        throw_parse_error(line_i, "Invalid margin");
+                                                }else if(token.compare(0, 9, "margin-h=")){
+                                                    SSBCoord x;
+                                                    if(string_to_number(token.substr(9), x))
+                                                        ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBMargin(SSBMargin::Type::HORIZONTAL, x)));
+                                                    else if(warnings)
+                                                        throw_parse_error(line_i, "Invalid horizontal margin");
+                                                }else if(token.compare(0, 9, "margin-v=")){
+                                                    SSBCoord y;
+                                                    if(string_to_number(token.substr(9), y))
+                                                        ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBMargin(SSBMargin::Type::VERTICAL, y)));
+                                                    else if(warnings)
+                                                        throw_parse_error(line_i, "Invalid vertical margin");
+                                                }else if(token.compare(0, 10, "direction=")){
+                                                    double angle;
+                                                    if(string_to_number(token.substr(10), angle))
+                                                        ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBDirection(angle)));
+                                                    else if(warnings)
+                                                        throw_parse_error(line_i, "Invalid direction");
 #pragma message "Parse SSB tags"
                                                 }else if(warnings)
                                                     throw_parse_error(line_i, "Invalid tag");

@@ -20,7 +20,21 @@ class SSBObject{
 // Any state for rendering
 class SSBTag : public SSBObject{
     public:
-        enum class Type : char{FONT_FAMILY, FONT_STYLE, FONT_SIZE, FONT_SPACE, LINE_WIDTH, LINE_STYLE, LINE_DASH} type;
+        enum class Type : char{
+            FONT_FAMILY,
+            FONT_STYLE,
+            FONT_SIZE,
+            FONT_SPACE,
+            LINE_WIDTH,
+            LINE_STYLE,
+            LINE_DASH,
+            MODE,
+            DEFORM,
+            POSITION,
+            ALIGN,
+            MARGIN,
+            DIRECTION
+        } type;
         virtual ~SSBTag() = default;
     protected:
         SSBTag(Type type) : SSBObject(SSBObject::Type::TAG), type(type){}
@@ -29,7 +43,11 @@ class SSBTag : public SSBObject{
 // Any geometry for rendering
 class SSBGeometry : public SSBObject{
     public:
-        enum class Type : char{POINTS, PATH, TEXT} type;
+        enum class Type : char{
+            POINTS,
+            PATH,
+            TEXT
+        } type;
         virtual ~SSBGeometry() = default;
     protected:
         SSBGeometry(Type type) : SSBObject(SSBObject::Type::GEOMETRY), type(type){}
@@ -92,6 +110,66 @@ class SSBLineDash : public SSBTag{
         SSBCoord offset;
         std::vector<SSBCoord> dashes;
         SSBLineDash(SSBCoord offset, std::vector<SSBCoord> dashes) : SSBTag(SSBTag::Type::LINE_DASH), offset(offset), dashes(dashes){}
+};
+
+// Painting mode state
+class SSBMode : public SSBTag{
+    public:
+        enum class Mode{FILL, WIRE} mode;
+        SSBMode(Mode mode) : SSBTag(SSBTag::Type::MODE), mode(mode){}
+};
+
+// Deforming state
+class SSBDeform : public SSBTag{
+    public:
+        std::string formula;
+        SSBDeform(std::string formula) : SSBTag(SSBTag::Type::DEFORM), formula(formula){}
+};
+
+// Position state
+class SSBPosition : public SSBTag{
+    public:
+        SSBCoord x, y;
+        SSBPosition(SSBCoord x, SSBCoord y) : SSBTag(SSBTag::Type::POSITION), x(x), y(y){}
+};
+
+// Alignment state
+class SSBAlign : public SSBTag{
+    public:
+        enum Align : char{
+            LEFT_BOTTOM = 1,
+            CENTER_BOTTOM, // = 2
+            RIGHT_BOTTOM, // = 3
+            LEFT_MIDDLE, // = 4
+            CENTER_MIDDLE, // = 5
+            RIGHT_MIDDLE, // = 6
+            LEFT_TOP, // = 7
+            CENTER_TOP, // = 8
+            RIGHT_TOP // = 9
+        } align;
+        SSBAlign(Align align) : SSBTag(SSBTag::Type::ALIGN), align(align){}
+};
+
+// Margin state
+class SSBMargin : public SSBTag{
+    public:
+        enum class Type : char{HORIZONTAL, VERTICAL, BOTH} type;
+        SSBCoord x, y;
+        SSBMargin(SSBCoord x, SSBCoord y) : SSBTag(SSBTag::Type::MARGIN), type(Type::BOTH), x(x), y(y){}
+        SSBMargin(Type type, SSBCoord xy) : SSBTag(SSBTag::Type::MARGIN), type(type){
+            switch(type){
+                case Type::HORIZONTAL: this->x = xy; break;
+                case Type::VERTICAL: this->y = xy; break;
+                case Type::BOTH: this->x = this->y = xy; break;
+            }
+        }
+};
+
+// Direction state
+class SSBDirection : public SSBTag{
+    public:
+        double angle;
+        SSBDirection(double angle) : SSBTag(SSBTag::Type::DIRECTION), angle(angle){}
 };
 
 // Point structure for geometries
