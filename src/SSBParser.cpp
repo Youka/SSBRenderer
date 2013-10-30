@@ -33,6 +33,12 @@ namespace{
             return false;
         return true;
     }
+    // Converts string to number pair
+    template<class T>
+    inline bool string_to_number_pair(std::string src, T& dst1, T& dst2){
+        std::string::size_type pos;
+        return (pos = src.find(',')) != std::string::npos && string_to_number(src.substr(0, pos), dst1) && string_to_number(src.substr(pos+1), dst2);
+    }
     // Parses SSB time and converts to milliseconds
     inline bool parse_time(std::string& s, unsigned long long& t){
         // Test for empty timestamp
@@ -280,7 +286,7 @@ void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
                                 bool in_tags = false;
                                 SSBGeometry::Type geometry_type = SSBGeometry::Type::TEXT;
                                 do{
-                                    // Evaluate either tags or geometry
+                                    // Evaluate tags
                                     if(in_tags){
                                         // Search tags end at closing bracket or cause error
                                         pos_end = text.find('}', pos_start);
@@ -326,10 +332,35 @@ void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
                                                         ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBFontSize(size)));
                                                     else if(warnings)
                                                         throw_parse_error(line_i, "Invalid font size");
+                                                }else if(token.compare(0, 11, "font-space=") == 0){
+                                                    SSBCoord x, y;
+                                                    if(string_to_number_pair(token.substr(11), x, y))
+                                                        ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBFontSpace(x, y)));
+                                                    else if(warnings)
+                                                        throw_parse_error(line_i, "Invalid font spaces");
+                                                }else if(token.compare(0, 13, "font-space-h=") == 0){
+                                                    SSBCoord x;
+                                                    if(string_to_number(token.substr(13), x))
+                                                        ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBFontSpace(SSBFontSpace::Type::HORIZONTAL, x)));
+                                                    else if(warnings)
+                                                        throw_parse_error(line_i, "Invalid horizontal font space");
+                                                }else if(token.compare(0, 13, "font-space-v=") == 0){
+                                                    SSBCoord y;
+                                                    if(string_to_number(token.substr(13), y))
+                                                        ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBFontSpace(SSBFontSpace::Type::VERTICAL, y)));
+                                                    else if(warnings)
+                                                        throw_parse_error(line_i, "Invalid vertical font space");
+                                                }else if(token.compare(0, 11, "line-width=") == 0){
+                                                    SSBCoord width;
+                                                    if(string_to_number(token.substr(11), width))
+                                                        ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBLineWidth(width)));
+                                                    else if(warnings)
+                                                        throw_parse_error(line_i, "Invalid line width");
+#pragma message "Parse SSB tags"
                                                 }else if(warnings)
                                                     throw_parse_error(line_i, "Invalid tag");
-#pragma message "Parse SSB tags"
                                         }
+                                    // Evaluate geometry
                                     }else{
                                         // Search geometry end at tags bracket or text end
                                         pos_end = text.find('{', pos_start);

@@ -5,10 +5,13 @@
 #include <vector>
 #include <memory>
 
+// Coordinate precision
+typedef float SSBCoord;
+
 // Any state or geometry for rendering
 class SSBObject{
     public:
-        enum class Type : char{TAG, GEOMETRY}type;
+        enum class Type : char{TAG, GEOMETRY} type;
         virtual ~SSBObject(){}
     protected:
         SSBObject(Type type) : type(type){}
@@ -17,7 +20,7 @@ class SSBObject{
 // Any state for rendering
 class SSBTag : public SSBObject{
     public:
-        enum class Type : char{FONT_FAMILY, FONT_STYLE, FONT_SIZE}type;
+        enum class Type : char{FONT_FAMILY, FONT_STYLE, FONT_SIZE, FONT_SPACE, LINE_WIDTH} type;
         virtual ~SSBTag() = default;
     protected:
         SSBTag(Type type) : SSBObject(SSBObject::Type::TAG), type(type){}
@@ -26,7 +29,7 @@ class SSBTag : public SSBObject{
 // Any geometry for rendering
 class SSBGeometry : public SSBObject{
     public:
-        enum class Type : char{POINTS, PATH, TEXT}type;
+        enum class Type : char{POINTS, PATH, TEXT} type;
         virtual ~SSBGeometry() = default;
     protected:
         SSBGeometry(Type type) : SSBObject(SSBObject::Type::GEOMETRY), type(type){}
@@ -53,8 +56,30 @@ class SSBFontSize : public SSBTag{
         SSBFontSize(unsigned int size) : SSBTag(SSBTag::Type::FONT_SIZE), size(size){}
 };
 
+// Font space state
+class SSBFontSpace : public SSBTag{
+    public:
+        enum class Type : char{HORIZONTAL, VERTICAL, BOTH} type;
+        SSBCoord x, y;
+        SSBFontSpace(SSBCoord x, SSBCoord y) : SSBTag(SSBTag::Type::FONT_SPACE), type(Type::BOTH), x(x), y(y){}
+        SSBFontSpace(Type type, SSBCoord xy) : SSBTag(SSBTag::Type::FONT_SPACE), type(type){
+            switch(type){
+                case Type::HORIZONTAL: this->x = xy; break;
+                case Type::VERTICAL: this->y = xy; break;
+                case Type::BOTH: this->x = this->y = xy; break;
+            }
+        }
+};
+
+// Line width state
+class SSBLineWidth : public SSBTag{
+    public:
+        SSBCoord width;
+        SSBLineWidth(SSBCoord width) : SSBTag(SSBTag::Type::LINE_WIDTH), width(width){}
+};
+
 // Point structure for geometries
-struct Point{float x,y;};
+struct Point{SSBCoord x,y;};
 
 // Points geometry
 class SSBPoints : public SSBGeometry{
