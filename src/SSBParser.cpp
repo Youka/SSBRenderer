@@ -398,8 +398,11 @@ void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
                                                     }else if(warnings)
                                                         throw_parse_error(line_i, "Invalid deform");
                                                 }else if(token.compare(0, 9, "position=") == 0){
+                                                    std::string tag_value = token.substr(9);
                                                     SSBCoord x, y;
-                                                    if(string_to_number_pair(token.substr(9), x, y))
+                                                    if(tag_value.empty())
+                                                        ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBPosition(std::numeric_limits<decltype(x)>::max(), std::numeric_limits<decltype(y)>::max())));
+                                                    else if(string_to_number_pair(token.substr(9), x, y))
                                                         ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBPosition(x, y)));
                                                     else if(warnings)
                                                         throw_parse_error(line_i, "Invalid position");
@@ -456,6 +459,78 @@ void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
                                                         ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBTranslate(SSBTranslate::Type::VERTICAL, y)));
                                                     else if(warnings)
                                                         throw_parse_error(line_i, "Invalid vertical translation");
+                                                }else if(token.compare(0, 6, "scale=") == 0){
+                                                    std::string tag_value = token.substr(6);
+                                                    double x, y;
+                                                    if(string_to_number(tag_value, x))
+                                                        ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBScale(SSBScale::Type::BOTH, x)));
+                                                    else if(string_to_number_pair(tag_value, x, y))
+                                                        ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBScale(x, y)));
+                                                    else if(warnings)
+                                                        throw_parse_error(line_i, "Invalid scale");
+                                                }else if(token.compare(0, 8, "scale-x=") == 0){
+                                                    double x;
+                                                    if(string_to_number(token.substr(8), x))
+                                                        ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBScale(SSBScale::Type::HORIZONTAL, x)));
+                                                    else if(warnings)
+                                                        throw_parse_error(line_i, "Invalid horizontal scale");
+                                                }else if(token.compare(0, 8, "scale-y=") == 0){
+                                                    double y;
+                                                    if(string_to_number(token.substr(8), y))
+                                                        ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBScale(SSBScale::Type::VERTICAL, y)));
+                                                    else if(warnings)
+                                                        throw_parse_error(line_i, "Invalid vertical scale");
+                                                }else if(token.compare(0, 9, "rotate-x=") == 0){
+                                                    double angle;
+                                                    if(string_to_number(token.substr(9), angle))
+                                                        ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBRotate(SSBRotate::Axis::X, angle)));
+                                                    else if(warnings)
+                                                        throw_parse_error(line_i, "Invalid rotation on x axis");
+                                                }else if(token.compare(0, 9, "rotate-y=") == 0){
+                                                    double angle;
+                                                    if(string_to_number(token.substr(9), angle))
+                                                        ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBRotate(SSBRotate::Axis::Y, angle)));
+                                                    else if(warnings)
+                                                        throw_parse_error(line_i, "Invalid rotation on y axis");
+                                                }else if(token.compare(0, 9, "rotate-z") == 0){
+                                                    double angle;
+                                                    if(string_to_number(token.substr(9), angle))
+                                                        ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBRotate(SSBRotate::Axis::Z, angle)));
+                                                    else if(warnings)
+                                                        throw_parse_error(line_i, "Invalid rotation on z axis");
+                                                }else if(token.compare(0, 6, "shear=") == 0){
+                                                    double x, y;
+                                                    if(string_to_number_pair(token.substr(6), x, y))
+                                                        ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBShear(x, y)));
+                                                    else if(warnings)
+                                                        throw_parse_error(line_i, "Invalid shear");
+                                                }else if(token.compare(0, 8, "shear-x=") == 0){
+                                                    double x;
+                                                    if(string_to_number(token.substr(8), x))
+                                                        ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBShear(SSBShear::Type::HORIZONTAL, x)));
+                                                    else if(warnings)
+                                                        throw_parse_error(line_i, "Invalid horizontal shear");
+                                                }else if(token.compare(0, 8, "shear-y") == 0){
+                                                    double y;
+                                                    if(string_to_number(token.substr(8), y))
+                                                        ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBShear(SSBShear::Type::VERTICAL, y)));
+                                                    else if(warnings)
+                                                        throw_parse_error(line_i, "Invalid vertical shear");
+                                                }else if(token.compare(0, 10, "transform=") == 0){
+                                                    double xx, yx, xy, yy, x0, y0;
+                                                    std::istringstream matrix_stream(token.substr(10));
+                                                    std::string matrix_value;
+                                                    if(std::getline(matrix_stream, matrix_value, ',') && string_to_number(matrix_value, xx) &&
+                                                        std::getline(matrix_stream, matrix_value, ',') && string_to_number(matrix_value, yx) &&
+                                                        std::getline(matrix_stream, matrix_value, ',') && string_to_number(matrix_value, xy) &&
+                                                        std::getline(matrix_stream, matrix_value, ',') && string_to_number(matrix_value, yy) &&
+                                                        std::getline(matrix_stream, matrix_value, ',') && string_to_number(matrix_value, x0) &&
+                                                        std::getline(matrix_stream, matrix_value, ',') && string_to_number(matrix_value, y0) &&
+                                                        matrix_stream.eof()
+                                                       )
+                                                        ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBTransform(xx, yx, xy, yy, x0, y0)));
+                                                    else if(warnings)
+                                                        throw_parse_error(line_i, "Invalid transform");
 #pragma message "Parse SSB tags"
                                                 }else if(warnings)
                                                     throw_parse_error(line_i, "Invalid tag");

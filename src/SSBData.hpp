@@ -37,7 +37,11 @@ class SSBTag : public SSBObject{
             MARGIN,
             DIRECTION,
             IDENTITY,
-            TRANSLATE
+            TRANSLATE,
+            SCALE,
+            ROTATE,
+            SHEAR,
+            TRANSFORM
         } type;
         SSBTag(const SSBTag&) = delete;
         SSBTag& operator =(const SSBTag&) = delete;
@@ -199,6 +203,51 @@ class SSBTranslate : public SSBTag{
                 case Type::BOTH: this->x = this->y = xy; break;
             }
         }
+};
+
+// Scale state
+class SSBScale : public SSBTag{
+    public:
+        enum class Type : char{HORIZONTAL, VERTICAL, BOTH} type;
+        double x, y;
+        SSBScale(SSBCoord x, SSBCoord y) : SSBTag(SSBTag::Type::SCALE), type(Type::BOTH), x(x), y(y){}
+        SSBScale(Type type, SSBCoord xy) : SSBTag(SSBTag::Type::SCALE), type(type){
+            switch(type){
+                case Type::HORIZONTAL: this->x = xy; break;
+                case Type::VERTICAL: this->y = xy; break;
+                case Type::BOTH: this->x = this->y = xy; break;
+            }
+        }
+};
+
+// Rotation state
+class SSBRotate : public SSBTag{
+    public:
+        enum class Axis : char{X, Y, Z} axis;
+        double angle;
+        SSBRotate(Axis axis, double angle) : SSBTag(SSBTag::Type::ROTATE), axis(axis), angle(angle){}
+};
+
+// Shear state
+class SSBShear : public SSBTag{
+    public:
+        enum class Type : char{HORIZONTAL, VERTICAL, BOTH} type;
+        double x, y;
+        SSBShear(SSBCoord x, SSBCoord y) : SSBTag(SSBTag::Type::SHEAR), type(Type::BOTH), x(x), y(y){}
+        SSBShear(Type type, SSBCoord xy) : SSBTag(SSBTag::Type::SHEAR), type(type){
+            switch(type){
+                case Type::HORIZONTAL: this->x = xy; break;
+                case Type::VERTICAL: this->y = xy; break;
+                case Type::BOTH: this->x = this->y = xy; break;
+            }
+        }
+};
+
+// Transform state
+class SSBTransform : public SSBTag{
+    public:
+        double xx, yx, xy, yy, x0, y0;
+        SSBTransform(double xx, double yx, double xy, double yy, double x0, double y0) : SSBTag(SSBTag::Type::TRANSFORM), xx(xx), yx(yx), xy(xy), yy(yy), x0(x0), y0(y0){}
 };
 
 // Point structure for geometries
