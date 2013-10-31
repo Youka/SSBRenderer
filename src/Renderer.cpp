@@ -28,29 +28,29 @@ namespace{
                     for(size_t i = 0; i < segments.size();)
                         switch(segments[i].type){
                             case SSBPath::SegmentType::MOVE_TO:
-                                cairo_move_to(ctx, segments[i].value.point.x, segments[i].value.point.y);
+                                cairo_move_to(ctx, segments[i].point.x, segments[i].point.y);
                                 ++i;
                                 break;
                             case SSBPath::SegmentType::LINE_TO:
-                                cairo_line_to(ctx, segments[i].value.point.x, segments[i].value.point.y);
+                                cairo_line_to(ctx, segments[i].point.x, segments[i].point.y);
                                 ++i;
                                 break;
                             case SSBPath::SegmentType::CURVE_TO:
                                 cairo_curve_to(ctx,
-                                                segments[i].value.point.x, segments[i].value.point.y,
-                                                segments[i+1].value.point.x, segments[i+1].value.point.y,
-                                                segments[i+2].value.point.x, segments[i+2].value.point.y);
+                                                segments[i].point.x, segments[i].point.y,
+                                                segments[i+1].point.x, segments[i+1].point.y,
+                                                segments[i+2].point.x, segments[i+2].point.y);
                                 i += 3;
                                 break;
                             case SSBPath::SegmentType::ARC_TO:
                                 if(cairo_has_current_point(ctx)){
                                     double lx, ly; cairo_get_current_point(ctx, &lx, &ly);
-                                    double xc = segments[i].value.point.x;
-                                    double yc = segments[i].value.point.y;
+                                    double xc = segments[i].point.x;
+                                    double yc = segments[i].point.y;
                                     double r = hypot(ly - yc, lx - xc);
                                     double angle1 = atan2(ly - yc, lx - xc);
-                                    double angle2 = angle1 + segments[i+1].value.angle * M_PI / 180;
-                                    if(segments[i+1].value.angle > 0)
+                                    double angle2 = angle1 + segments[i+1].angle * M_PI / 180;
+                                    if(segments[i+1].angle > 0)
                                         cairo_arc(ctx,
                                                     xc, yc,
                                                     r,

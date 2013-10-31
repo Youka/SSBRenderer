@@ -6,12 +6,14 @@
 #include <memory>
 
 // Coordinate precision
-typedef float SSBCoord;
+using SSBCoord = float;
 
 // Any state or geometry for rendering
 class SSBObject{
     public:
         enum class Type : char{TAG, GEOMETRY} type;
+        SSBObject(const SSBObject&) = delete;
+        SSBObject& operator =(const SSBObject&) = delete;
         virtual ~SSBObject(){}
     protected:
         SSBObject(Type type) : type(type){}
@@ -35,6 +37,8 @@ class SSBTag : public SSBObject{
             MARGIN,
             DIRECTION
         } type;
+        SSBTag(const SSBTag&) = delete;
+        SSBTag& operator =(const SSBTag&) = delete;
         virtual ~SSBTag() = default;
     protected:
         SSBTag(Type type) : SSBObject(SSBObject::Type::TAG), type(type){}
@@ -48,6 +52,8 @@ class SSBGeometry : public SSBObject{
             PATH,
             TEXT
         } type;
+        SSBGeometry(const SSBGeometry&) = delete;
+        SSBGeometry& operator =(const SSBGeometry&) = delete;
         virtual ~SSBGeometry() = default;
     protected:
         SSBGeometry(Type type) : SSBObject(SSBObject::Type::GEOMETRY), type(type){}
@@ -191,7 +197,7 @@ class SSBPath : public SSBGeometry{
             union{
                 Point point;
                 double angle;
-            } value;
+            };
         };
         std::vector<Segment> segments;
         SSBPath(std::vector<Segment> segments) : SSBGeometry(SSBGeometry::Type::PATH), segments(segments){}

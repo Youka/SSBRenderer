@@ -495,19 +495,19 @@ void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
                                                                 switch(segments[0].type){
                                                                     case SSBPath::SegmentType::MOVE_TO:
                                                                     case SSBPath::SegmentType::LINE_TO:
-                                                                        if(path_stream >> segments[0].value.point.x &&
-                                                                           path_stream >> segments[0].value.point.y)
+                                                                        if(path_stream >> segments[0].point.x &&
+                                                                           path_stream >> segments[0].point.y)
                                                                             path.push_back(segments[0]);
                                                                         else if(warnings)
                                                                             throw_parse_error(line_i, segments[0].type == SSBPath::SegmentType::MOVE_TO ? "Path (move) is invalid" : "Path (line) is invalid");
                                                                         break;
                                                                     case SSBPath::SegmentType::CURVE_TO:
-                                                                        if(path_stream >> segments[0].value.point.x &&
-                                                                            path_stream >> segments[0].value.point.y &&
-                                                                            path_stream >> segments[1].value.point.x &&
-                                                                            path_stream >> segments[1].value.point.y &&
-                                                                            path_stream >> segments[2].value.point.x &&
-                                                                            path_stream >> segments[2].value.point.y){
+                                                                        if(path_stream >> segments[0].point.x &&
+                                                                            path_stream >> segments[0].point.y &&
+                                                                            path_stream >> segments[1].point.x &&
+                                                                            path_stream >> segments[1].point.y &&
+                                                                            path_stream >> segments[2].point.x &&
+                                                                            path_stream >> segments[2].point.y){
                                                                             path.push_back(segments[0]);
                                                                             path.push_back(segments[1]);
                                                                             path.push_back(segments[2]);
@@ -515,9 +515,9 @@ void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
                                                                             throw_parse_error(line_i, "Path (curve) is invalid");
                                                                         break;
                                                                     case SSBPath::SegmentType::ARC_TO:
-                                                                        if(path_stream >> segments[0].value.point.x &&
-                                                                           path_stream >> segments[0].value.point.y &&
-                                                                           path_stream >> segments[1].value.angle){
+                                                                        if(path_stream >> segments[0].point.x &&
+                                                                           path_stream >> segments[0].point.y &&
+                                                                           path_stream >> segments[1].angle){
                                                                             path.push_back(segments[0]);
                                                                             path.push_back(segments[1]);
                                                                         }else if(warnings)
