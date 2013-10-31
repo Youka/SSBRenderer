@@ -390,7 +390,13 @@ void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
                                                     else if(warnings)
                                                         throw_parse_error(line_i, "Invalid mode");
                                                 }else if(token.compare(0, 7, "deform=") == 0){
-                                                    ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBDeform(token.substr(7))));
+                                                    std::string tag_value = token.substr(7);
+                                                    std::string::size_type pos;
+                                                    if((pos = tag_value.find(',')) != std::string::npos){
+                                                        ssb_event.static_tags = false;
+                                                        ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBDeform(tag_value.substr(0, pos), tag_value.substr(pos+1))));
+                                                    }else if(warnings)
+                                                        throw_parse_error(line_i, "Invalid deform");
                                                 }else if(token.compare(0, 9, "position=") == 0){
                                                     SSBCoord x, y;
                                                     if(string_to_number_pair(token.substr(9), x, y))
@@ -430,6 +436,26 @@ void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
                                                         ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBDirection(angle)));
                                                     else if(warnings)
                                                         throw_parse_error(line_i, "Invalid direction");
+                                                }else if(token == "identity")
+                                                    ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBIdentity()));
+                                                else if(token.compare(0, 10, "translate=") == 0){
+                                                    SSBCoord x, y;
+                                                    if(string_to_number_pair(token.substr(10), x, y))
+                                                        ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBTranslate(x, y)));
+                                                    else if(warnings)
+                                                        throw_parse_error(line_i, "Invalid translation");
+                                                }else if(token.compare(0, 12, "translate-x=") == 0){
+                                                    SSBCoord x;
+                                                    if(string_to_number(token.substr(12), x))
+                                                        ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBTranslate(SSBTranslate::Type::HORIZONTAL, x)));
+                                                    else if(warnings)
+                                                        throw_parse_error(line_i, "Invalid horizontal translation");
+                                                }else if(token.compare(0, 12, "translate-y=") == 0){
+                                                    SSBCoord y;
+                                                    if(string_to_number(token.substr(12), y))
+                                                        ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBTranslate(SSBTranslate::Type::VERTICAL, y)));
+                                                    else if(warnings)
+                                                        throw_parse_error(line_i, "Invalid vertical translation");
 #pragma message "Parse SSB tags"
                                                 }else if(warnings)
                                                     throw_parse_error(line_i, "Invalid tag");

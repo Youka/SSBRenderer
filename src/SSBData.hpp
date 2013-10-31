@@ -35,7 +35,9 @@ class SSBTag : public SSBObject{
             POSITION,
             ALIGN,
             MARGIN,
-            DIRECTION
+            DIRECTION,
+            IDENTITY,
+            TRANSLATE
         } type;
         SSBTag(const SSBTag&) = delete;
         SSBTag& operator =(const SSBTag&) = delete;
@@ -128,8 +130,8 @@ class SSBMode : public SSBTag{
 // Deforming state
 class SSBDeform : public SSBTag{
     public:
-        std::string formula;
-        SSBDeform(std::string formula) : SSBTag(SSBTag::Type::DEFORM), formula(formula){}
+        std::string formula_x, formula_y;
+        SSBDeform(std::string formula_x, std::string formula_y) : SSBTag(SSBTag::Type::DEFORM), formula_x(formula_x), formula_y(formula_y){}
 };
 
 // Position state
@@ -178,6 +180,27 @@ class SSBDirection : public SSBTag{
         SSBDirection(double angle) : SSBTag(SSBTag::Type::DIRECTION), angle(angle){}
 };
 
+// Identity state
+class SSBIdentity : public SSBTag{
+    public:
+        SSBIdentity() : SSBTag(SSBTag::Type::IDENTITY){}
+};
+
+// Translation state
+class SSBTranslate : public SSBTag{
+    public:
+        enum class Type : char{HORIZONTAL, VERTICAL, BOTH} type;
+        SSBCoord x, y;
+        SSBTranslate(SSBCoord x, SSBCoord y) : SSBTag(SSBTag::Type::TRANSLATE), type(Type::BOTH), x(x), y(y){}
+        SSBTranslate(Type type, SSBCoord xy) : SSBTag(SSBTag::Type::TRANSLATE), type(type){
+            switch(type){
+                case Type::HORIZONTAL: this->x = xy; break;
+                case Type::VERTICAL: this->y = xy; break;
+                case Type::BOTH: this->x = this->y = xy; break;
+            }
+        }
+};
+
 // Point structure for geometries
 struct Point{SSBCoord x,y;};
 
@@ -223,7 +246,7 @@ struct SSBFrame{
 // Event with rendering data
 struct SSBEvent{
     unsigned long long start_ms = 0, end_ms = 0;
-    bool static_tags = false;
+    bool static_tags = true;
     std::vector<std::shared_ptr<SSBObject>> objects;
 };
 
