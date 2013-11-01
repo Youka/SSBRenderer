@@ -20,9 +20,7 @@ class FileReader{
         FileReader(std::wstring& filename)
         : file(CreateFileW(filename.c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL)){}
         FileReader(FileReader& reader)
-        : file(reader.file){
-            reader.file = INVALID_HANDLE_VALUE;
-        }
+        : file(reader.file){reader.file = INVALID_HANDLE_VALUE;}
         // Assign operator
         FileReader& operator =(FileReader& reader){
             if(this->file != INVALID_HANDLE_VALUE)

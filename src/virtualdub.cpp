@@ -41,7 +41,7 @@ namespace VDub{
                     // '...' button
                     case VDUB_DIALOG_FILENAME_CHOOSE:
                         {
-                            wchar_t file[256]; file[0] = '\0';
+                            wchar_t file[MAX_PATH]; file[0] = '\0';
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
                             OPENFILENAMEW ofn = {0};

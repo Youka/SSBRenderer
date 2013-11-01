@@ -412,7 +412,7 @@ void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
                                                         ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBAlign(static_cast<SSBAlign::Align>(tag_value[0] - '0'))));
                                                     else if(warnings)
                                                         throw_parse_error(line_i, "Invalid alignment");
-                                                }else if(token.compare(0, 7, "margin=")){
+                                                }else if(token.compare(0, 7, "margin=") == 0){
                                                     std::string tag_value = token.substr(7);
                                                     SSBCoord x, y;
                                                     if(string_to_number(tag_value, x))
@@ -421,19 +421,19 @@ void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
                                                         ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBMargin(x, y)));
                                                     else if(warnings)
                                                         throw_parse_error(line_i, "Invalid margin");
-                                                }else if(token.compare(0, 9, "margin-h=")){
+                                                }else if(token.compare(0, 9, "margin-h=") == 0){
                                                     SSBCoord x;
                                                     if(string_to_number(token.substr(9), x))
                                                         ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBMargin(SSBMargin::Type::HORIZONTAL, x)));
                                                     else if(warnings)
                                                         throw_parse_error(line_i, "Invalid horizontal margin");
-                                                }else if(token.compare(0, 9, "margin-v=")){
+                                                }else if(token.compare(0, 9, "margin-v=") == 0){
                                                     SSBCoord y;
                                                     if(string_to_number(token.substr(9), y))
                                                         ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBMargin(SSBMargin::Type::VERTICAL, y)));
                                                     else if(warnings)
                                                         throw_parse_error(line_i, "Invalid vertical margin");
-                                                }else if(token.compare(0, 10, "direction=")){
+                                                }else if(token.compare(0, 10, "direction=") == 0){
                                                     double angle;
                                                     if(string_to_number(token.substr(10), angle))
                                                         ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBDirection(angle)));
@@ -586,8 +586,11 @@ void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
                                         }
                                     // Evaluate geometry
                                     }else{
-                                        // Search geometry end at tags bracket or text end
-                                        pos_end = text.find('{', pos_start);
+                                        // Search geometry end at tags bracket (unescaped) or text end
+                                        for(decltype(pos_start) search_pos_start = pos_start;
+                                            (pos_end = text.find('{', search_pos_start)) != std::string::npos && pos_end > 0 && text[pos_end-1] == '\\';
+                                            search_pos_start = pos_end + 1)
+                                            ;
                                         if(pos_end == std::string::npos)
                                             pos_end = text.length();
                                         // Parse geometry by type
@@ -686,11 +689,11 @@ void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
                                                 case SSBGeometry::Type::TEXT:
                                                     {
                                                         // Replace in string \n to real line breaks
-                                                        std::string::size_type pos = 0;
-                                                        while((pos = geometry.find("\\n", pos)) != std::string::npos){
+                                                        for(std::string::size_type pos = 0; (pos = geometry.find("\\n", pos)) != std::string::npos; pos++)
                                                             geometry.replace(pos, 2, 1, '\n');
-                                                            pos++;
-                                                        }
+                                                        // Replace in string \{ to single {
+                                                        for(std::string::size_type pos = 0; (pos = geometry.find("\\{", pos)) != std::string::npos; pos++)
+                                                            geometry.replace(pos, 2, 1, '{');
                                                         // Insert SSBText as SSBObject to SSBEvent
                                                         ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBText(geometry)));
                                                     }
