@@ -81,13 +81,13 @@ namespace{
 }
 
 void Renderer::render(unsigned char* image, int pitch, unsigned long long start_ms, unsigned long long) noexcept{
+    // Iterate through SSB events
+    for(SSBEvent& event : this->ssb.events)
+        // Process active SSB event
+        if(start_ms >= event.start_ms && start_ms < event.end_ms)
 #pragma message "Implent SSB rendering"
-    // Test rendering
-    if(this->format == Colorspace::BGRA || this->format == Colorspace::BGRX)
-        // Iterate through SSB events
-        for(SSBEvent& event : this->ssb.events)
-            // Process active SSB event
-            if(start_ms >= event.start_ms && start_ms < event.end_ms){
+        // Test rendering
+            if(this->format == Colorspace::BGRA || this->format == Colorspace::BGRX){
                 // Create reference image + context
                 cairo_surface_t* surface = cairo_image_surface_create_for_data(image, this->format == Colorspace::BGRA ? CAIRO_FORMAT_ARGB32 : CAIRO_FORMAT_RGB24, this->width, this->height, pitch);
                 cairo_t* ctx = cairo_create(surface);

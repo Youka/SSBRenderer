@@ -531,6 +531,55 @@ void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
                                                         ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBTransform(xx, yx, xy, yy, x0, y0)));
                                                     else if(warnings)
                                                         throw_parse_error(line_i, "Invalid transform");
+                                                }else if(token.compare(0, 6, "blend=") == 0){
+                                                    std::string tag_value = token.substr(6);
+                                                    if(tag_value == "over")
+                                                        ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBBlend(SSBBlend::Mode::OVER)));
+                                                    else if(tag_value == "source")
+                                                        ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBBlend(SSBBlend::Mode::SOURCE)));
+                                                    else if(tag_value == "add")
+                                                        ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBBlend(SSBBlend::Mode::ADD)));
+                                                    else if(tag_value == "multiply")
+                                                        ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBBlend(SSBBlend::Mode::MULTIPLY)));
+                                                    else if(tag_value == "invert")
+                                                        ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBBlend(SSBBlend::Mode::INVERT)));
+                                                    else if(warnings)
+                                                        throw_parse_error(line_i, "Invalid blending");
+                                                }else if(token.compare(0, 5, "blur=") == 0){
+                                                    std::string tag_value = token.substr(6);
+                                                    SSBCoord x, y;
+                                                    if(string_to_number(tag_value, x))
+                                                        ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBBlur(SSBBlur::Type::BOTH, x)));
+                                                    else if(string_to_number_pair(tag_value, x, y))
+                                                        ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBBlur(x, y)));
+                                                    else if(warnings)
+                                                        throw_parse_error(line_i, "Invalid blur");
+                                                }else if(token.compare(0, 7, "blur-h=") == 0){
+                                                    SSBCoord x;
+                                                    if(string_to_number(token.substr(7), x))
+                                                        ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBBlur(SSBBlur::Type::HORIZONTAL, x)));
+                                                    else if(warnings)
+                                                        throw_parse_error(line_i, "Invalid horizontal blur");
+                                                }else if(token.compare(0, 7, "blur-v=") == 0){
+                                                    SSBCoord y;
+                                                    if(string_to_number(token.substr(7), y))
+                                                        ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBBlur(SSBBlur::Type::VERTICAL, y)));
+                                                    else if(warnings)
+                                                        throw_parse_error(line_i, "Invalid vertical blur");
+                                                }else if(token.compare(0, 7, "clip=") == 0){
+                                                    std::string tag_value = token.substr(7);
+                                                    if(tag_value == "clear")
+                                                        ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBClip(SSBClip::Mode::CLEAR)));
+                                                    else if(tag_value == "set")
+                                                        ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBClip(SSBClip::Mode::SET)));
+                                                    else if(tag_value == "unset")
+                                                        ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBClip(SSBClip::Mode::UNSET)));
+                                                    else if(tag_value == "in")
+                                                        ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBClip(SSBClip::Mode::INSIDE)));
+                                                    else if(tag_value == "out")
+                                                        ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBClip(SSBClip::Mode::OUTSIDE)));
+                                                    else if(warnings)
+                                                        throw_parse_error(line_i, "Invalid clipping mode");
 #pragma message "Parse SSB tags"
                                                 }else if(warnings)
                                                     throw_parse_error(line_i, "Invalid tag");

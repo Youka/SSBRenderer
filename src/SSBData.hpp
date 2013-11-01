@@ -41,7 +41,10 @@ class SSBTag : public SSBObject{
             SCALE,
             ROTATE,
             SHEAR,
-            TRANSFORM
+            TRANSFORM,
+            BLEND,
+            BLUR,
+            CLIP
         } type;
         SSBTag(const SSBTag&) = delete;
         SSBTag& operator =(const SSBTag&) = delete;
@@ -248,6 +251,35 @@ class SSBTransform : public SSBTag{
     public:
         double xx, yx, xy, yy, x0, y0;
         SSBTransform(double xx, double yx, double xy, double yy, double x0, double y0) : SSBTag(SSBTag::Type::TRANSFORM), xx(xx), yx(yx), xy(xy), yy(yy), x0(x0), y0(y0){}
+};
+
+// Blend state
+class SSBBlend : public SSBTag{
+    public:
+        enum class Mode{OVER, SOURCE, ADD, MULTIPLY, INVERT} mode;
+        SSBBlend(Mode mode) : SSBTag(SSBTag::Type::BLEND), mode(mode){}
+};
+
+// Blur state
+class SSBBlur : public SSBTag{
+    public:
+        enum class Type : char{HORIZONTAL, VERTICAL, BOTH} type;
+        SSBCoord x, y;
+        SSBBlur(SSBCoord x, SSBCoord y) : SSBTag(SSBTag::Type::BLUR), type(Type::BOTH), x(x), y(y){}
+        SSBBlur(Type type, SSBCoord xy) : SSBTag(SSBTag::Type::BLUR), type(type){
+            switch(type){
+                case Type::HORIZONTAL: this->x = xy; break;
+                case Type::VERTICAL: this->y = xy; break;
+                case Type::BOTH: this->x = this->y = xy; break;
+            }
+        }
+};
+
+// Clip state
+class SSBClip : public SSBTag{
+    public:
+        enum class Mode{CLEAR, SET, UNSET, INSIDE, OUTSIDE} mode;
+        SSBClip(Mode mode) : SSBTag(SSBTag::Type::CLIP), mode(mode){}
 };
 
 // Point structure for geometries
