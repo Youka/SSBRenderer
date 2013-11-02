@@ -20,7 +20,8 @@ SSBData SSBParser::data() const {
 // Helper functions for parsing
 namespace{
     // Throws string in parse error message format
-    inline void throw_parse_error(unsigned int line, const char* message){
+    template<typename Line, typename Message>
+    inline void throw_parse_error(Line line, Message message){
         std::ostringstream s;
         s << line << ": " << message;
         throw s.str();
@@ -181,7 +182,7 @@ void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
         // Current SSB section
         enum class SSBSection{NONE, META, FRAME, STYLES, EVENTS} section = SSBSection::NONE;
         // File line number (needed for warnings)
-        unsigned int line_i = 0;
+        unsigned long int line_i = 0;
         // File line buffer
         std::string line;
         // Line iteration
@@ -243,7 +244,7 @@ void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
                             break;
                         case SSBSection::STYLES:
                             {
-                                std::string::size_type pos = line.find(": ");
+                                auto pos = line.find(": ");
                                 if(pos != std::string::npos){
                                     this->ssb.styles[line.substr(0, pos)] = line.substr(pos+2);
                                 }else if(warnings)
@@ -323,31 +324,31 @@ void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
                                                             throw_parse_error(line_i, "Invalid font style");
                                                     ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBFontStyle(bold, italic, underline, strikeout)));
                                                 }else if(token.compare(0, 10, "font-size=") == 0){
-                                                    unsigned int size;
+                                                    decltype(SSBFontSize::size) size;
                                                     if(string_to_number(token.substr(10), size))
                                                         ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBFontSize(size)));
                                                     else if(warnings)
                                                         throw_parse_error(line_i, "Invalid font size");
                                                 }else if(token.compare(0, 11, "font-space=") == 0){
-                                                    SSBCoord x, y;
+                                                    decltype(SSBFontSpace::x) x, y;
                                                     if(string_to_number_pair(token.substr(11), x, y))
                                                         ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBFontSpace(x, y)));
                                                     else if(warnings)
                                                         throw_parse_error(line_i, "Invalid font spaces");
                                                 }else if(token.compare(0, 13, "font-space-h=") == 0){
-                                                    SSBCoord x;
+                                                    decltype(SSBFontSpace::x) x;
                                                     if(string_to_number(token.substr(13), x))
                                                         ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBFontSpace(SSBFontSpace::Type::HORIZONTAL, x)));
                                                     else if(warnings)
                                                         throw_parse_error(line_i, "Invalid horizontal font space");
                                                 }else if(token.compare(0, 13, "font-space-v=") == 0){
-                                                    SSBCoord y;
+                                                    decltype(SSBFontSpace::y) y;
                                                     if(string_to_number(token.substr(13), y))
                                                         ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBFontSpace(SSBFontSpace::Type::VERTICAL, y)));
                                                     else if(warnings)
                                                         throw_parse_error(line_i, "Invalid vertical font space");
                                                 }else if(token.compare(0, 11, "line-width=") == 0){
-                                                    SSBCoord width;
+                                                    decltype(SSBLineWidth::width) width;
                                                     if(string_to_number(token.substr(11), width))
                                                         ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBLineWidth(width)));
                                                     else if(warnings)
@@ -379,12 +380,12 @@ void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
                                                     }else if(warnings)
                                                         throw_parse_error(line_i, "Invalid line style");
                                                 }else if(token.compare(0, 10, "line-dash=") == 0){
-                                                    SSBCoord offset;
+                                                    decltype(SSBLineDash::offset) offset;
                                                     std::istringstream dash_stream(token.substr(10));
                                                     std::string dash_token;
                                                     if(std::getline(dash_stream, dash_token, ',') && string_to_number(dash_token, offset)){
-                                                        std::vector<SSBCoord> dashes;
-                                                        SSBCoord dash;
+                                                        decltype(SSBLineDash::dashes) dashes;
+                                                        decltype(SSBLineDash::offset) dash;
                                                         while(std::getline(dash_stream, dash_token, ','))
                                                             if(string_to_number(dash_token, dash))
                                                                 dashes.push_back(dash);
@@ -421,7 +422,7 @@ void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
                                                         throw_parse_error(line_i, "Invalid deform");
                                                 }else if(token.compare(0, 9, "position=") == 0){
                                                     std::string tag_value = token.substr(9);
-                                                    SSBCoord x, y;
+                                                    decltype(SSBPosition::x) x, y;
                                                     if(tag_value.empty())
                                                         ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBPosition(std::numeric_limits<decltype(x)>::max(), std::numeric_limits<decltype(y)>::max())));
                                                     else if(string_to_number_pair(token.substr(9), x, y))
@@ -436,7 +437,7 @@ void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
                                                         throw_parse_error(line_i, "Invalid alignment");
                                                 }else if(token.compare(0, 7, "margin=") == 0){
                                                     std::string tag_value = token.substr(7);
-                                                    SSBCoord x, y;
+                                                    decltype(SSBMargin::x) x, y;
                                                     if(string_to_number(tag_value, x))
                                                         ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBMargin(SSBMargin::Type::BOTH, x)));
                                                     else if(string_to_number_pair(tag_value, x, y))
@@ -444,19 +445,19 @@ void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
                                                     else if(warnings)
                                                         throw_parse_error(line_i, "Invalid margin");
                                                 }else if(token.compare(0, 9, "margin-h=") == 0){
-                                                    SSBCoord x;
+                                                    decltype(SSBMargin::x) x;
                                                     if(string_to_number(token.substr(9), x))
                                                         ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBMargin(SSBMargin::Type::HORIZONTAL, x)));
                                                     else if(warnings)
                                                         throw_parse_error(line_i, "Invalid horizontal margin");
                                                 }else if(token.compare(0, 9, "margin-v=") == 0){
-                                                    SSBCoord y;
+                                                    decltype(SSBMargin::y) y;
                                                     if(string_to_number(token.substr(9), y))
                                                         ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBMargin(SSBMargin::Type::VERTICAL, y)));
                                                     else if(warnings)
                                                         throw_parse_error(line_i, "Invalid vertical margin");
                                                 }else if(token.compare(0, 10, "direction=") == 0){
-                                                    double angle;
+                                                    decltype(SSBDirection::angle) angle;
                                                     if(string_to_number(token.substr(10), angle))
                                                         ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBDirection(angle)));
                                                     else if(warnings)
@@ -464,26 +465,26 @@ void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
                                                 }else if(token == "identity")
                                                     ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBIdentity()));
                                                 else if(token.compare(0, 10, "translate=") == 0){
-                                                    SSBCoord x, y;
+                                                    decltype(SSBTranslate::x) x, y;
                                                     if(string_to_number_pair(token.substr(10), x, y))
                                                         ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBTranslate(x, y)));
                                                     else if(warnings)
                                                         throw_parse_error(line_i, "Invalid translation");
                                                 }else if(token.compare(0, 12, "translate-x=") == 0){
-                                                    SSBCoord x;
+                                                    decltype(SSBTranslate::x) x;
                                                     if(string_to_number(token.substr(12), x))
                                                         ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBTranslate(SSBTranslate::Type::HORIZONTAL, x)));
                                                     else if(warnings)
                                                         throw_parse_error(line_i, "Invalid horizontal translation");
                                                 }else if(token.compare(0, 12, "translate-y=") == 0){
-                                                    SSBCoord y;
+                                                    decltype(SSBTranslate::y) y;
                                                     if(string_to_number(token.substr(12), y))
                                                         ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBTranslate(SSBTranslate::Type::VERTICAL, y)));
                                                     else if(warnings)
                                                         throw_parse_error(line_i, "Invalid vertical translation");
                                                 }else if(token.compare(0, 6, "scale=") == 0){
                                                     std::string tag_value = token.substr(6);
-                                                    double x, y;
+                                                    decltype(SSBScale::x) x, y;
                                                     if(string_to_number(tag_value, x))
                                                         ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBScale(SSBScale::Type::BOTH, x)));
                                                     else if(string_to_number_pair(tag_value, x, y))
@@ -491,55 +492,55 @@ void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
                                                     else if(warnings)
                                                         throw_parse_error(line_i, "Invalid scale");
                                                 }else if(token.compare(0, 8, "scale-x=") == 0){
-                                                    double x;
+                                                    decltype(SSBScale::x) x;
                                                     if(string_to_number(token.substr(8), x))
                                                         ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBScale(SSBScale::Type::HORIZONTAL, x)));
                                                     else if(warnings)
                                                         throw_parse_error(line_i, "Invalid horizontal scale");
                                                 }else if(token.compare(0, 8, "scale-y=") == 0){
-                                                    double y;
+                                                    decltype(SSBScale::y) y;
                                                     if(string_to_number(token.substr(8), y))
                                                         ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBScale(SSBScale::Type::VERTICAL, y)));
                                                     else if(warnings)
                                                         throw_parse_error(line_i, "Invalid vertical scale");
                                                 }else if(token.compare(0, 9, "rotate-x=") == 0){
-                                                    double angle;
+                                                    decltype(SSBRotate::angle) angle;
                                                     if(string_to_number(token.substr(9), angle))
                                                         ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBRotate(SSBRotate::Axis::X, angle)));
                                                     else if(warnings)
                                                         throw_parse_error(line_i, "Invalid rotation on x axis");
                                                 }else if(token.compare(0, 9, "rotate-y=") == 0){
-                                                    double angle;
+                                                    decltype(SSBRotate::angle) angle;
                                                     if(string_to_number(token.substr(9), angle))
                                                         ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBRotate(SSBRotate::Axis::Y, angle)));
                                                     else if(warnings)
                                                         throw_parse_error(line_i, "Invalid rotation on y axis");
                                                 }else if(token.compare(0, 9, "rotate-z") == 0){
-                                                    double angle;
+                                                    decltype(SSBRotate::angle) angle;
                                                     if(string_to_number(token.substr(9), angle))
                                                         ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBRotate(SSBRotate::Axis::Z, angle)));
                                                     else if(warnings)
                                                         throw_parse_error(line_i, "Invalid rotation on z axis");
                                                 }else if(token.compare(0, 6, "shear=") == 0){
-                                                    double x, y;
+                                                    decltype(SSBShear::x) x, y;
                                                     if(string_to_number_pair(token.substr(6), x, y))
                                                         ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBShear(x, y)));
                                                     else if(warnings)
                                                         throw_parse_error(line_i, "Invalid shear");
                                                 }else if(token.compare(0, 8, "shear-x=") == 0){
-                                                    double x;
+                                                    decltype(SSBShear::x) x;
                                                     if(string_to_number(token.substr(8), x))
                                                         ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBShear(SSBShear::Type::HORIZONTAL, x)));
                                                     else if(warnings)
                                                         throw_parse_error(line_i, "Invalid horizontal shear");
                                                 }else if(token.compare(0, 8, "shear-y") == 0){
-                                                    double y;
+                                                    decltype(SSBShear::y) y;
                                                     if(string_to_number(token.substr(8), y))
                                                         ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBShear(SSBShear::Type::VERTICAL, y)));
                                                     else if(warnings)
                                                         throw_parse_error(line_i, "Invalid vertical shear");
                                                 }else if(token.compare(0, 10, "transform=") == 0){
-                                                    double xx, yx, xy, yy, x0, y0;
+                                                    decltype(SSBTransform::xx) xx, yx, xy, yy, x0, y0;
                                                     std::istringstream matrix_stream(token.substr(10));
                                                     std::string matrix_value;
                                                     if(std::getline(matrix_stream, matrix_value, ',') && string_to_number(matrix_value, xx) &&
@@ -567,25 +568,25 @@ void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
                                                     if(hex_string_to_number(tag_value, rgb[0]) &&
                                                        rgb[0] <= 0xffffff)
                                                         ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBColor(target,
-                                                            static_cast<double>(rgb[0] >> 16) / 0xff,
-                                                            static_cast<double>(rgb[0] >> 8) / 0xff,
-                                                            static_cast<double>(rgb[0]) / 0xff
+                                                            static_cast<decltype(SSBColor::RGB::r)>(rgb[0] >> 16) / 0xff,
+                                                            static_cast<decltype(SSBColor::RGB::g)>(rgb[0] >> 8) / 0xff,
+                                                            static_cast<decltype(SSBColor::RGB::b)>(rgb[0]) / 0xff
                                                         )));
                                                     else if(hex_string_to_number_quadruple(tag_value, rgb[0], rgb[1], rgb[2], rgb[3]) &&
                                                             rgb[0] <= 0xffffff && rgb[1] <= 0xffffff && rgb[2] <= 0xffffff && rgb[3] <= 0xffffff)
                                                         ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBColor(target,
-                                                            static_cast<double>(rgb[0] >> 16) / 0xff,
-                                                            static_cast<double>(rgb[0] >> 8) / 0xff,
-                                                            static_cast<double>(rgb[0]) / 0xff,
-                                                            static_cast<double>(rgb[1] >> 16) / 0xff,
-                                                            static_cast<double>(rgb[1] >> 8) / 0xff,
-                                                            static_cast<double>(rgb[1]) / 0xff,
-                                                            static_cast<double>(rgb[2] >> 16) / 0xff,
-                                                            static_cast<double>(rgb[2] >> 8) / 0xff,
-                                                            static_cast<double>(rgb[2]) / 0xff,
-                                                            static_cast<double>(rgb[3] >> 16) / 0xff,
-                                                            static_cast<double>(rgb[3] >> 8) / 0xff,
-                                                            static_cast<double>(rgb[3]) / 0xff
+                                                            static_cast<decltype(SSBColor::RGB::r)>(rgb[0] >> 16) / 0xff,
+                                                            static_cast<decltype(SSBColor::RGB::g)>(rgb[0] >> 8) / 0xff,
+                                                            static_cast<decltype(SSBColor::RGB::b)>(rgb[0]) / 0xff,
+                                                            static_cast<decltype(SSBColor::RGB::r)>(rgb[1] >> 16) / 0xff,
+                                                            static_cast<decltype(SSBColor::RGB::g)>(rgb[1] >> 8) / 0xff,
+                                                            static_cast<decltype(SSBColor::RGB::b)>(rgb[1]) / 0xff,
+                                                            static_cast<decltype(SSBColor::RGB::r)>(rgb[2] >> 16) / 0xff,
+                                                            static_cast<decltype(SSBColor::RGB::g)>(rgb[2] >> 8) / 0xff,
+                                                            static_cast<decltype(SSBColor::RGB::b)>(rgb[2]) / 0xff,
+                                                            static_cast<decltype(SSBColor::RGB::r)>(rgb[3] >> 16) / 0xff,
+                                                            static_cast<decltype(SSBColor::RGB::g)>(rgb[3] >> 8) / 0xff,
+                                                            static_cast<decltype(SSBColor::RGB::b)>(rgb[3]) / 0xff
                                                         )));
                                                     else if(warnings)
                                                         throw_parse_error(line_i, token[0] == 'l' ? "Invalid line color" : "Invalid color");
@@ -602,14 +603,14 @@ void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
                                                     unsigned short int a[4];
                                                     if(hex_string_to_number(tag_value, a[0]) &&
                                                        a[0] <= 0xff)
-                                                        ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBAlpha(target, static_cast<double>(a[0]) / 0xff)));
+                                                        ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBAlpha(target, static_cast<decltype(SSBColor::RGB::r)>(a[0]) / 0xff)));
                                                     else if(hex_string_to_number_quadruple(tag_value, a[0], a[1], a[2], a[3]) &&
                                                             a[0] <= 0xff && a[1] <= 0xff && a[2] <= 0xff && a[3] <= 0xff)
                                                         ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBAlpha(target,
-                                                            static_cast<double>(a[0]) / 0xff,
-                                                            static_cast<double>(a[1]) / 0xff,
-                                                            static_cast<double>(a[2]) / 0xff,
-                                                            static_cast<double>(a[3]) / 0xff
+                                                            static_cast<decltype(SSBColor::RGB::r)>(a[0]) / 0xff,
+                                                            static_cast<decltype(SSBColor::RGB::r)>(a[1]) / 0xff,
+                                                            static_cast<decltype(SSBColor::RGB::r)>(a[2]) / 0xff,
+                                                            static_cast<decltype(SSBColor::RGB::r)>(a[3]) / 0xff
                                                         )));
                                                     else if(warnings)
                                                         throw_parse_error(line_i, token[0] == 'l' ? "Invalid line alpha" : "Invalid alpha");
@@ -638,7 +639,7 @@ void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
                                                         tag_value = token.substr(8);
                                                         target = SSBTexFill::Target::FILL;
                                                     }
-                                                    SSBCoord x, y;
+                                                    decltype(SSBTexFill::x) x, y;
                                                     std::string::size_type pos1, pos2;
                                                     if((pos1 = tag_value.find(',')) != std::string::npos &&
                                                         string_to_number(tag_value.substr(0, pos1), x) &&
@@ -673,7 +674,7 @@ void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
                                                         throw_parse_error(line_i, "Invalid blending");
                                                 }else if(token.compare(0, 5, "blur=") == 0){
                                                     std::string tag_value = token.substr(6);
-                                                    SSBCoord x, y;
+                                                    decltype(SSBBlur::x) x, y;
                                                     if(string_to_number(tag_value, x))
                                                         ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBBlur(SSBBlur::Type::BOTH, x)));
                                                     else if(string_to_number_pair(tag_value, x, y))
@@ -681,13 +682,13 @@ void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
                                                     else if(warnings)
                                                         throw_parse_error(line_i, "Invalid blur");
                                                 }else if(token.compare(0, 7, "blur-h=") == 0){
-                                                    SSBCoord x;
+                                                    decltype(SSBBlur::x) x;
                                                     if(string_to_number(token.substr(7), x))
                                                         ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBBlur(SSBBlur::Type::HORIZONTAL, x)));
                                                     else if(warnings)
                                                         throw_parse_error(line_i, "Invalid horizontal blur");
                                                 }else if(token.compare(0, 7, "blur-v=") == 0){
-                                                    SSBCoord y;
+                                                    decltype(SSBBlur::y) y;
                                                     if(string_to_number(token.substr(7), y))
                                                         ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBBlur(SSBBlur::Type::VERTICAL, y)));
                                                     else if(warnings)
@@ -708,7 +709,7 @@ void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
                                                         throw_parse_error(line_i, "Invalid clipping mode");
                                                 }else if(token.compare(0, 5, "fade=") == 0){
                                                     std::string tag_value = token.substr(5);
-                                                    unsigned long int in, out;
+                                                    decltype(SSBFade::in) in, out;
                                                     if(string_to_number(tag_value, in))
                                                         ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBFade(SSBFade::Type::BOTH, in)));
                                                     else if(string_to_number_pair(tag_value, in, out))
@@ -716,28 +717,46 @@ void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
                                                     else if(warnings)
                                                         throw_parse_error(line_i, "Invalid fade");
                                                 }else if(token.compare(0, 8, "fade-in=") == 0){
-                                                    unsigned long int in;
+                                                    decltype(SSBFade::in) in;
                                                     if(string_to_number(token.substr(8), in))
                                                         ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBFade(SSBFade::Type::INFADE, in)));
                                                     else if(warnings)
                                                         throw_parse_error(line_i, "Invalid infade");
                                                 }else if(token.compare(0, 9, "fade-out=") == 0){
-                                                    unsigned long int out;
+                                                    decltype(SSBFade::out) out;
                                                     if(string_to_number(token.substr(9), out))
                                                         ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBFade(SSBFade::Type::OUTFADE, out)));
                                                     else if(warnings)
                                                         throw_parse_error(line_i, "Invalid outfade");
+                                                }else if(token.compare(0, 8, "animate=") == 0){
 #pragma message "Parse SSB tags"
+                                                }else if(token.compare(0, 2, "k=") == 0){
+                                                    decltype(SSBKaraoke::time) time;
+                                                    if(string_to_number(token.substr(2), time))
+                                                        ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBKaraoke(SSBKaraoke::Type::DURATION, time)));
+                                                    else if(warnings)
+                                                        throw_parse_error(line_i, "Invalid karaoke");
+                                                }else if(token.compare(0, 6, "kskip=") == 0){
+                                                    decltype(SSBKaraoke::time) time;
+                                                    if(string_to_number(token.substr(6), time))
+                                                        ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBKaraoke(SSBKaraoke::Type::SKIP, time)));
+                                                    else if(warnings)
+                                                        throw_parse_error(line_i, "Invalid karaoke skip");
+                                                }else if(token.compare(0, 5, "kset=") == 0){
+                                                    decltype(SSBKaraoke::time) time;
+                                                    if(string_to_number(token.substr(5), time))
+                                                        ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBKaraoke(SSBKaraoke::Type::SET, time)));
+                                                    else if(warnings)
+                                                        throw_parse_error(line_i, "Invalid karaoke set");
                                                 }else if(warnings)
                                                     throw_parse_error(line_i, "Invalid tag");
                                         }
                                     // Evaluate geometry
                                     }else{
                                         // Search geometry end at tags bracket (unescaped) or text end
-                                        for(decltype(pos_start) search_pos_start = pos_start;
+                                        for(auto search_pos_start = pos_start;
                                             (pos_end = text.find('{', search_pos_start)) != std::string::npos && pos_end > 0 && text[pos_end-1] == '\\';
-                                            search_pos_start = pos_end + 1)
-                                            ;
+                                            search_pos_start = pos_end + 1);
                                         if(pos_end == std::string::npos)
                                             pos_end = text.length();
                                         // Parse geometry by type
@@ -790,7 +809,7 @@ void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
                                                             // Get complete segment
                                                             else{
                                                                 // Put token back in stream for rereading
-                                                                path_stream.seekg(-static_cast<long int>(token.length()), std::istringstream::cur);
+                                                                path_stream.seekg(-static_cast<long long int>(token.length()), std::istringstream::cur);
                                                                 // Parse segment
                                                                 switch(segments[0].type){
                                                                     case SSBPath::SegmentType::MOVE_TO:

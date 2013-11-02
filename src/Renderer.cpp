@@ -86,7 +86,7 @@ void geometry_to_path(SSBGeometry* geometry, cairo_t* ctx){
                                         yc = segments[i].point.y,
                                         r = hypot(ly - yc, lx - xc),
                                         angle1 = atan2(ly - yc, lx - xc),
-                                        angle2 = angle1 + segments[i+1].angle * M_PI / 180;
+                                        angle2 = angle1 + segments[i+1].angle * M_PI / 180.0L;
                                 if(angle2 > angle1)
                                     cairo_arc(ctx,
                                                 xc, yc,

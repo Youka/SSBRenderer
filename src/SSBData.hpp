@@ -7,6 +7,8 @@
 
 // Coordinate precision
 using SSBCoord = float;
+// Time precision
+using SSBTime = unsigned long int;
 
 // Any state or geometry for rendering
 class SSBObject{
@@ -49,7 +51,9 @@ class SSBTag : public SSBObject{
             BLEND,
             BLUR,
             CLIP,
-            FADE
+            FADE,
+            ANIMATE,
+            KARAOKE
         } type;
         SSBTag(const SSBTag&) = delete;
         SSBTag& operator =(const SSBTag&) = delete;
@@ -90,7 +94,7 @@ class SSBFontStyle : public SSBTag{
 // Font size state
 class SSBFontSize : public SSBTag{
     public:
-        unsigned int size;
+        unsigned short int size;
         SSBFontSize(unsigned int size) : SSBTag(SSBTag::Type::FONT_SIZE), size(size){}
 };
 
@@ -149,7 +153,7 @@ class SSBDeform : public SSBTag{
 // Position state
 class SSBPosition : public SSBTag{
     public:
-        SSBCoord x, y;
+        SSBCoord x, y;  // 'Unset' in case of maximum values
         SSBPosition(SSBCoord x, SSBCoord y) : SSBTag(SSBTag::Type::POSITION), x(x), y(y){}
 };
 
@@ -320,9 +324,9 @@ class SSBBlur : public SSBTag{
 class SSBFade : public SSBTag{
     public:
         enum class Type : char{INFADE, OUTFADE, BOTH} type;
-        unsigned long int in, out;
-        SSBFade(unsigned long int in, unsigned long int out) : SSBTag(SSBTag::Type::FADE), type(Type::BOTH), in(in), out(out){}
-        SSBFade(Type type, unsigned long int inout) : SSBTag(SSBTag::Type::FADE), type(type){
+        SSBTime in, out;
+        SSBFade(SSBTime in, SSBTime out) : SSBTag(SSBTag::Type::FADE), type(Type::BOTH), in(in), out(out){}
+        SSBFade(Type type, SSBTime inout) : SSBTag(SSBTag::Type::FADE), type(type){
             switch(type){
                 case Type::INFADE: this->in = inout; break;
                 case Type::OUTFADE: this->out = inout; break;
@@ -336,6 +340,23 @@ class SSBClip : public SSBTag{
     public:
         enum class Mode{CLEAR, SET, UNSET, INSIDE, OUTSIDE} mode;
         SSBClip(Mode mode) : SSBTag(SSBTag::Type::CLIP), mode(mode){}
+};
+
+// Animation state
+class SSBAnimate : public SSBTag{
+    public:
+        SSBTime start, end; // 'Unset' in case of maximum values
+        std::string progress_formula;   // 'Unset' in case of emtpiness
+        std::vector<std::shared_ptr<SSBObject>> objects;
+        SSBAnimate(SSBTime start, SSBTime end, std::string progress_formula, std::vector<std::shared_ptr<SSBObject>> objects) : SSBTag(SSBTag::Type::ANIMATE), start(start), end(end), progress_formula(progress_formula), objects(objects){}
+};
+
+// Karaoke state
+class SSBKaraoke : public SSBTag{
+    public:
+        enum class Type{DURATION, SKIP, SET} type;
+        SSBTime time;
+        SSBKaraoke(Type type, SSBTime time) : SSBTag(SSBTag::Type::KARAOKE), type(type), time(time){}
 };
 
 // Point structure for geometries
