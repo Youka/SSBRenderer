@@ -44,7 +44,11 @@ class SSBTag : public SSBObject{
             TRANSFORM,
             BLEND,
             BLUR,
-            CLIP
+            CLIP,
+            COLOR,
+            ALPHA,
+            TEXTURE,
+            TEXFILL
         } type;
         SSBTag(const SSBTag&) = delete;
         SSBTag& operator =(const SSBTag&) = delete;
@@ -251,6 +255,42 @@ class SSBTransform : public SSBTag{
     public:
         double xx, yx, xy, yy, x0, y0;
         SSBTransform(double xx, double yx, double xy, double yy, double x0, double y0) : SSBTag(SSBTag::Type::TRANSFORM), xx(xx), yx(yx), xy(xy), yy(yy), x0(x0), y0(y0){}
+};
+
+// Color state
+class SSBColor : public SSBTag{
+    public:
+        enum class Target{FILL, LINE} target;
+        struct RGB{double r, g, b;};
+        RGB colors[4];
+        SSBColor(Target target, double r, double g, double b) : SSBTag(SSBTag::Type::COLOR), target(target), colors({{r, g, b}, {-1, -1, -1}, {-1, -1, -1}, {-1, -1, -1}}){}
+        SSBColor(Target target, double r0, double g0, double b0, double r1, double g1, double b1, double r2, double g2, double b2, double r3, double g3, double b3) : SSBTag(SSBTag::Type::COLOR), target(target), colors({{r0, g0, b0}, {r1, g1, b1}, {r2, g2, b2}, {r3, g3, b3}}){}
+};
+
+// Alpha state
+class SSBAlpha : public SSBTag{
+    public:
+        enum class Target{FILL, LINE} target;
+        double alphas[4];
+        SSBAlpha(Target target, double a) : SSBTag(SSBTag::Type::ALPHA), target(target), alphas{a, -1, -1, -1}{}
+        SSBAlpha(Target target, double a0, double a1, double a2, double a3) : SSBTag(SSBTag::Type::ALPHA), target(target), alphas{a0, a1, a2, a3}{}
+};
+
+// Texture state
+class SSBTexture : public SSBTag{
+    public:
+        enum class Target{FILL, LINE} target;
+        std::string filename;
+        SSBTexture(Target target, std::string filename) : SSBTag(SSBTag::Type::TEXTURE), target(target), filename(filename){}
+};
+
+// Texture fill state
+class SSBTexFill : public SSBTag{
+    public:
+        enum class Target{FILL, LINE} target;
+        SSBCoord x, y;
+        enum class WrapStyle{CLAMP, REPEAT, MIRROR, FLOW} wrap;
+        SSBTexFill(Target target, SSBCoord x, SSBCoord y, WrapStyle wrap) : SSBTag(SSBTag::Type::TEXFILL), target(target), x(x), y(y), wrap(wrap){}
 };
 
 // Blend state
