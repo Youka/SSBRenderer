@@ -26,7 +26,7 @@ namespace{
         throw s.str();
     }
     // Converts string to number
-    template<class T>
+    template<typename T>
     inline bool string_to_number(std::string src, T& dst){
         std::istringstream s(src);
         if(!(s >> std::noskipws >> dst) || !s.eof())
@@ -34,7 +34,7 @@ namespace{
         return true;
     }
     // Converts string to number pair
-    template<class T>
+    template<typename T>
     inline bool string_to_number_pair(std::string src, T& dst1, T& dst2){
         std::string::size_type pos;
         return (pos = src.find(',')) != std::string::npos &&
@@ -42,7 +42,7 @@ namespace{
                 string_to_number(src.substr(pos+1), dst2);
     }
     // Converts hex string to number
-    template<class T>
+    template<typename T>
     inline bool hex_string_to_number(std::string src, T& dst){
         std::istringstream s(src);
         if(!(s >> std::noskipws >> std::hex >> dst) || !s.eof())
@@ -50,7 +50,7 @@ namespace{
         return true;
     }
     // Converts hex string to three numbers
-    template<class T>
+    template<typename T>
     inline bool hex_string_to_number_quadruple(std::string src, T& dst1, T& dst2, T& dst3, T& dst4){
         std::string::size_type pos1, pos2;
         return (pos1 = src.find(',')) != std::string::npos &&
@@ -706,6 +706,27 @@ void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
                                                         ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBClip(SSBClip::Mode::OUTSIDE)));
                                                     else if(warnings)
                                                         throw_parse_error(line_i, "Invalid clipping mode");
+                                                }else if(token.compare(0, 5, "fade=") == 0){
+                                                    std::string tag_value = token.substr(5);
+                                                    unsigned long int in, out;
+                                                    if(string_to_number(tag_value, in))
+                                                        ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBFade(SSBFade::Type::BOTH, in)));
+                                                    else if(string_to_number_pair(tag_value, in, out))
+                                                        ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBFade(in, out)));
+                                                    else if(warnings)
+                                                        throw_parse_error(line_i, "Invalid fade");
+                                                }else if(token.compare(0, 8, "fade-in=") == 0){
+                                                    unsigned long int in;
+                                                    if(string_to_number(token.substr(8), in))
+                                                        ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBFade(SSBFade::Type::INFADE, in)));
+                                                    else if(warnings)
+                                                        throw_parse_error(line_i, "Invalid infade");
+                                                }else if(token.compare(0, 9, "fade-out=") == 0){
+                                                    unsigned long int out;
+                                                    if(string_to_number(token.substr(9), out))
+                                                        ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBFade(SSBFade::Type::OUTFADE, out)));
+                                                    else if(warnings)
+                                                        throw_parse_error(line_i, "Invalid outfade");
 #pragma message "Parse SSB tags"
                                                 }else if(warnings)
                                                     throw_parse_error(line_i, "Invalid tag");

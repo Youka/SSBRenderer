@@ -42,13 +42,14 @@ class SSBTag : public SSBObject{
             ROTATE,
             SHEAR,
             TRANSFORM,
-            BLEND,
-            BLUR,
-            CLIP,
             COLOR,
             ALPHA,
             TEXTURE,
-            TEXFILL
+            TEXFILL,
+            BLEND,
+            BLUR,
+            CLIP,
+            FADE
         } type;
         SSBTag(const SSBTag&) = delete;
         SSBTag& operator =(const SSBTag&) = delete;
@@ -311,6 +312,21 @@ class SSBBlur : public SSBTag{
                 case Type::HORIZONTAL: this->x = xy; break;
                 case Type::VERTICAL: this->y = xy; break;
                 case Type::BOTH: this->x = this->y = xy; break;
+            }
+        }
+};
+
+// Fade state
+class SSBFade : public SSBTag{
+    public:
+        enum class Type : char{INFADE, OUTFADE, BOTH} type;
+        unsigned long int in, out;
+        SSBFade(unsigned long int in, unsigned long int out) : SSBTag(SSBTag::Type::FADE), type(Type::BOTH), in(in), out(out){}
+        SSBFade(Type type, unsigned long int inout) : SSBTag(SSBTag::Type::FADE), type(type){
+            switch(type){
+                case Type::INFADE: this->in = inout; break;
+                case Type::OUTFADE: this->out = inout; break;
+                case Type::BOTH: this->in = this->out = inout; break;
             }
         }
 };
