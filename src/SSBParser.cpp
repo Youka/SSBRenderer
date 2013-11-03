@@ -595,15 +595,17 @@ namespace{
                     throw_parse_error(line_i, "Invalid outfade");
             }else if(tags_token.compare(0, 8, "animate=") == 0){
                 // Collect animation tokens (maximum: 4)
-#pragma message "To fix: animation ends at character ;"
                 std::vector<std::string> animate_tokens;
                 std::istringstream animate_stream(tags_token.substr(8));
                 std::string animate_token;
                 for(unsigned char i = 0; std::getline(animate_stream, animate_token, ',') && i < 4; ++i)
                     if(!animate_token.empty() && animate_token.front() == '('){
                         std::string animate_rest;
-                        std::getline(animate_stream, animate_rest, '\n');
-                        animate_tokens.push_back(animate_token + animate_rest);
+                        std::getline(animate_stream, animate_rest);
+                        animate_token += animate_rest;
+                        while(animate_token.back() != ')' && std::getline(tags_stream, tags_token, ';'))
+                            animate_token += ';' + tags_token;
+                        animate_tokens.push_back(animate_token);
                         break;
                     }else
                         animate_tokens.push_back(animate_token);
