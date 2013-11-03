@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <CodeBlocks_layout_file>
 	<ActiveTarget name="Release - Windows" />
-	<File name="SSBParser.cpp" open="1" top="1" tabpos="2" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="SSBData.hpp" open="0" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="28955" topLine="579" />
+			<Cursor1 position="11919" topLine="325" />
 		</Cursor>
 	</File>
-	<File name="SSBParser.hpp" open="0" top="0" tabpos="2" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="SSBParser.cpp" open="1" top="1" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="125" topLine="0" />
+			<Cursor1 position="36375" topLine="579" />
 		</Cursor>
 	</File>
 	<File name="FileReader.hpp" open="0" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
@@ -18,7 +18,12 @@
 	</File>
 	<File name="Renderer.cpp" open="0" top="0" tabpos="2" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="5439" topLine="0" />
+			<Cursor1 position="671" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="SSBParser.hpp" open="0" top="0" tabpos="2" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="125" topLine="0" />
 		</Cursor>
 	</File>
 	<File name="Renderer.hpp" open="0" top="0" tabpos="2" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
@@ -28,7 +33,7 @@
 	</File>
 	<File name="avisynth.cpp" open="0" top="0" tabpos="2" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="2061" topLine="15" />
+			<Cursor1 position="1304" topLine="15" />
 		</Cursor>
 	</File>
 	<File name="file_info.hpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
@@ -58,27 +63,22 @@
 	</File>
 	<File name="user.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="530" topLine="0" />
+			<Cursor1 position="971" topLine="0" />
 		</Cursor>
 	</File>
 	<File name="user.h" open="0" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="480" topLine="37" />
+			<Cursor1 position="1461" topLine="36" />
 		</Cursor>
 	</File>
 	<File name="virtualdub.cpp" open="0" top="0" tabpos="3" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="1463" topLine="0" />
+			<Cursor1 position="6514" topLine="123" />
 		</Cursor>
 	</File>
 	<File name="virtualdub_dialog.hpp" open="0" top="0" tabpos="3" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
 			<Cursor1 position="172" topLine="0" />
-		</Cursor>
-	</File>
-	<File name="SSBData.hpp" open="1" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="13661" topLine="388" />
 		</Cursor>
 	</File>
 </CodeBlocks_layout_file>

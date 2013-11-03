@@ -28,8 +28,7 @@ namespace AVS{
         // Make frame writable
         avs_make_writable(filter_info->env, &frame);
         // Render on frame
-        double ms_per_frame = static_cast<double>(filter_info->vi.fps_denominator * 1000) / filter_info->vi.fps_numerator;
-        reinterpret_cast<Renderer*>(filter_info->user_data)->render(avs_get_write_ptr(frame), avs_get_pitch(frame), n * ms_per_frame, (n+1) * ms_per_frame);
+        reinterpret_cast<Renderer*>(filter_info->user_data)->render(avs_get_write_ptr(frame), avs_get_pitch(frame), n * (filter_info->vi.fps_denominator * 1000.0L / filter_info->vi.fps_numerator));
         // Pass frame further in processing chain
         return frame;
     }

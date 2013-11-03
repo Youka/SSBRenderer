@@ -15,7 +15,7 @@ void Renderer::set_target(int width, int height, Colorspace format){
 
 void geometry_to_path(SSBGeometry* geometry, cairo_t* ctx);
 
-void Renderer::render(unsigned char* image, int pitch, unsigned long long start_ms, unsigned long long) noexcept{
+void Renderer::render(unsigned char* image, int pitch, unsigned long long start_ms) noexcept{
     // Iterate through SSB events
     for(SSBEvent& event : this->ssb.events)
         // Process active SSB event

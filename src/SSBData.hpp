@@ -235,9 +235,10 @@ class SSBScale : public SSBTag{
 // Rotation state
 class SSBRotate : public SSBTag{
     public:
-        enum class Axis : char{X, Y, Z} axis;
-        double angle;
-        SSBRotate(Axis axis, double angle) : SSBTag(SSBTag::Type::ROTATE), axis(axis), angle(angle){}
+        enum class Axis : char{XY, YX, Z} axis;
+        double angle1, angle2;
+        SSBRotate(Axis axis, double angle1, double angle2) : SSBTag(SSBTag::Type::ROTATE), axis(axis), angle1(angle1), angle2(angle2){}
+        SSBRotate(double angle) : SSBTag(SSBTag::Type::ROTATE), axis(Axis::Z), angle1(angle){}
 };
 
 // Shear state
