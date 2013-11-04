@@ -1,7 +1,4 @@
-- Design
-	* SSB
 - Implementation
-	* Parser
 	* Renderer
 	* Plugin interfaces
 		+ (DirectShow)

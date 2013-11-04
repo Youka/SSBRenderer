@@ -1,6 +1,7 @@
 #pragma once
 
 #include "SSBData.hpp"
+#include "cairo++.hpp"
 
 class Renderer{
     public:
@@ -12,8 +13,15 @@ class Renderer{
         Colorspace format;
         // SSB data
         SSBData ssb;
+        // Path buffer
+        CairoImage path_buffer;
+        // Image cache
+        struct{
+            SSBGeometry* pgeometry;
+            CairoImage image;
+        }cache;
     public:
-        // SSB parsing & frame meta informations saving
+        // Frame meta informations saving + SSB parsing + path buffer creation + image cache creation
         Renderer(int width, int height, Colorspace format, std::string& script, bool warnings);
         // Change frame meta informations
         void set_target(int width, int height, Colorspace format);

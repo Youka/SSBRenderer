@@ -123,6 +123,9 @@
 		<Unit filename="avisynth.cpp">
 			<Option virtualFolder="Interfaces/" />
 		</Unit>
+		<Unit filename="cairo++.hpp">
+			<Option virtualFolder="Utils/" />
+		</Unit>
 		<Unit filename="file_info.hpp">
 			<Option virtualFolder="Meta/" />
 		</Unit>
