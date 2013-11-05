@@ -355,7 +355,7 @@ class SSBAnimate : public SSBTag{
 // Karaoke state
 class SSBKaraoke : public SSBTag{
     public:
-        enum class Type{DURATION, SKIP, SET} type;
+        enum class Type{DURATION, SET} type;
         SSBTime time;
         SSBKaraoke(Type type, SSBTime time) : SSBTag(SSBTag::Type::KARAOKE), type(type), time(time){}
 };

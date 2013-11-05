@@ -3,6 +3,7 @@
 #include <limits>
 #include <muParser.h>
 #define M_PI 3.14159265358979323846  // Missing in math header because of strict ANSI C
+#define DEG_TO_RAD(x) (x / 180.0L * M_PI)
 
 Renderer::Renderer(int width, int height, Colorspace format, std::string& script, bool warnings)
 : width(width), height(height), format(format), ssb(SSBParser(script, warnings).data()){}
@@ -39,13 +40,13 @@ namespace{
         // Transformation
         cairo_matrix_t matrix = {1, 0, 0, 1, 0, 0};
         // Color
-        std::vector<SSBColor::RGB> colors;
-        std::vector<double> alphas;
+        std::vector<SSBColor::RGB> colors = {{1,1,1}};
+        std::vector<double> alphas = {1};
         std::string texture;
         double texture_x = 0, texture_y = 0;
         cairo_extend_t wrap_style = CAIRO_EXTEND_NONE;
-        std::vector<SSBColor::RGB> line_colors;
-        std::vector<double> line_alphas;
+        std::vector<SSBColor::RGB> line_colors = {{0,0,0}};
+        std::vector<double> line_alphas = {1};
         std::string line_texture;
         double line_texture_x = 0, line_texture_y = 0;
         cairo_extend_t line_wrap_style = CAIRO_EXTEND_NONE;
@@ -54,7 +55,7 @@ namespace{
         double blur_h = 0, blur_v = 0;
         SSBClip::Mode clip_mode = SSBClip::Mode::CLEAR;
         // Karaoke
-        long int karaoke = -1;
+        long int karaoke_start = -1, karaoke_duration = 0;
     };
     // Updates render state palette by SSB tag
     void tag_to_render_state_palette(SSBTag* tag, RenderStatePalette& rsp){
@@ -166,10 +167,167 @@ namespace{
                     }
                 }
                 break;
-            /*case SSBTag::Type:::
-                rsp. = dynamic_cast<SSB*>(tag);
-                break;*/
-
+            case SSBTag::Type::ROTATE:
+                {
+                    SSBRotate* rotation = dynamic_cast<SSBRotate*>(tag);
+                    switch(rotation->axis){
+                        case SSBRotate::Axis::Z: cairo_matrix_rotate(&rsp.matrix, DEG_TO_RAD(rotation->angle1)); break;
+                        case SSBRotate::Axis::XY:
+                        {
+                            double rad_x = DEG_TO_RAD(rotation->angle1), rad_y = DEG_TO_RAD(rotation->angle2);
+                            cairo_matrix_t tmp_matrix = {cos(rad_y), 0, sin(rad_x) * sin(rad_y), cos(rad_x), 0, 0};
+                            cairo_matrix_multiply(&rsp.matrix, &tmp_matrix, &rsp.matrix);
+                        }
+                        break;
+                        case SSBRotate::Axis::YX:
+                        {
+                            double rad_y = DEG_TO_RAD(rotation->angle1), rad_x = DEG_TO_RAD(rotation->angle2);
+                            cairo_matrix_t tmp_matrix = {cos(rad_y), -sin(rad_x) * -sin(rad_y), 0, cos(rad_x), 0, 0};
+                            cairo_matrix_multiply(&rsp.matrix, &tmp_matrix, &rsp.matrix);
+                        }
+                        break;
+                    }
+                }
+                break;
+            case SSBTag::Type::SHEAR:
+                {
+                    SSBShear* shear = dynamic_cast<SSBShear*>(tag);
+                    cairo_matrix_t tmp_matrix;
+                    switch(shear->type){
+                        case SSBShear::Type::HORIZONTAL: tmp_matrix = {1, 0, shear->x, 1, 0, 0}; break;
+                        case SSBShear::Type::VERTICAL: tmp_matrix = {1, shear->y, 0, 1, 0, 0}; break;
+                        case SSBShear::Type::BOTH: tmp_matrix = {1, shear->y, shear->x, 1, 0, 0}; break;
+                    }
+                    cairo_matrix_multiply(&rsp.matrix, &tmp_matrix, &rsp.matrix);
+                }
+                break;
+            case SSBTag::Type::TRANSFORM:
+                {
+                    SSBTransform* transform = dynamic_cast<SSBTransform*>(tag);
+                    cairo_matrix_t tmp_matrix = {transform->xx, transform->yx, transform->xy, transform->yy, transform->x0, transform->y0};
+                    cairo_matrix_multiply(&rsp.matrix, &tmp_matrix, &rsp.matrix);
+                }
+                break;
+            case SSBTag::Type::COLOR:
+                {
+                    SSBColor* color = dynamic_cast<SSBColor*>(tag);
+                    if(color->target == SSBColor::Target::FILL)
+                        if(color->colors[1].r < 0){
+                            rsp.colors.resize(1);
+                            rsp.colors[0] = color->colors[0];
+                        }else{
+                            rsp.colors.resize(4);
+                            rsp.colors[0] = color->colors[0];
+                            rsp.colors[1] = color->colors[1];
+                            rsp.colors[2] = color->colors[2];
+                            rsp.colors[3] = color->colors[3];
+                        }
+                    else
+                        if(color->colors[1].r < 0){
+                            rsp.line_colors.resize(1);
+                            rsp.line_colors[0] = color->colors[0];
+                        }else{
+                            rsp.line_colors.resize(4);
+                            rsp.line_colors[0] = color->colors[0];
+                            rsp.line_colors[1] = color->colors[1];
+                            rsp.line_colors[2] = color->colors[2];
+                            rsp.line_colors[3] = color->colors[3];
+                        }
+                }
+                break;
+            case SSBTag::Type::ALPHA:
+                {
+                    SSBAlpha* alpha = dynamic_cast<SSBAlpha*>(tag);
+                    if(alpha->target == SSBAlpha::Target::FILL)
+                        if(alpha->alphas[1] < 0){
+                            rsp.alphas.resize(1);
+                            rsp.alphas[0] = alpha->alphas[0];
+                        }else{
+                            rsp.alphas.resize(4);
+                            rsp.alphas[0] = alpha->alphas[0];
+                            rsp.alphas[1] = alpha->alphas[1];
+                            rsp.alphas[2] = alpha->alphas[2];
+                            rsp.alphas[3] = alpha->alphas[3];
+                        }
+                    else
+                        if(alpha->alphas[1] < 0){
+                            rsp.line_alphas.resize(1);
+                            rsp.line_alphas[0] = alpha->alphas[0];
+                        }else{
+                            rsp.line_alphas.resize(4);
+                            rsp.line_alphas[0] = alpha->alphas[0];
+                            rsp.line_alphas[1] = alpha->alphas[1];
+                            rsp.line_alphas[2] = alpha->alphas[2];
+                            rsp.line_alphas[3] = alpha->alphas[3];
+                        }
+                }
+                break;
+            case SSBTag::Type::TEXTURE:
+                {
+                    SSBTexture* texture = dynamic_cast<SSBTexture*>(tag);
+                    if(texture->target == SSBTexture::Target::FILL)
+                        rsp.texture = texture->filename;
+                    else
+                        rsp.line_texture = texture->filename;
+                }
+                break;
+            case SSBTag::Type::TEXFILL:
+                {
+                    SSBTexFill* texfill = dynamic_cast<SSBTexFill*>(tag);
+                    if(texfill->target == SSBTexFill::Target::FILL){
+                        rsp.texture_x = texfill->x;
+                        rsp.texture_y = texfill->y;
+                        switch(texfill->wrap){
+                            case SSBTexFill::WrapStyle::CLAMP: rsp.wrap_style = CAIRO_EXTEND_NONE; break;
+                            case SSBTexFill::WrapStyle::REPEAT: rsp.wrap_style = CAIRO_EXTEND_REPEAT; break;
+                            case SSBTexFill::WrapStyle::MIRROR: rsp.wrap_style = CAIRO_EXTEND_REFLECT; break;
+                            case SSBTexFill::WrapStyle::FLOW: rsp.wrap_style = CAIRO_EXTEND_PAD; break;
+                        }
+                    }else{
+                        rsp.line_texture_x = texfill->x;
+                        rsp.line_texture_y = texfill->y;
+                        switch(texfill->wrap){
+                            case SSBTexFill::WrapStyle::CLAMP: rsp.line_wrap_style = CAIRO_EXTEND_NONE; break;
+                            case SSBTexFill::WrapStyle::REPEAT: rsp.line_wrap_style = CAIRO_EXTEND_REPEAT; break;
+                            case SSBTexFill::WrapStyle::MIRROR: rsp.line_wrap_style = CAIRO_EXTEND_REFLECT; break;
+                            case SSBTexFill::WrapStyle::FLOW: rsp.line_wrap_style = CAIRO_EXTEND_PAD; break;
+                        }
+                    }
+                }
+                break;
+            case SSBTag::Type::BLEND:
+                rsp.blend_mode = dynamic_cast<SSBBlend*>(tag)->mode;
+                break;
+            case SSBTag::Type::BLUR:
+                {
+                    SSBBlur* blur = dynamic_cast<SSBBlur*>(tag);
+                    switch(blur->type){
+                        case SSBBlur::Type::HORIZONTAL: rsp.blur_h = blur->x; break;
+                        case SSBBlur::Type::VERTICAL: rsp.blur_v = blur->y; break;
+                        case SSBBlur::Type::BOTH: rsp.blur_h = blur->x; rsp.blur_v = blur->y; break;
+                    }
+                }
+                break;
+            case SSBTag::Type::CLIP:
+                rsp.clip_mode = dynamic_cast<SSBClip*>(tag)->mode;
+                break;
+            case SSBTag::Type::KARAOKE:
+                {
+                    SSBKaraoke* karaoke = dynamic_cast<SSBKaraoke*>(tag);
+                    switch(karaoke->type){
+                        case SSBKaraoke::Type::DURATION:
+                            if(rsp.karaoke_start < 0)
+                                rsp.karaoke_start = 0;
+                            rsp.karaoke_start += rsp.karaoke_duration;
+                            rsp.karaoke_duration = karaoke->time;
+                            break;
+                        case SSBKaraoke::Type::SET:
+                            rsp.karaoke_start = karaoke->time;
+                            rsp.karaoke_duration = 0;
+                            break;
+                    }
+                }
+                break;
 #pragma message "Implent updater for render state palette by tag"
         }
     }
@@ -214,7 +372,7 @@ namespace{
                                             yc = segments[i].point.y,
                                             r = hypot(ly - yc, lx - xc),
                                             angle1 = atan2(ly - yc, lx - xc),
-                                            angle2 = angle1 + segments[i+1].angle * M_PI / 180.0L;
+                                            angle2 = angle1 + DEG_TO_RAD(segments[i+1].angle);
                                     if(angle2 > angle1)
                                         cairo_arc(ctx,
                                                     xc, yc,
@@ -236,7 +394,7 @@ namespace{
                 }
                 break;
             case SSBGeometry::Type::TEXT:
-    #pragma message "Implent SSB text paths"
+#pragma message "Implent SSB text paths"
                 break;
         }
     }

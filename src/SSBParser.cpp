@@ -667,12 +667,6 @@ namespace{
                     ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBKaraoke(SSBKaraoke::Type::DURATION, time)));
                 else if(warnings)
                     throw_parse_error(line_i, "Invalid karaoke");
-            }else if(tags_token.compare(0, 6, "kskip=") == 0){
-                decltype(SSBKaraoke::time) time;
-                if(string_to_number(tags_token.substr(6), time))
-                    ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBKaraoke(SSBKaraoke::Type::SKIP, time)));
-                else if(warnings)
-                    throw_parse_error(line_i, "Invalid karaoke skip");
             }else if(tags_token.compare(0, 5, "kset=") == 0){
                 decltype(SSBKaraoke::time) time;
                 if(string_to_number(tags_token.substr(5), time))

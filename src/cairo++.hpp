@@ -43,20 +43,44 @@ class CairoImage{
 };
 
 #ifdef _WIN32
-#   include <windows.h>
-#else
-#   error "Not implented"
-#endif
+#include <windows.h>
+#include "textconv.hpp"
 
 class NativeFont{
     private:
-#ifdef _WIN32
-    HDC dc;
-    HFONT font;
-    HGDIOBJ old_font;
+        HDC dc;
+        HFONT font;
+        HGDIOBJ old_font;
+    public:
+        // Ctor & dtor
+        NativeFont(std::string& family, bool bold, bool italic, bool underline, bool strikeout, unsigned short int size){
+            this->dc = CreateCompatibleDC(NULL);
+            SetMapMode(this->dc, MM_TEXT);
+            SetBkMode(this->dc, TRANSPARENT);
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+            LOGFONTW lf = {0};
+#pragma GCC diagnostic pop
+            lf.lfHeight = size << 6;    // Multiply with 64
+            lf.lfWeight = bold ? FW_BOLD : FW_NORMAL;
+            lf.lfItalic = italic;
+            lf.lfUnderline = underline;
+            lf.lfStrikeOut = strikeout;
+            lf.lfCharSet = DEFAULT_CHARSET;
+            lf.lfOutPrecision = OUT_TT_PRECIS;
+            lf.lfQuality = ANTIALIASED_QUALITY;
+            lf.lfFaceName[utf8_to_utf16(family).copy(lf.lfFaceName, 31)] = L'\0';
+            this->font = CreateFontIndirectW(&lf);
+            this->old_font = SelectObject(this->dc, this->font);
+        }
+        ~NativeFont(){
+            SelectObject(this->dc, this->old_font);
+            DeleteObject(this->font);
+            DeleteDC(this->dc);
+        }
+        NativeFont(const NativeFont&) = delete;
+        NativeFont& operator=(const NativeFont&) = delete;
+};
 #else
 #   error "Not implented"
 #endif
-    public:
-
-};
