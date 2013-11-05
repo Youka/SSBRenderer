@@ -24,8 +24,8 @@ namespace{
         double font_space_h = 0, font_space_v = 0;
         // Line
         double line_width = 2;
-        cairo_line_join_t join = CAIRO_LINE_JOIN_ROUND;
-        cairo_line_cap_t cap = CAIRO_LINE_CAP_ROUND;
+        cairo_line_join_t line_join = CAIRO_LINE_JOIN_ROUND;
+        cairo_line_cap_t line_cap = CAIRO_LINE_CAP_ROUND;
         double dash_offset = 0;
         std::vector<double> dashes;
         // Geometry
@@ -59,6 +59,117 @@ namespace{
     // Updates render state palette by SSB tag
     void tag_to_render_state_palette(SSBTag* tag, RenderStatePalette& rsp){
         switch(tag->type){
+            case SSBTag::Type::FONT_FAMILY:
+                rsp.font_family = dynamic_cast<SSBFontFamily*>(tag)->family;
+                break;
+            case SSBTag::Type::FONT_STYLE:
+                {
+                    SSBFontStyle* font_style = dynamic_cast<SSBFontStyle*>(tag);
+                    rsp.bold = font_style->bold;
+                    rsp.italic = font_style->italic;
+                    rsp.underline = font_style->underline;
+                    rsp.strikeout = font_style->strikeout;
+                }
+                break;
+            case SSBTag::Type::FONT_SIZE:
+                rsp.font_size = dynamic_cast<SSBFontSize*>(tag)->size;
+                break;
+            case SSBTag::Type::FONT_SPACE:
+                {
+                    SSBFontSpace* font_space = dynamic_cast<SSBFontSpace*>(tag);
+                    switch(font_space->type){
+                        case SSBFontSpace::Type::HORIZONTAL: rsp.font_space_h = font_space->x; break;
+                        case SSBFontSpace::Type::VERTICAL: rsp.font_space_v = font_space->y; break;
+                        case SSBFontSpace::Type::BOTH: rsp.font_space_h = font_space->x; rsp.font_space_v = font_space->y; break;
+                    }
+                }
+                break;
+            case SSBTag::Type::LINE_WIDTH:
+                rsp.line_width = dynamic_cast<SSBLineWidth*>(tag)->width;
+                break;
+            case SSBTag::Type::LINE_STYLE:
+                {
+                    SSBLineStyle* line_style = dynamic_cast<SSBLineStyle*>(tag);
+                    switch(line_style->join){
+                        case SSBLineStyle::Join::MITER: rsp.line_join = CAIRO_LINE_JOIN_MITER; break;
+                        case SSBLineStyle::Join::BEVEL: rsp.line_join = CAIRO_LINE_JOIN_BEVEL; break;
+                        case SSBLineStyle::Join::ROUND: rsp.line_join = CAIRO_LINE_JOIN_ROUND; break;
+                    }
+                    switch(line_style->cap){
+                        case SSBLineStyle::Cap::FLAT: rsp.line_cap = CAIRO_LINE_CAP_BUTT; break;
+                        case SSBLineStyle::Cap::SQUARE: rsp.line_cap = CAIRO_LINE_CAP_SQUARE; break;
+                        case SSBLineStyle::Cap::ROUND: rsp.line_cap = CAIRO_LINE_CAP_ROUND; break;
+                    }
+                }
+                break;
+            case SSBTag::Type::LINE_DASH:
+                {
+                    SSBLineDash* line_dash = dynamic_cast<SSBLineDash*>(tag);
+                    rsp.dash_offset = line_dash->offset;
+                    rsp.dashes.resize(line_dash->dashes.size());
+                    std::copy(line_dash->dashes.begin(), line_dash->dashes.end(), rsp.dashes.begin());
+                }
+                break;
+            case SSBTag::Type::MODE:
+                rsp.mode = dynamic_cast<SSBMode*>(tag)->mode;
+                break;
+            case SSBTag::Type::DEFORM:
+                {
+                    SSBDeform* deform = dynamic_cast<SSBDeform*>(tag);
+                    rsp.deform_x = deform->formula_x;
+                    rsp.deform_y = deform->formula_y;
+                }
+                break;
+            case SSBTag::Type::POSITION:
+                {
+                    SSBPosition* pos = dynamic_cast<SSBPosition*>(tag);
+                    rsp.pos_x = pos->x;
+                    rsp.pos_y = pos->y;
+                }
+                break;
+            case SSBTag::Type::ALIGN:
+                rsp.align = dynamic_cast<SSBAlign*>(tag)->align;
+                break;
+            case SSBTag::Type::MARGIN:
+                {
+                    SSBMargin* margin = dynamic_cast<SSBMargin*>(tag);
+                    switch(margin->type){
+                        case SSBMargin::Type::HORIZONTAL: rsp.margin_h = margin->x; break;
+                        case SSBMargin::Type::VERTICAL: rsp.margin_v = margin->y; break;
+                        case SSBMargin::Type::BOTH: rsp.margin_h = margin->x; rsp.margin_v = margin->y; break;
+                    }
+                }
+                break;
+            case SSBTag::Type::DIRECTION:
+                rsp.direction_angle = dynamic_cast<SSBDirection*>(tag)->angle;
+                break;
+            case SSBTag::Type::IDENTITY:
+                cairo_matrix_init_identity(&rsp.matrix);
+                break;
+            case SSBTag::Type::TRANSLATE:
+                {
+                    SSBTranslate* translation = dynamic_cast<SSBTranslate*>(tag);
+                    switch(translation->type){
+                        case SSBTranslate::Type::HORIZONTAL: cairo_matrix_translate(&rsp.matrix, translation->x, 0); break;
+                        case SSBTranslate::Type::VERTICAL: cairo_matrix_translate(&rsp.matrix, 0, translation->y); break;
+                        case SSBTranslate::Type::BOTH: cairo_matrix_translate(&rsp.matrix, translation->x, translation->y); break;
+                    }
+                }
+                break;
+            case SSBTag::Type::SCALE:
+                {
+                    SSBScale* scale = dynamic_cast<SSBScale*>(tag);
+                    switch(scale->type){
+                        case SSBScale::Type::HORIZONTAL: cairo_matrix_scale(&rsp.matrix, scale->x, 0); break;
+                        case SSBScale::Type::VERTICAL: cairo_matrix_scale(&rsp.matrix, 0, scale->y); break;
+                        case SSBScale::Type::BOTH: cairo_matrix_scale(&rsp.matrix, scale->x, scale->y); break;
+                    }
+                }
+                break;
+            /*case SSBTag::Type:::
+                rsp. = dynamic_cast<SSB*>(tag);
+                break;*/
+
 #pragma message "Implent updater for render state palette by tag"
         }
     }

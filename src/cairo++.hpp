@@ -42,9 +42,21 @@ class CairoImage{
         }
 };
 
+#ifdef _WIN32
+#   include <windows.h>
+#else
+#   error "Not implented"
+#endif
+
 class NativeFont{
     private:
-
+#ifdef _WIN32
+    HDC dc;
+    HFONT font;
+    HGDIOBJ old_font;
+#else
+#   error "Not implented"
+#endif
     public:
 
 };
