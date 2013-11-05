@@ -321,6 +321,13 @@ class SSBBlur : public SSBTag{
         }
 };
 
+// Clip state
+class SSBClip : public SSBTag{
+    public:
+        enum class Mode{CLEAR, SET, UNSET, INSIDE, OUTSIDE} mode;
+        SSBClip(Mode mode) : SSBTag(SSBTag::Type::CLIP), mode(mode){}
+};
+
 // Fade state
 class SSBFade : public SSBTag{
     public:
@@ -334,13 +341,6 @@ class SSBFade : public SSBTag{
                 case Type::BOTH: this->in = this->out = inout; break;
             }
         }
-};
-
-// Clip state
-class SSBClip : public SSBTag{
-    public:
-        enum class Mode{CLEAR, SET, UNSET, INSIDE, OUTSIDE} mode;
-        SSBClip(Mode mode) : SSBTag(SSBTag::Type::CLIP), mode(mode){}
 };
 
 // Animation state

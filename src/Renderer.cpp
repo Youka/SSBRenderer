@@ -21,25 +21,40 @@ namespace{
         std::string font_family = "Arial";
         bool bold = false, italic = false, underline = false, strikeout = false;
         unsigned short int font_size = 30;
-        SSBCoord font_space_h = 0, font_space_v = 0;
+        double font_space_h = 0, font_space_v = 0;
         // Line
-        SSBCoord line_width = 2;
+        double line_width = 2;
         cairo_line_join_t join = CAIRO_LINE_JOIN_ROUND;
         cairo_line_cap_t cap = CAIRO_LINE_CAP_ROUND;
-        SSBCoord dash_offset = 0;
-        std::vector<SSBCoord> dashes;
+        double dash_offset = 0;
+        std::vector<double> dashes;
         // Geometry
         SSBMode::Mode mode = SSBMode::Mode::FILL;
         std::string deform_x, deform_y;
         // Position
-        SSBCoord pos_x = std::numeric_limits<SSBCoord>::max(), pos_y = std::numeric_limits<SSBCoord>::max();
+        double pos_x = std::numeric_limits<double>::max(), pos_y = std::numeric_limits<double>::max();
         SSBAlign::Align align = SSBAlign::Align::CENTER_BOTTOM;
-        SSBCoord margin_h = 0, margin_v = 0;
+        double margin_h = 0, margin_v = 0;
         double direction_angle = 0;
         // Transformation
         cairo_matrix_t matrix = {1, 0, 0, 1, 0, 0};
         // Color
-#pragma message "Implent render state palette"
+        std::vector<SSBColor::RGB> colors;
+        std::vector<double> alphas;
+        std::string texture;
+        double texture_x = 0, texture_y = 0;
+        cairo_extend_t wrap_style = CAIRO_EXTEND_NONE;
+        std::vector<SSBColor::RGB> line_colors;
+        std::vector<double> line_alphas;
+        std::string line_texture;
+        double line_texture_x = 0, line_texture_y = 0;
+        cairo_extend_t line_wrap_style = CAIRO_EXTEND_NONE;
+        // Rastering
+        SSBBlend::Mode blend_mode = SSBBlend::Mode::OVER;
+        double blur_h = 0, blur_v = 0;
+        SSBClip::Mode clip_mode = SSBClip::Mode::CLEAR;
+        // Karaoke
+        long int karaoke = -1;
     };
     // Updates render state palette by SSB tag
     void tag_to_render_state_palette(SSBTag* tag, RenderStatePalette& rsp){

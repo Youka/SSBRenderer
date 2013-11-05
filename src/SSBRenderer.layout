@@ -1,31 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <CodeBlocks_layout_file>
 	<ActiveTarget name="Release - Windows" />
-	<File name="SSBData.hpp" open="0" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="2547" topLine="101" />
-		</Cursor>
-	</File>
-	<File name="SSBParser.cpp" open="0" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="10056" topLine="216" />
-		</Cursor>
-	</File>
-	<File name="FileReader.hpp" open="0" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="848" topLine="6" />
-		</Cursor>
-	</File>
-	<File name="Renderer.cpp" open="1" top="0" tabpos="2" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="1075" topLine="102" />
-		</Cursor>
-	</File>
-	<File name="Renderer.hpp" open="0" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="390" topLine="0" />
-		</Cursor>
-	</File>
 	<File name="SSBParser.hpp" open="0" top="0" tabpos="2" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
 			<Cursor1 position="279" topLine="0" />
@@ -36,9 +11,9 @@
 			<Cursor1 position="1304" topLine="15" />
 		</Cursor>
 	</File>
-	<File name="cairo++.hpp" open="1" top="1" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="cairo++.hpp" open="0" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="1277" topLine="22" />
+			<Cursor1 position="1463" topLine="21" />
 		</Cursor>
 	</File>
 	<File name="file_info.hpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
@@ -46,9 +21,19 @@
 			<Cursor1 position="263" topLine="0" />
 		</Cursor>
 	</File>
+	<File name="SSBData.hpp" open="1" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="12481" topLine="0" />
+		</Cursor>
+	</File>
 	<File name="module.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
 			<Cursor1 position="326" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="SSBParser.cpp" open="0" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="24223" topLine="441" />
 		</Cursor>
 	</File>
 	<File name="module.hpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
@@ -56,14 +41,29 @@
 			<Cursor1 position="64" topLine="0" />
 		</Cursor>
 	</File>
+	<File name="FileReader.hpp" open="0" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="848" topLine="6" />
+		</Cursor>
+	</File>
 	<File name="resources.rc" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
 			<Cursor1 position="327" topLine="6" />
 		</Cursor>
 	</File>
+	<File name="Renderer.cpp" open="1" top="1" tabpos="2" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="7637" topLine="0" />
+		</Cursor>
+	</File>
 	<File name="textconv.hpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
 			<Cursor1 position="367" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="Renderer.hpp" open="0" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="390" topLine="0" />
 		</Cursor>
 	</File>
 	<File name="user.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
