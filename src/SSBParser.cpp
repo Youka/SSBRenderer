@@ -63,7 +63,8 @@ namespace{
                 hex_string_to_number(src.substr(pos1+1), dst4);
     }
     // Parses SSB time and converts to milliseconds
-    inline bool parse_time(std::string& s, unsigned long long& t){
+    template<typename T>
+    inline bool parse_time(std::string& s, T& t){
         // Test for empty timestamp
         if(s.empty())
             return false;

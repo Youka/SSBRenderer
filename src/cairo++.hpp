@@ -17,20 +17,19 @@ class CairoImage{
             cairo_surface_destroy(this->surface);
         }
         // Copy
+        CairoImage(const CairoImage& image){
+            this->surface = cairo_surface_reference(image.surface);
+            this->context = image.context ? cairo_reference(image.context) : nullptr;
+        }
         CairoImage& operator=(const CairoImage& image){
             // Free old content
-            if(this->context){
-                cairo_destroy(this->context); this->context = nullptr;
-            }
+            if(this->context)
+                cairo_destroy(this->context);
             cairo_surface_destroy(this->surface);
             // Assign new content
-            if(image.context)
-                this->context = cairo_reference(image.context);
             this->surface = cairo_surface_reference(image.surface);
+            this->context = image.context ? cairo_reference(image.context) : nullptr;
             return *this;
-        }
-        CairoImage(const CairoImage& image){
-            *this = image;
         }
         // Cast
         operator cairo_surface_t*() const{
@@ -41,4 +40,11 @@ class CairoImage{
                 this->context = cairo_create(this->surface);
             return this->context;
         }
+};
+
+class NativeFont{
+    private:
+
+    public:
+
 };

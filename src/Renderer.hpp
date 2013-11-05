@@ -15,13 +15,8 @@ class Renderer{
         SSBData ssb;
         // Path buffer
         CairoImage path_buffer;
-        // Image cache
-        struct{
-            SSBGeometry* pgeometry;
-            CairoImage image;
-        }cache;
     public:
-        // Frame meta informations saving + SSB parsing + path buffer creation + image cache creation
+        // Frame meta informations saving + SSB parsing + path buffer creation
         Renderer(int width, int height, Colorspace format, std::string& script, bool warnings);
         // Change frame meta informations
         void set_target(int width, int height, Colorspace format);
