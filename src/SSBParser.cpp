@@ -728,7 +728,7 @@ namespace{
                     // Get complete segment
                         else{
                             // Put token back in stream for rereading
-                            path_stream.seekg(-static_cast<long long int>(path_token.length()), std::istringstream::cur);
+                            path_stream.seekg(-static_cast<long int>(path_token.length()), std::istringstream::cur);
                             // Parse segment
                             switch(segments[0].type){
                                 case SSBPath::SegmentType::MOVE_TO:

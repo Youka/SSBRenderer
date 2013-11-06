@@ -55,7 +55,7 @@ Render on image.
 @param pitch Frame row pitch
 @param start_ms Start time of frame in milliseconds
 */
-DLL_EXPORT void ssb_render(ssb_renderer renderer, unsigned char* image, int pitch, unsigned long long start_ms);
+DLL_EXPORT void ssb_render(ssb_renderer renderer, unsigned char* image, int pitch, unsigned long int start_ms);
 
 /**
 Destroy renderer handle.

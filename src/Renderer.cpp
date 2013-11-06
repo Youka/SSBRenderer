@@ -59,7 +59,7 @@ namespace{
         long int karaoke_start = -1, karaoke_duration = 0;
     };
     // Updates render state palette by SSB tag
-    inline void tag_to_render_state_palette(SSBTag* tag, unsigned long long start_ms, unsigned long long end_ms, unsigned long long cur_ms, RenderStatePalette& rsp){
+    inline void tag_to_render_state_palette(SSBTag* tag, SSBTime inner_ms, SSBTime inner_duration, RenderStatePalette& rsp){
         switch(tag->type){
             case SSBTag::Type::FONT_FAMILY:
                 rsp.font_family = dynamic_cast<SSBFontFamily*>(tag)->family;
@@ -332,12 +332,11 @@ namespace{
             case SSBTag::Type::FADE:
                 {
                     SSBFade* fade = dynamic_cast<SSBFade*>(tag);
-                    decltype(SSBFade::in) inner_ms = cur_ms - start_ms;
                     double progress = -1;
                     if(inner_ms < fade->in)
                         progress = static_cast<double>(inner_ms) / fade->in;
                     else{
-                        decltype(SSBFade::in) inv_inner_ms = end_ms - start_ms - inner_ms;
+                        decltype(inner_ms) inv_inner_ms = inner_duration - inner_ms;
                         if(inv_inner_ms < fade->out)
                             progress = static_cast<double>(inv_inner_ms) / fade->out;
                     }
@@ -421,7 +420,7 @@ namespace{
     }
 }
 
-void Renderer::render(unsigned char* image, int pitch, unsigned long long start_ms) noexcept{
+void Renderer::render(unsigned char* image, int pitch, unsigned long int start_ms) noexcept{
     // Iterate through SSB events
     for(SSBEvent& event : this->ssb.events)
         // Process active SSB event
@@ -432,7 +431,7 @@ void Renderer::render(unsigned char* image, int pitch, unsigned long long start_
             for(std::shared_ptr<SSBObject>& obj : event.objects)
                 if(obj->type == SSBObject::Type::TAG){
                     // Apply tag to render state palette
-                    tag_to_render_state_palette(dynamic_cast<SSBTag*>(obj.get()), event.start_ms, event.end_ms, start_ms, rsp);
+                    tag_to_render_state_palette(dynamic_cast<SSBTag*>(obj.get()), start_ms - event.start_ms, event.end_ms - event.start_ms, rsp);
                 }else{  // obj->type == SSBObject::Type::GEOMETRY
                     // Set transformations
 

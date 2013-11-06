@@ -9,6 +9,7 @@
 using SSBCoord = float;
 // Time precision
 using SSBTime = unsigned long int;
+using SSBDuration = long int;
 
 // Any state or geometry for rendering
 class SSBObject{
@@ -346,10 +347,10 @@ class SSBFade : public SSBTag{
 // Animation state
 class SSBAnimate : public SSBTag{
     public:
-        SSBTime start, end; // 'Unset' in case of maximum values
+        SSBDuration start, end; // 'Unset' in case of maximum values
         std::string progress_formula;   // 'Unset' in case of emtpiness
         std::vector<std::shared_ptr<SSBObject>> objects;
-        SSBAnimate(SSBTime start, SSBTime end, std::string progress_formula, std::vector<std::shared_ptr<SSBObject>> objects) : SSBTag(SSBTag::Type::ANIMATE), start(start), end(end), progress_formula(progress_formula), objects(objects){}
+        SSBAnimate(SSBDuration start, SSBDuration end, std::string progress_formula, std::vector<std::shared_ptr<SSBObject>> objects) : SSBTag(SSBTag::Type::ANIMATE), start(start), end(end), progress_formula(progress_formula), objects(objects){}
 };
 
 // Karaoke state
@@ -404,7 +405,7 @@ struct SSBFrame{
 
 // Event with rendering data
 struct SSBEvent{
-    unsigned long long start_ms = 0, end_ms = 0;
+    SSBTime start_ms = 0, end_ms = 0;
     bool static_tags = true;
     std::vector<std::shared_ptr<SSBObject>> objects;
 };
