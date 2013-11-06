@@ -614,8 +614,8 @@ namespace{
                 auto last_animate_token = animate_tokens.back();
                 if(last_animate_token.length() >= 2 && last_animate_token.front() == '(' && last_animate_token.back() == ')'){
                     // Get animation values
-                    constexpr decltype(SSBAnimate::start) max_time = std::numeric_limits<decltype(SSBAnimate::start)>::max();
-                    decltype(SSBAnimate::start) start_time = max_time, end_time = max_time;
+                    constexpr decltype(SSBAnimate::start) max_duration = std::numeric_limits<decltype(SSBAnimate::start)>::max();
+                    decltype(SSBAnimate::start) start_time = max_duration, end_time = max_duration;
                     std::string progress_formula;
                     SSBEvent buffer_event;
                     bool success = true;

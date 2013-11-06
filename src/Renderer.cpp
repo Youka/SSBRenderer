@@ -34,7 +34,7 @@ namespace{
         SSBMode::Mode mode = SSBMode::Mode::FILL;
         std::string deform_x, deform_y;
         // Position
-        double pos_x = std::numeric_limits<double>::max(), pos_y = std::numeric_limits<double>::max();
+        double pos_x = std::numeric_limits<double>::max(), pos_y = std::numeric_limits<double>::max();  // 'Unset' in case of maximum values
         SSBAlign::Align align = SSBAlign::Align::CENTER_BOTTOM;
         double margin_h = 0, margin_v = 0;
         double direction_angle = 0;
@@ -347,8 +347,53 @@ namespace{
                 }
                 break;
             case SSBTag::Type::ANIMATE:
-                break;
+                {
+                    SSBAnimate* animate = dynamic_cast<SSBAnimate*>(tag);
+                    // Calculate start & end time
+                    SSBTime animate_start, animate_end;
+                    if(animate->start == std::numeric_limits<decltype(animate->start)>::max()){
+                        animate_start = 0;
+                        animate_end = inner_duration;
+                    }else{
+                        animate_start = animate->start >= 0 ? animate->start : inner_duration + animate->start;
+                        animate_end = animate->end > 0 ? animate->end : inner_duration + animate->end;
+                    }
+                    // Calculate progress
+                    double progress = inner_ms < animate_start ? 0 : (inner_ms > animate_end ? 1 : static_cast<double>(inner_ms - animate_start) / (animate_end - animate_start));
+                    // Recalulate progress by formula
+                    if(!animate->progress_formula.empty()){
+                        mu::Parser parser;
+                        parser.SetExpr(animate->progress_formula);
+                        parser.DefineConst("t", progress);
+                        try{
+                            progress = parser.Eval();
+                        }catch(...){}
+                    }
+                    // Interpolate tags & set to render state palette
+                    for(std::shared_ptr<SSBObject>& obj : animate->objects){
+                        SSBTag* animate_tag = dynamic_cast<SSBTag*>(obj.get());
+                        switch(animate_tag->type){
+                            case SSBTag::Type::FONT_FAMILY:
+                                if(progress > 0)
+                                    rsp.font_family = dynamic_cast<SSBFontFamily*>(animate_tag)->family;
+                                break;
+                            case SSBTag::Type::FONT_STYLE:
+                                if(progress > 0){
+                                    SSBFontStyle* font_style = dynamic_cast<SSBFontStyle*>(animate_tag);
+                                    rsp.bold = font_style->bold;
+                                    rsp.italic = font_style->italic;
+                                    rsp.underline = font_style->underline;
+                                    rsp.strikeout = font_style->strikeout;
+                                }
+                                break;
+                            case SSBTag::Type::FONT_SIZE:
+                                rsp.font_size = rsp.font_size + progress * (static_cast<short int>(dynamic_cast<SSBFontSize*>(animate_tag)->size) - rsp.font_size);
+                                break;
 #pragma message "Implent updater for render state palette by tag"
+                        }
+                    }
+                }
+                break;
         }
     }
     // Converts SSB geometry to cairo path
