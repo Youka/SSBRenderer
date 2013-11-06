@@ -663,15 +663,17 @@ namespace{
                     throw_parse_error(line_i, "Invalid animate");
             }else if(tags_token.compare(0, 2, "k=") == 0){
                 decltype(SSBKaraoke::time) time;
-                if(string_to_number(tags_token.substr(2), time))
+                if(string_to_number(tags_token.substr(2), time)){
+                    ssb_event.static_tags = false;
                     ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBKaraoke(SSBKaraoke::Type::DURATION, time)));
-                else if(warnings)
+                }else if(warnings)
                     throw_parse_error(line_i, "Invalid karaoke");
             }else if(tags_token.compare(0, 5, "kset=") == 0){
                 decltype(SSBKaraoke::time) time;
-                if(string_to_number(tags_token.substr(5), time))
+                if(string_to_number(tags_token.substr(5), time)){
+                    ssb_event.static_tags = false;
                     ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBKaraoke(SSBKaraoke::Type::SET, time)));
-                else if(warnings)
+                }else if(warnings)
                     throw_parse_error(line_i, "Invalid karaoke set");
             }else if(warnings)
                 throw_parse_error(line_i, "Invalid tag");

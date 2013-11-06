@@ -1,6 +1,7 @@
 #include "Renderer.hpp"
 #include "SSBParser.hpp"
 #include <limits>
+#include <algorithm>
 #include <muParser.h>
 #define M_PI 3.14159265358979323846  // Missing in math header because of strict ANSI C
 #define DEG_TO_RAD(x) (x / 180.0L * M_PI)
@@ -58,7 +59,7 @@ namespace{
         long int karaoke_start = -1, karaoke_duration = 0;
     };
     // Updates render state palette by SSB tag
-    void tag_to_render_state_palette(SSBTag* tag, RenderStatePalette& rsp){
+    inline void tag_to_render_state_palette(SSBTag* tag, unsigned long long start_ms, unsigned long long end_ms, unsigned long long cur_ms, RenderStatePalette& rsp){
         switch(tag->type){
             case SSBTag::Type::FONT_FAMILY:
                 rsp.font_family = dynamic_cast<SSBFontFamily*>(tag)->family;
@@ -328,11 +329,31 @@ namespace{
                     }
                 }
                 break;
+            case SSBTag::Type::FADE:
+                {
+                    SSBFade* fade = dynamic_cast<SSBFade*>(tag);
+                    decltype(SSBFade::in) inner_ms = cur_ms - start_ms;
+                    double progress = -1;
+                    if(inner_ms < fade->in)
+                        progress = static_cast<double>(inner_ms) / fade->in;
+                    else{
+                        decltype(SSBFade::in) inv_inner_ms = end_ms - start_ms - inner_ms;
+                        if(inv_inner_ms < fade->out)
+                            progress = static_cast<double>(inv_inner_ms) / fade->out;
+                    }
+                    if(progress >= 0){
+                        std::for_each(rsp.alphas.begin(), rsp.alphas.end(), [&progress](double& a){a *= progress;});
+                        std::for_each(rsp.line_alphas.begin(), rsp.line_alphas.end(), [&progress](double& a){a *= progress;});
+                    }
+                }
+                break;
+            case SSBTag::Type::ANIMATE:
+                break;
 #pragma message "Implent updater for render state palette by tag"
         }
     }
     // Converts SSB geometry to cairo path
-    void geometry_to_path(SSBGeometry* geometry, RenderStatePalette& rsp, cairo_t* ctx){
+    inline void geometry_to_path(SSBGeometry* geometry, RenderStatePalette& rsp, cairo_t* ctx){
         switch(geometry->type){
             case SSBGeometry::Type::POINTS:
                 if(rsp.line_width > 1)
@@ -411,7 +432,7 @@ void Renderer::render(unsigned char* image, int pitch, unsigned long long start_
             for(std::shared_ptr<SSBObject>& obj : event.objects)
                 if(obj->type == SSBObject::Type::TAG){
                     // Apply tag to render state palette
-                    tag_to_render_state_palette(dynamic_cast<SSBTag*>(obj.get()), rsp);
+                    tag_to_render_state_palette(dynamic_cast<SSBTag*>(obj.get()), event.start_ms, event.end_ms, start_ms, rsp);
                 }else{  // obj->type == SSBObject::Type::GEOMETRY
                     // Set transformations
 
