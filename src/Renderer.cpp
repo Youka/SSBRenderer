@@ -125,8 +125,17 @@ namespace{
             case SSBTag::Type::POSITION:
                 {
                     SSBPosition* pos = dynamic_cast<SSBPosition*>(tag);
-                    rsp.pos_x = pos->x;
-                    rsp.pos_y = pos->y;
+                    constexpr decltype(pos->x) max_pos = std::numeric_limits<decltype(pos->x)>::max();
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wfloat-equal"
+                    if(pos->x == max_pos && pos->y == max_pos){
+#pragma GCC diagnostic pop
+                        rsp.pos_x = std::numeric_limits<decltype(rsp.pos_x)>::max();
+                        rsp.pos_y = std::numeric_limits<decltype(rsp.pos_y)>::max();
+                    }else{
+                        rsp.pos_x = pos->x;
+                        rsp.pos_y = pos->y;
+                    }
                 }
                 break;
             case SSBTag::Type::ALIGN:
@@ -312,23 +321,6 @@ namespace{
             case SSBTag::Type::CLIP:
                 rsp.clip_mode = dynamic_cast<SSBClip*>(tag)->mode;
                 break;
-            case SSBTag::Type::KARAOKE:
-                {
-                    SSBKaraoke* karaoke = dynamic_cast<SSBKaraoke*>(tag);
-                    switch(karaoke->type){
-                        case SSBKaraoke::Type::DURATION:
-                            if(rsp.karaoke_start < 0)
-                                rsp.karaoke_start = 0;
-                            rsp.karaoke_start += rsp.karaoke_duration;
-                            rsp.karaoke_duration = karaoke->time;
-                            break;
-                        case SSBKaraoke::Type::SET:
-                            rsp.karaoke_start = karaoke->time;
-                            rsp.karaoke_duration = 0;
-                            break;
-                    }
-                }
-                break;
             case SSBTag::Type::FADE:
                 {
                     SSBFade* fade = dynamic_cast<SSBFade*>(tag);
@@ -351,7 +343,8 @@ namespace{
                     SSBAnimate* animate = dynamic_cast<SSBAnimate*>(tag);
                     // Calculate start & end time
                     SSBTime animate_start, animate_end;
-                    if(animate->start == std::numeric_limits<decltype(animate->start)>::max()){
+                    constexpr decltype(animate->start) max_duration = std::numeric_limits<decltype(animate->start)>::max();
+                    if(animate->start == max_duration && animate->end == max_duration){
                         animate_start = 0;
                         animate_end = inner_duration;
                     }else{
@@ -372,13 +365,14 @@ namespace{
                     // Interpolate tags & set to render state palette
                     for(std::shared_ptr<SSBObject>& obj : animate->objects){
                         SSBTag* animate_tag = dynamic_cast<SSBTag*>(obj.get());
+                        constexpr double threshold = 1;
                         switch(animate_tag->type){
                             case SSBTag::Type::FONT_FAMILY:
-                                if(progress > 0)
+                                if(progress >= threshold)
                                     rsp.font_family = dynamic_cast<SSBFontFamily*>(animate_tag)->family;
                                 break;
                             case SSBTag::Type::FONT_STYLE:
-                                if(progress > 0){
+                                if(progress >= threshold){
                                     SSBFontStyle* font_style = dynamic_cast<SSBFontStyle*>(animate_tag);
                                     rsp.bold = font_style->bold;
                                     rsp.italic = font_style->italic;
@@ -387,10 +381,132 @@ namespace{
                                 }
                                 break;
                             case SSBTag::Type::FONT_SIZE:
-                                rsp.font_size = rsp.font_size + progress * (static_cast<short int>(dynamic_cast<SSBFontSize*>(animate_tag)->size) - rsp.font_size);
+                                rsp.font_size += progress * (static_cast<short int>(dynamic_cast<SSBFontSize*>(animate_tag)->size) - rsp.font_size);
+                                break;
+                            case SSBTag::Type::FONT_SPACE:
+                                {
+                                    SSBFontSpace* font_space = dynamic_cast<SSBFontSpace*>(animate_tag);
+                                    switch(font_space->type){
+                                        case SSBFontSpace::Type::HORIZONTAL: rsp.font_space_h += progress * (font_space->x - rsp.font_space_h); break;
+                                        case SSBFontSpace::Type::VERTICAL: rsp.font_space_v += progress * (font_space->y - rsp.font_space_v); break;
+                                        case SSBFontSpace::Type::BOTH: rsp.font_space_h += progress * (font_space->x - rsp.font_space_h); rsp.font_space_v += progress * (font_space->y - rsp.font_space_v); break;
+                                    }
+                                }
+                                break;
+                            case SSBTag::Type::LINE_WIDTH:
+                                rsp.line_width += progress * (dynamic_cast<SSBLineWidth*>(animate_tag)->width - rsp.line_width);
+                                break;
+                            case SSBTag::Type::LINE_STYLE:
+                                if(progress >= threshold){
+                                    SSBLineStyle* line_style = dynamic_cast<SSBLineStyle*>(animate_tag);
+                                    switch(line_style->join){
+                                        case SSBLineStyle::Join::MITER: rsp.line_join = CAIRO_LINE_JOIN_MITER; break;
+                                        case SSBLineStyle::Join::BEVEL: rsp.line_join = CAIRO_LINE_JOIN_BEVEL; break;
+                                        case SSBLineStyle::Join::ROUND: rsp.line_join = CAIRO_LINE_JOIN_ROUND; break;
+                                    }
+                                    switch(line_style->cap){
+                                        case SSBLineStyle::Cap::FLAT: rsp.line_cap = CAIRO_LINE_CAP_BUTT; break;
+                                        case SSBLineStyle::Cap::SQUARE: rsp.line_cap = CAIRO_LINE_CAP_SQUARE; break;
+                                        case SSBLineStyle::Cap::ROUND: rsp.line_cap = CAIRO_LINE_CAP_ROUND; break;
+                                    }
+                                }
+                                break;
+                            case SSBTag::Type::LINE_DASH:
+                                {
+                                    SSBLineDash* line_dash = dynamic_cast<SSBLineDash*>(animate_tag);
+                                    rsp.dash_offset += progress * (line_dash->offset - rsp.dash_offset);
+                                    if(line_dash->dashes.size() == rsp.dashes.size())
+                                        std::transform(rsp.dashes.begin(), rsp.dashes.end(), line_dash->dashes.begin(), rsp.dashes.begin(), [&progress](const double& dst, decltype(line_dash->dashes.front()) src){return dst + progress * (src - dst);});
+                                }
+                                break;
+                            case SSBTag::Type::MODE:
+                                if(progress >= threshold)
+                                    rsp.mode = dynamic_cast<SSBMode*>(animate_tag)->mode;
+                                break;
+                            case SSBTag::Type::DEFORM:
+                                // Doesn't exist in an animation
+                                break;
+                            case SSBTag::Type::POSITION:
+                                {
+                                    SSBPosition* pos = dynamic_cast<SSBPosition*>(animate_tag);
+                                    constexpr decltype(pos->x) max_pos = std::numeric_limits<decltype(pos->x)>::max();
+                                    constexpr decltype(rsp.pos_x) rsp_max_pos = std::numeric_limits<decltype(rsp.pos_x)>::max();
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wfloat-equal"
+                                    if(rsp.pos_x != rsp_max_pos && rsp.pos_y != rsp_max_pos && pos->x != max_pos && pos->y != max_pos){
+#pragma GCC diagnostic pop
+                                        rsp.pos_x += progress * (pos->x - rsp.pos_x);
+                                        rsp.pos_y += progress * (pos->y - rsp.pos_y);
+                                    }
+                                }
+                                break;
+                            case SSBTag::Type::ALIGN:
+                                if(progress >= threshold)
+                                    rsp.align = dynamic_cast<SSBAlign*>(animate_tag)->align;
+                                break;
+                            case SSBTag::Type::MARGIN:
+                                {
+                                    SSBMargin* margin = dynamic_cast<SSBMargin*>(animate_tag);
+                                    switch(margin->type){
+                                        case SSBMargin::Type::HORIZONTAL: rsp.margin_h += progress * (margin->x - rsp.margin_h); break;
+                                        case SSBMargin::Type::VERTICAL: rsp.margin_v += progress * (margin->y - rsp.margin_v); break;
+                                        case SSBMargin::Type::BOTH: rsp.margin_h += progress * (margin->x - rsp.margin_h); rsp.margin_v += progress * (margin->y - rsp.margin_v); break;
+                                    }
+                                }
+                                break;
+                            case SSBTag::Type::DIRECTION:
+                                rsp.direction_angle += progress * (dynamic_cast<SSBDirection*>(animate_tag)->angle - rsp.direction_angle);
+                                break;
+                            case SSBTag::Type::IDENTITY:
+                                if(progress >= threshold)
+                                    cairo_matrix_init_identity(&rsp.matrix);
                                 break;
 #pragma message "Implent updater for render state palette by tag"
+                            case SSBTag::Type::BLEND:
+                                if(progress >= threshold)
+                                    rsp.blend_mode = dynamic_cast<SSBBlend*>(animate_tag)->mode;
+                                break;
+                            case SSBTag::Type::BLUR:
+                                {
+                                    SSBBlur* blur = dynamic_cast<SSBBlur*>(animate_tag);
+                                    switch(blur->type){
+                                        case SSBBlur::Type::HORIZONTAL: rsp.blur_h += progress * (blur->x - rsp.blur_h); break;
+                                        case SSBBlur::Type::VERTICAL: rsp.blur_v += progress * (blur->y - rsp.blur_v); break;
+                                        case SSBBlur::Type::BOTH: rsp.blur_h += progress * (blur->x - rsp.blur_h); rsp.blur_v += progress * (blur->y - rsp.blur_v); break;
+                                    }
+                                }
+                                break;
+                            case SSBTag::Type::CLIP:
+                                if(progress >= threshold)
+                                rsp.clip_mode = dynamic_cast<SSBClip*>(animate_tag)->mode;
+                                break;
+                            case SSBTag::Type::FADE:
+                                // Doesn't exist in an animation
+                                break;
+                            case SSBTag::Type::ANIMATE:
+                                // Doesn't exist in an animation
+                                break;
+                            case SSBTag::Type::KARAOKE:
+                                // Doesn't exist in an animation
+                                break;
                         }
+                    }
+                }
+                break;
+            case SSBTag::Type::KARAOKE:
+                {
+                    SSBKaraoke* karaoke = dynamic_cast<SSBKaraoke*>(tag);
+                    switch(karaoke->type){
+                        case SSBKaraoke::Type::DURATION:
+                            if(rsp.karaoke_start < 0)
+                                rsp.karaoke_start = 0;
+                            rsp.karaoke_start += rsp.karaoke_duration;
+                            rsp.karaoke_duration = karaoke->time;
+                            break;
+                        case SSBKaraoke::Type::SET:
+                            rsp.karaoke_start = karaoke->time;
+                            rsp.karaoke_duration = 0;
+                            break;
                     }
                 }
                 break;

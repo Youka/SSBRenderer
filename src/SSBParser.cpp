@@ -289,8 +289,9 @@ namespace{
             }else if(tags_token.compare(0, 9, "position=") == 0){
                 std::string tag_value = tags_token.substr(9);
                 decltype(SSBPosition::x) x, y;
+                constexpr decltype(x) max_pos = std::numeric_limits<decltype(x)>::max();
                 if(tag_value.empty())
-                    ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBPosition(std::numeric_limits<decltype(x)>::max(), std::numeric_limits<decltype(y)>::max())));
+                    ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBPosition(max_pos, max_pos)));
                 else if(string_to_number_pair(tags_token.substr(9), x, y))
                     ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBPosition(x, y)));
                 else if(warnings)
