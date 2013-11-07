@@ -435,25 +435,25 @@ namespace{
                 if(hex_string_to_number(tag_value, rgb[0]) &&
                         rgb[0] <= 0xffffff)
                     ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBColor(target,
-                                                static_cast<decltype(SSBColor::RGB::r)>(rgb[0] >> 16) / 0xff,
-                                                static_cast<decltype(SSBColor::RGB::g)>(rgb[0] >> 8) / 0xff,
-                                                static_cast<decltype(SSBColor::RGB::b)>(rgb[0]) / 0xff
+                                                static_cast<decltype(RGB::r)>(rgb[0] >> 16) / 0xff,
+                                                static_cast<decltype(RGB::g)>(rgb[0] >> 8) / 0xff,
+                                                static_cast<decltype(RGB::b)>(rgb[0]) / 0xff
                                                                                        )));
                 else if(hex_string_to_number_quadruple(tag_value, rgb[0], rgb[1], rgb[2], rgb[3]) &&
                         rgb[0] <= 0xffffff && rgb[1] <= 0xffffff && rgb[2] <= 0xffffff && rgb[3] <= 0xffffff)
                     ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBColor(target,
-                                                static_cast<decltype(SSBColor::RGB::r)>(rgb[0] >> 16) / 0xff,
-                                                static_cast<decltype(SSBColor::RGB::g)>(rgb[0] >> 8) / 0xff,
-                                                static_cast<decltype(SSBColor::RGB::b)>(rgb[0]) / 0xff,
-                                                static_cast<decltype(SSBColor::RGB::r)>(rgb[1] >> 16) / 0xff,
-                                                static_cast<decltype(SSBColor::RGB::g)>(rgb[1] >> 8) / 0xff,
-                                                static_cast<decltype(SSBColor::RGB::b)>(rgb[1]) / 0xff,
-                                                static_cast<decltype(SSBColor::RGB::r)>(rgb[2] >> 16) / 0xff,
-                                                static_cast<decltype(SSBColor::RGB::g)>(rgb[2] >> 8) / 0xff,
-                                                static_cast<decltype(SSBColor::RGB::b)>(rgb[2]) / 0xff,
-                                                static_cast<decltype(SSBColor::RGB::r)>(rgb[3] >> 16) / 0xff,
-                                                static_cast<decltype(SSBColor::RGB::g)>(rgb[3] >> 8) / 0xff,
-                                                static_cast<decltype(SSBColor::RGB::b)>(rgb[3]) / 0xff
+                                                static_cast<decltype(RGB::r)>(rgb[0] >> 16) / 0xff,
+                                                static_cast<decltype(RGB::g)>(rgb[0] >> 8) / 0xff,
+                                                static_cast<decltype(RGB::b)>(rgb[0]) / 0xff,
+                                                static_cast<decltype(RGB::r)>(rgb[1] >> 16) / 0xff,
+                                                static_cast<decltype(RGB::g)>(rgb[1] >> 8) / 0xff,
+                                                static_cast<decltype(RGB::b)>(rgb[1]) / 0xff,
+                                                static_cast<decltype(RGB::r)>(rgb[2] >> 16) / 0xff,
+                                                static_cast<decltype(RGB::g)>(rgb[2] >> 8) / 0xff,
+                                                static_cast<decltype(RGB::b)>(rgb[2]) / 0xff,
+                                                static_cast<decltype(RGB::r)>(rgb[3] >> 16) / 0xff,
+                                                static_cast<decltype(RGB::g)>(rgb[3] >> 8) / 0xff,
+                                                static_cast<decltype(RGB::b)>(rgb[3]) / 0xff
                                                                                        )));
                 else if(warnings)
                     throw_parse_error(line_i, tags_token[0] == 'l' ? "Invalid line color" : "Invalid color");
@@ -470,14 +470,14 @@ namespace{
                 unsigned short int a[4];
                 if(hex_string_to_number(tag_value, a[0]) &&
                         a[0] <= 0xff)
-                    ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBAlpha(target, static_cast<decltype(SSBColor::RGB::r)>(a[0]) / 0xff)));
+                    ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBAlpha(target, static_cast<decltype(RGB::r)>(a[0]) / 0xff)));
                 else if(hex_string_to_number_quadruple(tag_value, a[0], a[1], a[2], a[3]) &&
                         a[0] <= 0xff && a[1] <= 0xff && a[2] <= 0xff && a[3] <= 0xff)
                     ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBAlpha(target,
-                                                static_cast<decltype(SSBColor::RGB::r)>(a[0]) / 0xff,
-                                                static_cast<decltype(SSBColor::RGB::r)>(a[1]) / 0xff,
-                                                static_cast<decltype(SSBColor::RGB::r)>(a[2]) / 0xff,
-                                                static_cast<decltype(SSBColor::RGB::r)>(a[3]) / 0xff
+                                                static_cast<decltype(RGB::r)>(a[0]) / 0xff,
+                                                static_cast<decltype(RGB::r)>(a[1]) / 0xff,
+                                                static_cast<decltype(RGB::r)>(a[2]) / 0xff,
+                                                static_cast<decltype(RGB::r)>(a[3]) / 0xff
                                                                                        )));
                 else if(warnings)
                     throw_parse_error(line_i, tags_token[0] == 'l' ? "Invalid line alpha" : "Invalid alpha");
@@ -577,23 +577,27 @@ namespace{
             }else if(tags_token.compare(0, 5, "fade=") == 0){
                 std::string tag_value = tags_token.substr(5);
                 decltype(SSBFade::in) in, out;
-                if(string_to_number(tag_value, in))
+                if(string_to_number(tag_value, in)){
+                    ssb_event.static_tags = false;
                     ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBFade(SSBFade::Type::BOTH, in)));
-                else if(string_to_number_pair(tag_value, in, out))
+                }else if(string_to_number_pair(tag_value, in, out)){
+                    ssb_event.static_tags = false;
                     ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBFade(in, out)));
-                else if(warnings)
+                }else if(warnings)
                     throw_parse_error(line_i, "Invalid fade");
             }else if(tags_token.compare(0, 8, "fade-in=") == 0){
                 decltype(SSBFade::in) in;
-                if(string_to_number(tags_token.substr(8), in))
+                if(string_to_number(tags_token.substr(8), in)){
+                    ssb_event.static_tags = false;
                     ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBFade(SSBFade::Type::INFADE, in)));
-                else if(warnings)
+                }else if(warnings)
                     throw_parse_error(line_i, "Invalid infade");
             }else if(tags_token.compare(0, 9, "fade-out=") == 0){
                 decltype(SSBFade::out) out;
-                if(string_to_number(tags_token.substr(9), out))
+                if(string_to_number(tags_token.substr(9), out)){
+                    ssb_event.static_tags = false;
                     ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBFade(SSBFade::Type::OUTFADE, out)));
-                else if(warnings)
+                }else if(warnings)
                     throw_parse_error(line_i, "Invalid outfade");
             }else if(tags_token.compare(0, 8, "animate=") == 0){
                 // Collect animation tokens (maximum: 4)

@@ -41,12 +41,12 @@ namespace{
         // Transformation
         cairo_matrix_t matrix = {1, 0, 0, 1, 0, 0};
         // Color
-        std::vector<SSBColor::RGB> colors = {{1,1,1}};
+        std::vector<RGB> colors = {{1,1,1}};
         std::vector<double> alphas = {1};
         std::string texture;
         double texture_x = 0, texture_y = 0;
         cairo_extend_t wrap_style = CAIRO_EXTEND_NONE;
-        std::vector<SSBColor::RGB> line_colors = {{0,0,0}};
+        std::vector<RGB> line_colors = {{0,0,0}};
         std::vector<double> line_alphas = {1};
         std::string line_texture;
         double line_texture_x = 0, line_texture_y = 0;
@@ -522,32 +522,98 @@ namespace{
                                     cairo_matrix_multiply(&rsp.matrix, &tmp_matrix, &rsp.matrix);
                                 }
                                 break;
-#pragma message "Implent updater for render state palette by tag"
+                            case SSBTag::Type::COLOR:
+                                {
+                                    SSBColor* color = dynamic_cast<SSBColor*>(animate_tag);
+                                    if(color->target == SSBColor::Target::FILL)
+                                        if(rsp.colors.size() == 1 && color->colors[1].r < 0)
+                                            rsp.colors[0] += (color->colors[0] - rsp.colors[0]) * progress;
+                                        else if(rsp.colors.size() == 4 && color->colors[1].r >= 0){
+                                            rsp.colors[0] += (color->colors[0] - rsp.colors[0]) * progress;
+                                            rsp.colors[1] += (color->colors[1] - rsp.colors[1]) * progress;
+                                            rsp.colors[2] += (color->colors[2] - rsp.colors[2]) * progress;
+                                            rsp.colors[3] += (color->colors[3] - rsp.colors[3]) * progress;
+                                        }else if(rsp.colors.size() == 1 && color->colors[1].r >= 0){
+                                            rsp.colors.resize(4);
+                                            std::fill(rsp.colors.begin(), rsp.colors.end(), rsp.colors[0]);
+                                            rsp.colors[0] += (color->colors[0] - rsp.colors[0]) * progress;
+                                            rsp.colors[1] += (color->colors[1] - rsp.colors[1]) * progress;
+                                            rsp.colors[2] += (color->colors[2] - rsp.colors[2]) * progress;
+                                            rsp.colors[3] += (color->colors[3] - rsp.colors[3]) * progress;
+                                        }else{
+                                            rsp.colors[0] += (color->colors[0] - rsp.colors[0]) * progress;
+                                            rsp.colors[1] += (color->colors[0] - rsp.colors[1]) * progress;
+                                            rsp.colors[2] += (color->colors[0] - rsp.colors[2]) * progress;
+                                            rsp.colors[3] += (color->colors[0] - rsp.colors[3]) * progress;
+                                        }
+                                    else
+                                        if(rsp.line_colors.size() == 1 && color->colors[1].r < 0)
+                                            rsp.line_colors[0] += (color->colors[0] - rsp.line_colors[0]) * progress;
+                                        else if(rsp.line_colors.size() == 4 && color->colors[1].r >= 0){
+                                            rsp.line_colors[0] += (color->colors[0] - rsp.line_colors[0]) * progress;
+                                            rsp.line_colors[1] += (color->colors[1] - rsp.line_colors[1]) * progress;
+                                            rsp.line_colors[2] += (color->colors[2] - rsp.line_colors[2]) * progress;
+                                            rsp.line_colors[3] += (color->colors[3] - rsp.line_colors[3]) * progress;
+                                        }else if(rsp.line_colors.size() == 1 && color->colors[1].r >= 0){
+                                            rsp.line_colors.resize(4);
+                                            std::fill(rsp.line_colors.begin(), rsp.line_colors.end(), rsp.line_colors[0]);
+                                            rsp.line_colors[0] += (color->colors[0] - rsp.line_colors[0]) * progress;
+                                            rsp.line_colors[1] += (color->colors[1] - rsp.line_colors[1]) * progress;
+                                            rsp.line_colors[2] += (color->colors[2] - rsp.line_colors[2]) * progress;
+                                            rsp.line_colors[3] += (color->colors[3] - rsp.line_colors[3]) * progress;
+                                        }else{
+                                            rsp.line_colors[0] += (color->colors[0] - rsp.line_colors[0]) * progress;
+                                            rsp.line_colors[1] += (color->colors[0] - rsp.line_colors[1]) * progress;
+                                            rsp.line_colors[2] += (color->colors[0] - rsp.line_colors[2]) * progress;
+                                            rsp.line_colors[3] += (color->colors[0] - rsp.line_colors[3]) * progress;
+                                        }
+                                }
+                                break;
                             case SSBTag::Type::ALPHA:
                                 {
                                     SSBAlpha* alpha = dynamic_cast<SSBAlpha*>(animate_tag);
-                                    /*if(alpha->target == SSBAlpha::Target::FILL)
-                                        if(alpha->alphas[1] < 0){
-                                            rsp.alphas.resize(1);
-                                            rsp.alphas[0] = alpha->alphas[0];
-                                        }else{
+                                    if(alpha->target == SSBAlpha::Target::FILL)
+                                        if(rsp.alphas.size() == 1 && alpha->alphas[1] < 0)
+                                            rsp.alphas[0] += progress * (alpha->alphas[0] - rsp.alphas[0]);
+                                        else if(rsp.alphas.size() == 4 && alpha->alphas[1] >= 0){
+                                            rsp.alphas[0] += progress * (alpha->alphas[0] - rsp.alphas[0]);
+                                            rsp.alphas[1] += progress * (alpha->alphas[1] - rsp.alphas[1]);
+                                            rsp.alphas[2] += progress * (alpha->alphas[2] - rsp.alphas[2]);
+                                            rsp.alphas[3] += progress * (alpha->alphas[3] - rsp.alphas[3]);
+                                        }else if(rsp.alphas.size() == 1 && alpha->alphas[1] >= 0){
                                             rsp.alphas.resize(4);
-                                            rsp.alphas[0] = alpha->alphas[0];
-                                            rsp.alphas[1] = alpha->alphas[1];
-                                            rsp.alphas[2] = alpha->alphas[2];
-                                            rsp.alphas[3] = alpha->alphas[3];
+                                            std::fill(rsp.alphas.begin(), rsp.alphas.end(), rsp.alphas[0]);
+                                            rsp.alphas[0] += progress * (alpha->alphas[0] - rsp.alphas[0]);
+                                            rsp.alphas[1] += progress * (alpha->alphas[1] - rsp.alphas[1]);
+                                            rsp.alphas[2] += progress * (alpha->alphas[2] - rsp.alphas[2]);
+                                            rsp.alphas[3] += progress * (alpha->alphas[3] - rsp.alphas[3]);
+                                        }else{
+                                            rsp.alphas[0] += progress * (alpha->alphas[0] - rsp.alphas[0]);
+                                            rsp.alphas[1] += progress * (alpha->alphas[0] - rsp.alphas[1]);
+                                            rsp.alphas[2] += progress * (alpha->alphas[0] - rsp.alphas[2]);
+                                            rsp.alphas[3] += progress * (alpha->alphas[0] - rsp.alphas[3]);
                                         }
                                     else
-                                        if(alpha->alphas[1] < 0){
-                                            rsp.line_alphas.resize(1);
-                                            rsp.line_alphas[0] = alpha->alphas[0];
-                                        }else{
+                                        if(rsp.line_alphas.size() == 1 && alpha->alphas[1] < 0)
+                                            rsp.line_alphas[0] += progress * (alpha->alphas[0] - rsp.line_alphas[0]);
+                                        else if(rsp.line_alphas.size() == 4 && alpha->alphas[1] >= 0){
+                                            rsp.line_alphas[0] += progress * (alpha->alphas[0] - rsp.line_alphas[0]);
+                                            rsp.line_alphas[1] += progress * (alpha->alphas[1] - rsp.line_alphas[1]);
+                                            rsp.line_alphas[2] += progress * (alpha->alphas[2] - rsp.line_alphas[2]);
+                                            rsp.line_alphas[3] += progress * (alpha->alphas[3] - rsp.line_alphas[3]);
+                                        }else if(rsp.line_alphas.size() == 1 && alpha->alphas[1] >= 0){
                                             rsp.line_alphas.resize(4);
-                                            rsp.line_alphas[0] = alpha->alphas[0];
-                                            rsp.line_alphas[1] = alpha->alphas[1];
-                                            rsp.line_alphas[2] = alpha->alphas[2];
-                                            rsp.line_alphas[3] = alpha->alphas[3];
-                                        }*/
+                                            std::fill(rsp.line_alphas.begin(), rsp.line_alphas.end(), rsp.line_alphas[0]);
+                                            rsp.line_alphas[0] += progress * (alpha->alphas[0] - rsp.line_alphas[0]);
+                                            rsp.line_alphas[1] += progress * (alpha->alphas[1] - rsp.line_alphas[1]);
+                                            rsp.line_alphas[2] += progress * (alpha->alphas[2] - rsp.line_alphas[2]);
+                                            rsp.line_alphas[3] += progress * (alpha->alphas[3] - rsp.line_alphas[3]);
+                                        }else{
+                                            rsp.line_alphas[0] += progress * (alpha->alphas[0] - rsp.line_alphas[0]);
+                                            rsp.line_alphas[1] += progress * (alpha->alphas[0] - rsp.line_alphas[1]);
+                                            rsp.line_alphas[2] += progress * (alpha->alphas[0] - rsp.line_alphas[2]);
+                                            rsp.line_alphas[3] += progress * (alpha->alphas[0] - rsp.line_alphas[3]);
+                                        }
                                 }
                                 break;
                             case SSBTag::Type::TEXTURE:

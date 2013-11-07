@@ -264,11 +264,27 @@ class SSBTransform : public SSBTag{
         SSBTransform(double xx, double yx, double xy, double yy, double x0, double y0) : SSBTag(SSBTag::Type::TRANSFORM), xx(xx), yx(yx), xy(xy), yy(yy), x0(x0), y0(y0){}
 };
 
+// RGB structure for colors
+struct RGB{
+    double r, g, b;
+    RGB operator-(const RGB& value){
+        return {this->r - value.r, this->g - value.g, this->b - value.b};
+    }
+    RGB operator*(const double& value){
+        return {this->r * value, this->g * value, this->b * value};
+    }
+    RGB& operator+=(const RGB& value){
+        this->r += value.r;
+        this->g += value.g;
+        this->b += value.b;
+        return *this;
+    }
+};
+
 // Color state
 class SSBColor : public SSBTag{
     public:
         enum class Target{FILL, LINE} target;
-        struct RGB{double r, g, b;};
         RGB colors[4];
         SSBColor(Target target, double r, double g, double b) : SSBTag(SSBTag::Type::COLOR), target(target), colors({{r, g, b}, {-1, -1, -1}, {-1, -1, -1}, {-1, -1, -1}}){}
         SSBColor(Target target, double r0, double g0, double b0, double r1, double g1, double b1, double r2, double g2, double b2, double r3, double g3, double b3) : SSBTag(SSBTag::Type::COLOR), target(target), colors({{r0, g0, b0}, {r1, g1, b1}, {r2, g2, b2}, {r3, g3, b3}}){}
