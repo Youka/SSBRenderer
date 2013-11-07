@@ -787,17 +787,34 @@ void Renderer::render(unsigned char* image, int pitch, unsigned long int start_m
 
                     // Apply geometry to image path
                     geometry_to_path(dynamic_cast<SSBGeometry*>(obj.get()), rsp, this->path_buffer);
+#pragma message "Implent SSB rendering"
+                    // Test
+                    if(this->format == Renderer::Colorspace::BGRX || this->format == Renderer::Colorspace::BGRA){
+                        cairo_surface_t* surface = cairo_image_surface_create_for_data(image, this->format == Renderer::Colorspace::BGRA ? CAIRO_FORMAT_ARGB32 : CAIRO_FORMAT_RGB24, this->width, this->height, pitch);
+                        cairo_t* context = cairo_create(surface);
+                        cairo_path_t* path = cairo_copy_path(this->path_buffer);
+                        cairo_matrix_t matrix = {1, 0, 0, 1, 0, 0};
+                        cairo_matrix_scale(&matrix, 1, -1);
+                        cairo_matrix_translate(&matrix, 0, -this->height);
+                        cairo_matrix_multiply(&matrix, &rsp.matrix, &matrix);
+                        cairo_set_matrix(context, &matrix);
+                        cairo_append_path(context, path);
+                        cairo_set_source_rgb(context, rsp.colors.front().r, rsp.colors.front().g, rsp.colors.front().b);
+                        cairo_fill(context);
+                        cairo_path_destroy(path);
+                        cairo_destroy(context);
+                        cairo_surface_destroy(surface);
+                    }
                     // Create image with fitting size
 
                     // Draw on image
 
                     // Clear image path
-
+                    cairo_new_path(this->path_buffer);
                     // Calculate image rectangle for blending on frame
 
                     // Blend image on frame
 
                 }
-#pragma message "Implent SSB rendering"
         }
 }
