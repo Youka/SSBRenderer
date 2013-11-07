@@ -171,8 +171,8 @@ namespace{
                 {
                     SSBScale* scale = dynamic_cast<SSBScale*>(tag);
                     switch(scale->type){
-                        case SSBScale::Type::HORIZONTAL: cairo_matrix_scale(&rsp.matrix, scale->x, 0); break;
-                        case SSBScale::Type::VERTICAL: cairo_matrix_scale(&rsp.matrix, 0, scale->y); break;
+                        case SSBScale::Type::HORIZONTAL: cairo_matrix_scale(&rsp.matrix, scale->x, 1); break;
+                        case SSBScale::Type::VERTICAL: cairo_matrix_scale(&rsp.matrix, 1, scale->y); break;
                         case SSBScale::Type::BOTH: cairo_matrix_scale(&rsp.matrix, scale->x, scale->y); break;
                     }
                 }
@@ -183,19 +183,19 @@ namespace{
                     switch(rotation->axis){
                         case SSBRotate::Axis::Z: cairo_matrix_rotate(&rsp.matrix, DEG_TO_RAD(rotation->angle1)); break;
                         case SSBRotate::Axis::XY:
-                        {
-                            double rad_x = DEG_TO_RAD(rotation->angle1), rad_y = DEG_TO_RAD(rotation->angle2);
-                            cairo_matrix_t tmp_matrix = {cos(rad_y), 0, sin(rad_x) * sin(rad_y), cos(rad_x), 0, 0};
-                            cairo_matrix_multiply(&rsp.matrix, &tmp_matrix, &rsp.matrix);
-                        }
-                        break;
+                            {
+                                double rad_x = DEG_TO_RAD(rotation->angle1), rad_y = DEG_TO_RAD(rotation->angle2);
+                                cairo_matrix_t tmp_matrix = {cos(rad_y), 0, sin(rad_x) * sin(rad_y), cos(rad_x), 0, 0};
+                                cairo_matrix_multiply(&rsp.matrix, &tmp_matrix, &rsp.matrix);
+                            }
+                            break;
                         case SSBRotate::Axis::YX:
-                        {
-                            double rad_y = DEG_TO_RAD(rotation->angle1), rad_x = DEG_TO_RAD(rotation->angle2);
-                            cairo_matrix_t tmp_matrix = {cos(rad_y), -sin(rad_x) * -sin(rad_y), 0, cos(rad_x), 0, 0};
-                            cairo_matrix_multiply(&rsp.matrix, &tmp_matrix, &rsp.matrix);
-                        }
-                        break;
+                            {
+                                double rad_y = DEG_TO_RAD(rotation->angle1), rad_x = DEG_TO_RAD(rotation->angle2);
+                                cairo_matrix_t tmp_matrix = {cos(rad_y), -sin(rad_x) * -sin(rad_y), 0, cos(rad_x), 0, 0};
+                                cairo_matrix_multiply(&rsp.matrix, &tmp_matrix, &rsp.matrix);
+                            }
+                            break;
                     }
                 }
                 break;
@@ -461,7 +461,130 @@ namespace{
                                 if(progress >= threshold)
                                     cairo_matrix_init_identity(&rsp.matrix);
                                 break;
+                            case SSBTag::Type::TRANSLATE:
+                                {
+                                    SSBTranslate* translation = dynamic_cast<SSBTranslate*>(animate_tag);
+                                    switch(translation->type){
+                                        case SSBTranslate::Type::HORIZONTAL: cairo_matrix_translate(&rsp.matrix, progress * translation->x, 0); break;
+                                        case SSBTranslate::Type::VERTICAL: cairo_matrix_translate(&rsp.matrix, 0, progress * translation->y); break;
+                                        case SSBTranslate::Type::BOTH: cairo_matrix_translate(&rsp.matrix, progress * translation->x, progress * translation->y); break;
+                                    }
+                                }
+                                break;
+                            case SSBTag::Type::SCALE:
+                                {
+                                    SSBScale* scale = dynamic_cast<SSBScale*>(animate_tag);
+                                    switch(scale->type){
+                                        case SSBScale::Type::HORIZONTAL: cairo_matrix_scale(&rsp.matrix, 1 + progress * (scale->x - 1), 1); break;
+                                        case SSBScale::Type::VERTICAL: cairo_matrix_scale(&rsp.matrix, 1, 1 + progress * (scale->y-1)); break;
+                                        case SSBScale::Type::BOTH: cairo_matrix_scale(&rsp.matrix, 1 + progress * (scale->x - 1), 1 + progress * (scale->y - 1)); break;
+                                    }
+                                }
+                                break;
+                            case SSBTag::Type::ROTATE:
+                                {
+                                    SSBRotate* rotation = dynamic_cast<SSBRotate*>(animate_tag);
+                                    switch(rotation->axis){
+                                        case SSBRotate::Axis::Z: cairo_matrix_rotate(&rsp.matrix, progress * DEG_TO_RAD(rotation->angle1)); break;
+                                        case SSBRotate::Axis::XY:
+                                            {
+                                                double rad_x = progress * DEG_TO_RAD(rotation->angle1), rad_y = progress * DEG_TO_RAD(rotation->angle2);
+                                                cairo_matrix_t tmp_matrix = {cos(rad_y), 0, sin(rad_x) * sin(rad_y), cos(rad_x), 0, 0};
+                                                cairo_matrix_multiply(&rsp.matrix, &tmp_matrix, &rsp.matrix);
+                                            }
+                                            break;
+                                        case SSBRotate::Axis::YX:
+                                            {
+                                                double rad_y = progress * DEG_TO_RAD(rotation->angle1), rad_x = progress * DEG_TO_RAD(rotation->angle2);
+                                                cairo_matrix_t tmp_matrix = {cos(rad_y), -sin(rad_x) * -sin(rad_y), 0, cos(rad_x), 0, 0};
+                                                cairo_matrix_multiply(&rsp.matrix, &tmp_matrix, &rsp.matrix);
+                                            }
+                                            break;
+                                    }
+                                }
+                                break;
+                            case SSBTag::Type::SHEAR:
+                                {
+                                    SSBShear* shear = dynamic_cast<SSBShear*>(animate_tag);
+                                    cairo_matrix_t tmp_matrix;
+                                    switch(shear->type){
+                                        case SSBShear::Type::HORIZONTAL: tmp_matrix = {1, 0, progress * shear->x, 1, 0, 0}; break;
+                                        case SSBShear::Type::VERTICAL: tmp_matrix = {1, progress * shear->y, 0, 1, 0, 0}; break;
+                                        case SSBShear::Type::BOTH: tmp_matrix = {1, progress * shear->y, progress * shear->x, 1, 0, 0}; break;
+                                    }
+                                    cairo_matrix_multiply(&rsp.matrix, &tmp_matrix, &rsp.matrix);
+                                }
+                                break;
+                            case SSBTag::Type::TRANSFORM:
+                                {
+                                    SSBTransform* transform = dynamic_cast<SSBTransform*>(animate_tag);
+                                    cairo_matrix_t tmp_matrix = { 1 + progress * (transform->xx - 1), progress * transform->yx, progress * transform->xy, 1 + progress * (transform->yy - 1), transform->x0, transform->y0};
+                                    cairo_matrix_multiply(&rsp.matrix, &tmp_matrix, &rsp.matrix);
+                                }
+                                break;
 #pragma message "Implent updater for render state palette by tag"
+                            case SSBTag::Type::ALPHA:
+                                {
+                                    SSBAlpha* alpha = dynamic_cast<SSBAlpha*>(animate_tag);
+                                    /*if(alpha->target == SSBAlpha::Target::FILL)
+                                        if(alpha->alphas[1] < 0){
+                                            rsp.alphas.resize(1);
+                                            rsp.alphas[0] = alpha->alphas[0];
+                                        }else{
+                                            rsp.alphas.resize(4);
+                                            rsp.alphas[0] = alpha->alphas[0];
+                                            rsp.alphas[1] = alpha->alphas[1];
+                                            rsp.alphas[2] = alpha->alphas[2];
+                                            rsp.alphas[3] = alpha->alphas[3];
+                                        }
+                                    else
+                                        if(alpha->alphas[1] < 0){
+                                            rsp.line_alphas.resize(1);
+                                            rsp.line_alphas[0] = alpha->alphas[0];
+                                        }else{
+                                            rsp.line_alphas.resize(4);
+                                            rsp.line_alphas[0] = alpha->alphas[0];
+                                            rsp.line_alphas[1] = alpha->alphas[1];
+                                            rsp.line_alphas[2] = alpha->alphas[2];
+                                            rsp.line_alphas[3] = alpha->alphas[3];
+                                        }*/
+                                }
+                                break;
+                            case SSBTag::Type::TEXTURE:
+                                if(progress >= threshold){
+                                    SSBTexture* texture = dynamic_cast<SSBTexture*>(animate_tag);
+                                    if(texture->target == SSBTexture::Target::FILL)
+                                        rsp.texture = texture->filename;
+                                    else
+                                        rsp.line_texture = texture->filename;
+                                }
+                                break;
+                            case SSBTag::Type::TEXFILL:
+                                {
+                                    SSBTexFill* texfill = dynamic_cast<SSBTexFill*>(animate_tag);
+                                    if(texfill->target == SSBTexFill::Target::FILL){
+                                        rsp.texture_x += progress * (texfill->x - rsp.texture_x);
+                                        rsp.texture_y += progress * (texfill->y - rsp.texture_x);
+                                        if(progress >= threshold)
+                                            switch(texfill->wrap){
+                                                case SSBTexFill::WrapStyle::CLAMP: rsp.wrap_style = CAIRO_EXTEND_NONE; break;
+                                                case SSBTexFill::WrapStyle::REPEAT: rsp.wrap_style = CAIRO_EXTEND_REPEAT; break;
+                                                case SSBTexFill::WrapStyle::MIRROR: rsp.wrap_style = CAIRO_EXTEND_REFLECT; break;
+                                                case SSBTexFill::WrapStyle::FLOW: rsp.wrap_style = CAIRO_EXTEND_PAD; break;
+                                            }
+                                    }else{
+                                        rsp.line_texture_x += progress * (texfill->x - rsp.line_texture_x);
+                                        rsp.line_texture_y += progress * (texfill->y - rsp.line_texture_x);
+                                        if(progress >= threshold)
+                                            switch(texfill->wrap){
+                                                case SSBTexFill::WrapStyle::CLAMP: rsp.line_wrap_style = CAIRO_EXTEND_NONE; break;
+                                                case SSBTexFill::WrapStyle::REPEAT: rsp.line_wrap_style = CAIRO_EXTEND_REPEAT; break;
+                                                case SSBTexFill::WrapStyle::MIRROR: rsp.line_wrap_style = CAIRO_EXTEND_REFLECT; break;
+                                                case SSBTexFill::WrapStyle::FLOW: rsp.line_wrap_style = CAIRO_EXTEND_PAD; break;
+                                            }
+                                    }
+                                }
+                                break;
                             case SSBTag::Type::BLEND:
                                 if(progress >= threshold)
                                     rsp.blend_mode = dynamic_cast<SSBBlend*>(animate_tag)->mode;
@@ -478,7 +601,7 @@ namespace{
                                 break;
                             case SSBTag::Type::CLIP:
                                 if(progress >= threshold)
-                                rsp.clip_mode = dynamic_cast<SSBClip*>(animate_tag)->mode;
+                                    rsp.clip_mode = dynamic_cast<SSBClip*>(animate_tag)->mode;
                                 break;
                             case SSBTag::Type::FADE:
                                 // Doesn't exist in an animation
