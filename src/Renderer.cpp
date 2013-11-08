@@ -705,15 +705,18 @@ namespace{
     inline void geometry_to_path(SSBGeometry* geometry, RenderStatePalette& rsp, cairo_t* ctx){
         switch(geometry->type){
             case SSBGeometry::Type::POINTS:
-                if(rsp.line_width > 1)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wfloat-equal"
+                if(rsp.line_width == 1)
+#pragma GCC diagnostic pop
+                    for(const Point& point : dynamic_cast<SSBPoints*>(geometry)->points)
+                        cairo_rectangle(ctx, point.x, point.y, rsp.line_width, rsp.line_width);   // Creates a move + lines + close = closed shape
+                else
                     for(const Point& point : dynamic_cast<SSBPoints*>(geometry)->points){
                         cairo_new_sub_path(ctx);
                         cairo_arc(ctx, point.x, point.y, rsp.line_width / 2, 0, M_PI * 2);
                         cairo_close_path(ctx);
                     }
-                else
-                    for(const Point& point : dynamic_cast<SSBPoints*>(geometry)->points)
-                        cairo_rectangle(ctx, point.x, point.y, rsp.line_width, rsp.line_width);   // Creates a move + lines + close = closed shape
                 break;
             case SSBGeometry::Type::PATH:
                 {

@@ -606,9 +606,11 @@ namespace{
                 std::string animate_token;
                 for(unsigned char i = 0; std::getline(animate_stream, animate_token, ',') && i < 4; ++i)
                     if(!animate_token.empty() && animate_token.front() == '('){
-                        std::string animate_rest;
-                        std::getline(animate_stream, animate_rest);
-                        animate_token += animate_rest;
+                        if(animate_stream.unget() && animate_stream.get() == ','){
+                            std::string animate_rest;
+                            std::getline(animate_stream, animate_rest);
+                            animate_token += ',' + animate_rest;
+                        }
                         while(animate_token.back() != ')' && std::getline(tags_stream, tags_token, ';'))
                             animate_token += ';' + tags_token;
                         animate_tokens.push_back(animate_token);
@@ -616,8 +618,7 @@ namespace{
                     }else
                         animate_tokens.push_back(animate_token);
                 // Check last animation token for brackets
-                auto last_animate_token = animate_tokens.back();
-                if(last_animate_token.length() >= 2 && last_animate_token.front() == '(' && last_animate_token.back() == ')'){
+                if(animate_tokens.size() > 0 && animate_tokens.back().length() >= 2 && animate_tokens.back().front() == '(' && animate_tokens.back().back() == ')'){
                     // Get animation values
                     constexpr decltype(SSBAnimate::start) max_duration = std::numeric_limits<decltype(SSBAnimate::start)>::max();
                     decltype(SSBAnimate::start) start_time = max_duration, end_time = max_duration;
