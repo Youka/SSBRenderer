@@ -4,7 +4,7 @@
 #include <algorithm>
 #include <muParser.h>
 #define M_PI 3.14159265358979323846  // Missing in math header because of strict ANSI C
-#define DEG_TO_RAD(x) (x / 180.0L * M_PI)
+#define DEG_TO_RAD(x) (x / 180.0 * M_PI)
 
 Renderer::Renderer(int width, int height, Colorspace format, std::string& script, bool warnings)
 : width(width), height(height), format(format), ssb(SSBParser(script, warnings).data()){}
@@ -767,7 +767,11 @@ namespace{
                 }
                 break;
             case SSBGeometry::Type::TEXT:
-#pragma message "Implent SSB text paths"
+                {
+#pragma message "Implent SSB text paths correctly"
+                    NativeFont font(rsp.font_family, rsp.bold, rsp.italic, rsp.underline, rsp.strikeout, rsp.font_size);
+                    font.text_path_to_cairo(dynamic_cast<SSBText*>(geometry)->text, ctx);
+                }
                 break;
         }
     }

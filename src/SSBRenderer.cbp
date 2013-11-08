@@ -51,6 +51,7 @@
 					<Add library="png" />
 					<Add library="z" />
 					<Add library="libmuparser.a" />
+					<Add library="gdi32" />
 					<Add directory="libs" />
 				</Linker>
 			</Target>
@@ -98,6 +99,7 @@
 					<Add library="png" />
 					<Add library="z" />
 					<Add library="libmuparser.a" />
+					<Add library="gdi32" />
 					<Add directory="libs" />
 				</Linker>
 			</Target>
