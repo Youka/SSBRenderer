@@ -62,6 +62,12 @@ namespace{
                 hex_string_to_number(src.substr(pos2+1, pos1-(pos2+1)), dst3) &&
                 hex_string_to_number(src.substr(pos1+1), dst4);
     }
+    // Replaces text
+    inline std::string& string_replace(std::string& s, std::string find, std::string repl){
+        for(std::string::size_type pos = 0; (pos = s.find(find, pos)) != std::string::npos; pos+=repl.length())
+            s.replace(pos, find.length(), repl);
+        return s;
+    }
     // Parses SSB time and converts to milliseconds
     template<typename T>
     inline bool parse_time(std::string& s, T& t){
@@ -779,12 +785,12 @@ namespace{
                 break;
             case SSBGeometry::Type::TEXT:
                 {
+                    // Replace in string \t to 4 spaces
+                    string_replace(geometry, "\t", "    ");
                     // Replace in string \n to real line breaks
-                    for(std::string::size_type pos = 0; (pos = geometry.find("\\n", pos)) != std::string::npos; pos++)
-                        geometry.replace(pos, 2, 1, '\n');
+                    string_replace(geometry, "\\n", "\n");
                     // Replace in string \{ to single {
-                    for(std::string::size_type pos = 0; (pos = geometry.find("\\{", pos)) != std::string::npos; pos++)
-                        geometry.replace(pos, 2, 1, '{');
+                    string_replace(geometry, "\\{", "{");
                     // Insert SSBText as SSBObject to SSBEvent
                     ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBText(geometry)));
                 }

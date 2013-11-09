@@ -107,6 +107,9 @@
 		<Unit filename="FileReader.hpp">
 			<Option virtualFolder="Utils/" />
 		</Unit>
+		<Unit filename="RenderState.hpp">
+			<Option virtualFolder="Filter/" />
+		</Unit>
 		<Unit filename="Renderer.cpp">
 			<Option virtualFolder="Filter/" />
 		</Unit>
