@@ -143,6 +143,7 @@ void Renderer::render(unsigned char* image, int pitch, unsigned long int start_m
                         cairo_append_path(context, path);
                         cairo_set_source_rgb(context, rs.colors.front().r, rs.colors.front().g, rs.colors.front().b);
                         cairo_fill(context);
+                        cairo_image_surface_blur(surface, rs.blur_h, rs.blur_v);
                         cairo_path_destroy(path);
                         cairo_destroy(context);
                         cairo_surface_destroy(surface);

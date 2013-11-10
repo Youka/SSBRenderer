@@ -5,6 +5,7 @@
 		<Option title="SSBRenderer" />
 		<Option platforms="Windows;Unix;" />
 		<Option pch_mode="2" />
+		<Option default_target="Debug - Windows" />
 		<Option compiler="gcc" />
 		<Option virtualFolders="Meta\;Interfaces\;Filter\;Utils\;" />
 		<Build>
@@ -18,7 +19,7 @@
 				<Option createStaticLib="1" />
 				<Compiler>
 					<Add option="-Os" />
-					<Add option="-O3" />
+					<Add option="-O2" />
 					<Add option="-Winit-self" />
 					<Add option="-Wredundant-decls" />
 					<Add option="-Wundef" />
@@ -62,6 +63,9 @@
 				<Option object_output="obj/Debug/" />
 				<Option type="3" />
 				<Option compiler="gcc" />
+				<Option parameters='&quot;E:\PROJEKTE\SSBRenderer\TODO\test_debug.avs&quot;' />
+				<Option host_application="E:/Combined Community Codec Pack/MPC/mpc-hc.exe" />
+				<Option run_host_application_in_terminal="0" />
 				<Option createDefFile="1" />
 				<Option createStaticLib="1" />
 				<Compiler>

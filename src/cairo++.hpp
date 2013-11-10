@@ -16,6 +16,8 @@ Permission is granted to anyone to use this software for any purpose, including 
 #pragma once
 
 #include <cairo.h>
+#include <vector>
+#include <cmath>
 
 class CairoImage{
     private:
@@ -56,9 +58,6 @@ class CairoImage{
             return this->context;
         }
 };
-
-#include <vector>
-#include <cmath>
 
 inline void cairo_path_split(cairo_t* ctx){
     // Get flatten path
@@ -117,15 +116,31 @@ inline void cairo_path_split(cairo_t* ctx){
     cairo_path_destroy(path);
 }
 
-// SSE2 vector type
+// SSE2 vector type for parallel single-precision floating-point arithmetric
 union v4sf{
     float __attribute__ ((vector_size(16))) x;
     float v[4];
 };
 
-inline void cairo_surface_blur(cairo_surface_t* surface, double blur_x, double blur_y){
-    if(blur_x > 0 || blur_y > 0){
+inline void cairo_image_surface_blur(cairo_surface_t* surface, double blur_h, double blur_v){
+    // Valid blur range?
+    if(blur_h > 0 || blur_v > 0){
+        // Get surface data
+        int width = cairo_image_surface_get_width(surface);
+        int height = cairo_image_surface_get_height(surface);
+        cairo_format_t format = cairo_image_surface_get_format(surface);
+        int stride = cairo_image_surface_get_stride(surface);
+        unsigned char* data = cairo_image_surface_get_data(surface);
+        // Flush pending operations on surface
+        cairo_surface_flush(surface);
+        // Create data in float format for vector operations
+        const unsigned long int size = height * stride;
+        std::vector<float> fdata(size);
+        std::copy(data, data + size, fdata.data());
+        // Create blur kernel
 #pragma message "Implent cairo surface blurring"
+        // Signal changes on surfaces
+        cairo_surface_mark_dirty(surface);
     }
 }
 
