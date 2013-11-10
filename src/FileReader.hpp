@@ -46,7 +46,7 @@ class FileReader{
             return *this;
         }
         // Destructor
-        virtual ~FileReader(){
+        ~FileReader(){
             if(this->file != INVALID_HANDLE_VALUE)
                 CloseHandle(this->file);
         }

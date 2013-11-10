@@ -236,7 +236,7 @@ namespace{
                     throw_parse_error(line_i, "Invalid vertical font space");
             }else if(tags_token.compare(0, 11, "line-width=") == 0){
                 decltype(SSBLineWidth::width) width;
-                if(string_to_number(tags_token.substr(11), width))
+                if(string_to_number(tags_token.substr(11), width) && width >= 0)
                     ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBLineWidth(width)));
                 else if(warnings)
                     throw_parse_error(line_i, "Invalid line width");
@@ -270,11 +270,11 @@ namespace{
                 decltype(SSBLineDash::offset) offset;
                 std::istringstream dash_stream(tags_token.substr(10));
                 std::string dash_token;
-                if(std::getline(dash_stream, dash_token, ',') && string_to_number(dash_token, offset)){
+                if(std::getline(dash_stream, dash_token, ',') && string_to_number(dash_token, offset) && offset >= 0){
                     decltype(SSBLineDash::dashes) dashes;
                     decltype(SSBLineDash::offset) dash;
                     while(std::getline(dash_stream, dash_token, ','))
-                        if(string_to_number(dash_token, dash))
+                        if(string_to_number(dash_token, dash) && dash >= 0)
                             dashes.push_back(dash);
                         else if(warnings)
                             throw_parse_error(line_i, "Invalid line dash");
@@ -512,8 +512,12 @@ namespace{
                     tag_value = tags_token.substr(8);
                     target = SSBTexture::Target::FILL;
                 }
+#ifdef _WIN32
                 std::wstring filename = utf8_to_utf16(tag_value);
                 if(FileReader(filename))
+#else
+                if(std::ifstream(tag_value))
+#endif
                     ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBTexture(target, tag_value)));
                 else if(warnings)
                     throw_parse_error(line_i, tags_token[0] == 'l' ? "Invalid line texture" : "Invalid texture");
@@ -563,21 +567,21 @@ namespace{
             }else if(tags_token.compare(0, 5, "blur=") == 0){
                 std::string tag_value = tags_token.substr(6);
                 decltype(SSBBlur::x) x, y;
-                if(string_to_number(tag_value, x))
+                if(string_to_number(tag_value, x) && x >= 0)
                     ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBBlur(SSBBlur::Type::BOTH, x)));
-                else if(string_to_number_pair(tag_value, x, y))
+                else if(string_to_number_pair(tag_value, x, y) && x >= 0 && y >= 0)
                     ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBBlur(x, y)));
                 else if(warnings)
                     throw_parse_error(line_i, "Invalid blur");
             }else if(tags_token.compare(0, 7, "blur-h=") == 0){
                 decltype(SSBBlur::x) x;
-                if(string_to_number(tags_token.substr(7), x))
+                if(string_to_number(tags_token.substr(7), x) && x >= 0)
                     ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBBlur(SSBBlur::Type::HORIZONTAL, x)));
                 else if(warnings)
                     throw_parse_error(line_i, "Invalid horizontal blur");
             }else if(tags_token.compare(0, 7, "blur-v=") == 0){
                 decltype(SSBBlur::y) y;
-                if(string_to_number(tags_token.substr(7), y))
+                if(string_to_number(tags_token.substr(7), y) && y >= 0)
                     ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBBlur(SSBBlur::Type::VERTICAL, y)));
                 else if(warnings)
                     throw_parse_error(line_i, "Invalid vertical blur");
@@ -873,17 +877,17 @@ void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
                             break;
                         case SSBSection::FRAME:
                             if(line.compare(0, 7, "Width: ") == 0){
-                                if(!string_to_number(line.substr(7), this->ssb.frame.width) || this->ssb.frame.width < 0){
-                                    this->ssb.frame.width = -1;
-                                    if(warnings)
-                                        throw_parse_error(line_i, "Invalid frame width");
-                                }
+                                decltype(SSBFrame::width) width;
+                                if(string_to_number(line.substr(7), width))
+                                    this->ssb.frame.width = width;
+                                else if(warnings)
+                                    throw_parse_error(line_i, "Invalid frame width");
                             }else if(line.compare(0, 8, "Height: ") == 0){
-                                if(!string_to_number(line.substr(8), this->ssb.frame.height) || this->ssb.frame.height < 0){
-                                    this->ssb.frame.height = -1;
-                                    if(warnings)
-                                        throw_parse_error(line_i, "Invalid frame height");
-                                }
+                                decltype(SSBFrame::height) height;
+                                if(string_to_number(line.substr(8), height))
+                                    this->ssb.frame.height = height;
+                                else if(warnings)
+                                    throw_parse_error(line_i, "Invalid frame height");
                             }else if(warnings)
                                 throw_parse_error(line_i, "Invalid frame field");
                             break;
@@ -893,7 +897,7 @@ void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
                                 if(pos != std::string::npos){
                                     this->ssb.styles[line.substr(0, pos)] = line.substr(pos+2);
                                 }else if(warnings)
-                                    throw_parse_error(line_i, "Invalid style");
+                                    throw_parse_error(line_i, "Invalid style format");
                             }
                             break;
                         case SSBSection::EVENTS:
@@ -915,6 +919,12 @@ void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
                                         throw_parse_error(line_i, "Couldn't find end time");
                                     break;
                                 }
+                                // Check times
+                                if(ssb_event.end_ms <= ssb_event.start_ms){
+                                    if(warnings)
+                                        throw_parse_error(line_i, "Invalid time range");
+                                    break;
+                                }
                                 // Get style content for later text insertion
                                 std::string style_content;
                                 if(!std::getline(event_stream, event_token, '|') || !this->ssb.styles.count(event_token)){
@@ -930,9 +940,12 @@ void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
                                     break;
                                 }
                                 // Get text
-                                if(!std::getline(event_stream, event_token))
-                                    event_token = "";
-                                std::string text = style_content + event_token;
+                                if(!event_stream.unget() || event_stream.get() != '|'){
+                                    if(warnings)
+                                        throw_parse_error(line_i, "Couldn't find text");
+                                    break;
+                                }
+                                std::string text = std::getline(event_stream, event_token) ? style_content + event_token : style_content;
                                 // Parse text
                                 std::string::size_type pos_start = 0, pos_end;
                                 bool in_tags = false;

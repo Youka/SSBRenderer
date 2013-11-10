@@ -97,7 +97,15 @@ namespace{
                 {
 #pragma message "Implent SSB text paths correctly"
                     NativeFont font(rs.font_family, rs.bold, rs.italic, rs.underline, rs.strikeout, rs.font_size);
-                    font.text_path_to_cairo(dynamic_cast<SSBText*>(geometry)->text, ctx);
+                    NativeFont::FontMetrics metrics = font.get_metrics();
+                    std::stringstream text(dynamic_cast<SSBText*>(geometry)->text);
+                    std::string line;
+                    cairo_save(ctx);
+                    while(std::getline(text, line)){
+                        font.text_path_to_cairo(line, ctx);
+                        cairo_translate(ctx, 0, metrics.height + metrics.external_lead);
+                    }
+                    cairo_restore(ctx);
                 }
                 break;
         }

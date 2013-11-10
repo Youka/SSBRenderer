@@ -5,6 +5,5 @@
 		+ Avxsynth
 		+ GStreamer
 - Documentation
-	* LICENSE
 	* README
 	* Examples

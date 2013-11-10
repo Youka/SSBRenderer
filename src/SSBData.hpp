@@ -21,7 +21,7 @@ Permission is granted to anyone to use this software for any purpose, including 
 #include <memory>
 
 // Coordinate precision
-using SSBCoord = float;
+using SSBCoord = double;
 // Time precision
 using SSBTime = unsigned long int;
 using SSBDuration = long int;
@@ -29,7 +29,7 @@ using SSBDuration = long int;
 // Any state or geometry for rendering
 class SSBObject{
     public:
-        enum class Type : char{TAG, GEOMETRY} type;
+        enum class Type : char{TAG, GEOMETRY} const type;
         SSBObject(const SSBObject&) = delete;
         SSBObject& operator =(const SSBObject&) = delete;
         virtual ~SSBObject(){}
@@ -70,7 +70,7 @@ class SSBTag : public SSBObject{
             FADE,
             ANIMATE,
             KARAOKE
-        } type;
+        } const type;
         SSBTag(const SSBTag&) = delete;
         SSBTag& operator =(const SSBTag&) = delete;
         virtual ~SSBTag() = default;
@@ -85,7 +85,7 @@ class SSBGeometry : public SSBObject{
             POINTS,
             PATH,
             TEXT
-        } type;
+        } const type;
         SSBGeometry(const SSBGeometry&) = delete;
         SSBGeometry& operator =(const SSBGeometry&) = delete;
         virtual ~SSBGeometry() = default;
@@ -431,7 +431,7 @@ struct SSBMeta{
 
 // Destination frame (for scaling to different frame sizes than the intended one)
 struct SSBFrame{
-    int width = -1, height = -1;
+    unsigned int width = 0, height = 0;
 };
 
 // Event with rendering data
