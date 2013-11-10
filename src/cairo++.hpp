@@ -117,6 +117,18 @@ inline void cairo_path_split(cairo_t* ctx){
     cairo_path_destroy(path);
 }
 
+// SSE2 vector type
+union v4sf{
+    float __attribute__ ((vector_size(16))) x;
+    float v[4];
+};
+
+inline void cairo_surface_blur(cairo_surface_t* surface, double blur_x, double blur_y){
+    if(blur_x > 0 || blur_y > 0){
+#pragma message "Implent cairo surface blurring"
+    }
+}
+
 #ifdef _WIN32
 #include "textconv.hpp"
 
