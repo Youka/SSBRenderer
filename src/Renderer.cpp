@@ -134,17 +134,35 @@ void Renderer::render(unsigned char* image, int pitch, unsigned long int start_m
                     if(this->format == Renderer::Colorspace::BGRX || this->format == Renderer::Colorspace::BGRA){
                         cairo_surface_t* surface = cairo_image_surface_create_for_data(image, this->format == Renderer::Colorspace::BGRA ? CAIRO_FORMAT_ARGB32 : CAIRO_FORMAT_RGB24, this->width, this->height, pitch);
                         cairo_t* context = cairo_create(surface);
-                        cairo_path_t* path = cairo_copy_path(this->path_buffer);
                         cairo_matrix_t matrix = {1, 0, 0, 1, 0, 0};
                         cairo_matrix_scale(&matrix, 1, -1);
                         cairo_matrix_translate(&matrix, 0, -this->height);
                         cairo_matrix_multiply(&matrix, &rs.matrix, &matrix);
                         cairo_set_matrix(context, &matrix);
+                        if(!rs.deform_x.empty() || !rs.deform_y.empty()){
+                            mu::Parser parser_x, parser_y;
+                            parser_x.SetExpr(rs.deform_x);
+                            parser_x.DefineConst("t", rs.deform_progress);
+                            parser_y.SetExpr(rs.deform_y);
+                            parser_y.DefineConst("t", rs.deform_progress);
+                            cairo_path_filter(this->path_buffer,
+                                [&parser_x,&parser_y](double& x, double& y){
+                                    parser_x.DefineConst("x", x);
+                                    parser_x.DefineConst("y", y);
+                                    parser_y.DefineConst("x", x);
+                                    parser_y.DefineConst("y", y);
+                                    try{
+                                        x = parser_x.Eval();
+                                        y = parser_y.Eval();
+                                    }catch(...){}
+                                });
+                        }
+                        cairo_path_t* path = cairo_copy_path(this->path_buffer);
                         cairo_append_path(context, path);
+                        cairo_path_destroy(path);
                         cairo_set_source_rgb(context, rs.colors.front().r, rs.colors.front().g, rs.colors.front().b);
                         cairo_fill(context);
                         cairo_image_surface_blur(surface, rs.blur_h, rs.blur_v);
-                        cairo_path_destroy(path);
                         cairo_destroy(context);
                         cairo_surface_destroy(surface);
                     }

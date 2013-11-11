@@ -40,6 +40,7 @@ namespace{
         // Geometry
         SSBMode::Mode mode = SSBMode::Mode::FILL;
         std::string deform_x, deform_y;
+        double deform_progress = 0;
         // Position
         double pos_x = std::numeric_limits<double>::max(), pos_y = std::numeric_limits<double>::max();  // 'Unset' in case of maximum values
         SSBAlign::Align align = SSBAlign::Align::CENTER_BOTTOM;
@@ -127,6 +128,7 @@ namespace{
                     SSBDeform* deform = dynamic_cast<SSBDeform*>(tag);
                     rs.deform_x = deform->formula_x;
                     rs.deform_y = deform->formula_y;
+                    rs.deform_progress = 0;
                 }
                 break;
             case SSBTag::Type::POSITION:
@@ -362,7 +364,7 @@ namespace{
                     double progress = inner_ms < animate_start ? 0 : (inner_ms > animate_end ? 1 : static_cast<double>(inner_ms - animate_start) / (animate_end - animate_start));
                     // Recalulate progress by formula
                     if(!animate->progress_formula.empty()){
-                        mu::Parser parser;
+                        static mu::Parser parser;
                         parser.SetExpr(animate->progress_formula);
                         parser.DefineConst("t", progress);
                         try{
@@ -431,7 +433,12 @@ namespace{
                                     rs.mode = dynamic_cast<SSBMode*>(animate_tag)->mode;
                                 break;
                             case SSBTag::Type::DEFORM:
-                                // Doesn't exist in an animation
+                                {
+                                    SSBDeform* deform = dynamic_cast<SSBDeform*>(animate_tag);
+                                    rs.deform_x = deform->formula_x;
+                                    rs.deform_y = deform->formula_y;
+                                    rs.deform_progress = progress;
+                                }
                                 break;
                             case SSBTag::Type::POSITION:
                                 {

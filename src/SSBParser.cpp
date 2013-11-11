@@ -302,10 +302,9 @@ namespace{
             }else if(tags_token.compare(0, 7, "deform=") == 0){
                 std::string tag_value = tags_token.substr(7);
                 std::string::size_type pos;
-                if((pos = tag_value.find(',')) != std::string::npos && tag_value.find(',', pos+1) == std::string::npos){
-                    ssb_event.static_tags = false;
+                if((pos = tag_value.find(',')) != std::string::npos && tag_value.find(',', pos+1) == std::string::npos)
                     ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBDeform(tag_value.substr(0, pos), tag_value.substr(pos+1))));
-                }else if(warnings)
+                else if(warnings)
                     throw_parse_error(line_i, "Invalid deform");
             }else if(tags_token.compare(0, 9, "position=") == 0){
                 std::string tag_value = tags_token.substr(9);

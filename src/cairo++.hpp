@@ -59,30 +59,33 @@ class CairoImage{
         }
 };
 
-inline void cairo_path_split(cairo_t* ctx){
+inline void cairo_path_filter(cairo_t* ctx, std::function<void(double&, double&)> filter){
     // Get flatten path
     cairo_path_t* path = cairo_copy_path_flat(ctx);
     if(path->status == CAIRO_STATUS_SUCCESS && path->num_data > 0){
         // Create new flatten path with short lines
         std::vector<cairo_path_data_t> new_path_data;
         struct{double x = 0, y = 0;} last_point;
-        for(int i = 0; i < path->num_data; i += path->data[i].header.length)
-            switch(path->data[i].header.type){
+        cairo_path_data_t* pdata;
+        for(int i = 0; i < path->num_data; i += path->data[i].header.length){
+            pdata = &path->data[i];
+            switch(pdata->header.type){
                 case CAIRO_PATH_CURVE_TO:
                     // Doesn't exist in flatten path
                     break;
                 case CAIRO_PATH_CLOSE_PATH:
-                    new_path_data.push_back(path->data[i]);
+                    new_path_data.push_back(pdata[0]);
                     break;
                 case CAIRO_PATH_MOVE_TO:
-                    new_path_data.push_back(path->data[i]);
-                    new_path_data.push_back(path->data[i+1]);
-                    last_point.x = path->data[i+1].point.x;
-                    last_point.y = path->data[i+1].point.y;
+                    last_point.x = pdata[1].point.x;
+                    last_point.y = pdata[1].point.y;
+                    filter(pdata[1].point.x, pdata[1].point.y);
+                    new_path_data.push_back(pdata[0]);
+                    new_path_data.push_back(pdata[1]);
                     break;
                 case CAIRO_PATH_LINE_TO:
                     {
-                        double vec_x = path->data[i+1].point.x - last_point.x, vec_y = path->data[i+1].point.y - last_point.y;
+                        double vec_x = pdata[1].point.x - last_point.x, vec_y = pdata[1].point.y - last_point.y;
                         double line_len = hypot(vec_x, vec_y);
                         constexpr double max_len = sqrt(2);
                         if(line_len > max_len){
@@ -92,17 +95,20 @@ inline void cairo_path_split(cairo_t* ctx){
                                 progress = cur_len / line_len;
                                 path_point.point.x = last_point.x + progress * vec_x;
                                 path_point.point.y = last_point.y + progress * vec_y;
-                                new_path_data.push_back(path->data[i]);
+                                filter(path_point.point.x, path_point.point.y);
+                                new_path_data.push_back(pdata[0]);
                                 new_path_data.push_back(path_point);
                             }
                         }
                     }
-                    new_path_data.push_back(path->data[i]);
-                    new_path_data.push_back(path->data[i+1]);
-                    last_point.x = path->data[i+1].point.x;
-                    last_point.y = path->data[i+1].point.y;
+                    last_point.x = pdata[1].point.x;
+                    last_point.y = pdata[1].point.y;
+                    filter(pdata[1].point.x, pdata[1].point.y);
+                    new_path_data.push_back(pdata[0]);
+                    new_path_data.push_back(pdata[1]);
                     break;
             }
+        }
         // Replace old context path with new one
         cairo_path_t new_path = {
             CAIRO_STATUS_SUCCESS,
@@ -139,6 +145,13 @@ inline void cairo_image_surface_blur(cairo_surface_t* surface, double blur_h, do
         std::copy(data, data + size, fdata.data());
         // Create blur kernel
 #pragma message "Implent cairo surface blurring"
+        // Run threads
+        unsigned int max_threads = 2;
+        for(unsigned int thread_i = 0; thread_i < max_threads; ++thread_i){
+
+
+
+        }
         // Signal changes on surfaces
         cairo_surface_mark_dirty(surface);
     }
