@@ -17,7 +17,6 @@ Permission is granted to anyone to use this software for any purpose, including 
 
 #include "SSBData.hpp"
 #include <cairo.h>
-#include <limits>
 #include <algorithm>
 #include <muParser.h>
 #define M_PI 3.14159265358979323846  // Missing in math header because of strict ANSI C

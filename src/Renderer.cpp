@@ -141,16 +141,19 @@ void Renderer::render(unsigned char* image, int pitch, unsigned long int start_m
                         cairo_set_matrix(context, &matrix);
                         if(!rs.deform_x.empty() || !rs.deform_y.empty()){
                             mu::Parser parser_x, parser_y;
+                            double x_buf, y_buf;
                             parser_x.SetExpr(rs.deform_x);
-                            parser_x.DefineConst("t", rs.deform_progress);
                             parser_y.SetExpr(rs.deform_y);
+                            parser_x.DefineConst("t", rs.deform_progress);
                             parser_y.DefineConst("t", rs.deform_progress);
+                            parser_x.DefineVar("x", &x_buf);
+                            parser_y.DefineVar("x", &x_buf);
+                            parser_x.DefineVar("y", &y_buf);
+                            parser_y.DefineVar("y", &y_buf);
                             cairo_path_filter(this->path_buffer,
-                                [&parser_x,&parser_y](double& x, double& y){
-                                    parser_x.DefineConst("x", x);
-                                    parser_x.DefineConst("y", y);
-                                    parser_y.DefineConst("x", x);
-                                    parser_y.DefineConst("y", y);
+                                [&parser_x,&parser_y,&x_buf,&y_buf](double& x, double& y){
+                                    x_buf = x;
+                                    y_buf = y;
                                     try{
                                         x = parser_x.Eval();
                                         y = parser_y.Eval();

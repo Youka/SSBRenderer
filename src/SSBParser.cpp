@@ -14,13 +14,9 @@ Permission is granted to anyone to use this software for any purpose, including 
 */
 
 #include "SSBParser.hpp"
-#ifdef _WIN32   // Windows
-#   include "textconv.hpp"
-#   include "FileReader.hpp"
-#else   // Unix
-#   include <fstream>
-#endif
+#include "FileReader.hpp"
 #include <sstream>
+#include <limits>
 
 SSBParser::SSBParser(SSBData& ssb) : ssb(ssb){}
 
@@ -511,12 +507,7 @@ namespace{
                     tag_value = tags_token.substr(8);
                     target = SSBTexture::Target::FILL;
                 }
-#ifdef _WIN32
-                std::wstring filename = utf8_to_utf16(tag_value);
-                if(FileReader(filename))
-#else
-                if(std::ifstream(tag_value))
-#endif
+                if(FileReader(tag_value))
                     ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBTexture(target, tag_value)));
                 else if(warnings)
                     throw_parse_error(line_i, tags_token[0] == 'l' ? "Invalid line texture" : "Invalid texture");
@@ -819,12 +810,7 @@ namespace{
 
 void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
     // File reading
-#ifdef _WIN32   // Windows
-    std::wstring scriptW = utf8_to_utf16(script);
-    FileReader file(scriptW);
-#else   // Unix
-    std::ifstream file(script);
-#endif
+    FileReader file(script);
     // File valid?
     if(file){
         // Current SSB section
@@ -834,11 +820,7 @@ void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
         // File line buffer
         std::string line;
         // Line iteration
-#ifdef _WIN32   // Windows
         while(file.getline(line)){
-#else   // Unix
-        while(std::getline(file, line)){
-#endif
             // Update line number
             line_i++;
             // Remove windows carriage return at end of lines

@@ -144,14 +144,13 @@ inline void cairo_image_surface_blur(cairo_surface_t* surface, double blur_h, do
         std::vector<float> fdata(size);
         std::copy(data, data + size, fdata.data());
         // Create blur kernel
+        unsigned int blur_rx = blur_h < 0 ? 0 : ceil(blur_h),
+                    blur_ry = blur_v < 0 ? 0 : ceil(blur_v),
+                    kernel_width = (blur_rx << 1) + 1,
+                    kernel_height = (blur_ry << 1) + 1;
 #pragma message "Implent cairo surface blurring"
         // Run threads
-        unsigned int max_threads = 2;
-        for(unsigned int thread_i = 0; thread_i < max_threads; ++thread_i){
 
-
-
-        }
         // Signal changes on surfaces
         cairo_surface_mark_dirty(surface);
     }

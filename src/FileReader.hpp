@@ -15,23 +15,31 @@ Permission is granted to anyone to use this software for any purpose, including 
 
 #pragma once
 
-#include <windows.h>
-#include <string>
+#ifdef _WIN32
+#include "textconv.hpp"
 #include <algorithm>
+#else
+#include <fstream>
+#endif
 
 class FileReader{
     private:
+#ifdef _WIN32
         // File handle
         HANDLE file;
         // Read buffer
         char buffer[4096];
         char* buffer_start, *buffer_end = buffer_start;
+#else
+        std::ifstream file;
+#endif
     public:
+#ifdef _WIN32
         // Constructors
         FileReader()
         : file(INVALID_HANDLE_VALUE){}
         FileReader(std::string& filename)
-        : file(CreateFileA(filename.c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL)){}
+        : file(CreateFileW(utf8_to_utf16(filename).c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL)){}
         FileReader(std::wstring& filename)
         : file(CreateFileW(filename.c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL)){}
         FileReader(FileReader& reader)
@@ -51,7 +59,7 @@ class FileReader{
                 CloseHandle(this->file);
         }
         // Check file state
-        operator bool(){
+        operator bool() const{
             return this->file != INVALID_HANDLE_VALUE;
         }
         // Reset file pointer
@@ -96,4 +104,26 @@ class FileReader{
             // File handle invalid
             return false;
         }
+#else
+        // Constructors
+        FileReader() = default;
+        FileReader(std::string& filename) : file(filename){}
+        FileReader(const FileReader& reader) = default;
+        // Assign operator
+        FileReader& operator =(const FileReader& reader) = default;
+        // Destructor
+        ~FileReader() = default;
+        // Check file state
+        operator bool() const{
+            return this->file;
+        }
+        // Reset file pointer
+        void reset(){
+            file.seekg(0);
+        }
+        // Read one line from file
+        bool getline(std::string& line){
+            return std::getline(this->file, line);
+        }
+#endif
 };
