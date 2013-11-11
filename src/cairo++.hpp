@@ -18,6 +18,7 @@ Permission is granted to anyone to use this software for any purpose, including 
 #include <cairo.h>
 #include <vector>
 #include <cmath>
+#include "thread.hpp"
 
 class CairoImage{
     private:
@@ -144,13 +145,18 @@ inline void cairo_image_surface_blur(cairo_surface_t* surface, double blur_h, do
         std::vector<float> fdata(size);
         std::copy(data, data + size, fdata.data());
         // Create blur kernel
-        unsigned int blur_rx = blur_h < 0 ? 0 : ceil(blur_h),
-                    blur_ry = blur_v < 0 ? 0 : ceil(blur_v),
-                    kernel_width = (blur_rx << 1) + 1,
-                    kernel_height = (blur_ry << 1) + 1;
+        struct{
+            unsigned int rx = blur_h < 0 ? 0 : ceil(blur_h),
+                        ry = blur_v < 0 ? 0 : ceil(blur_v),
+                        width = (rx << 1) + 1,
+                        height = (ry << 1) + 1;
+            std::vector<float> data;
+        } kernel;
 #pragma message "Implent cairo surface blurring"
         // Run threads
+        Thread t([&](){
 
+        });
         // Signal changes on surfaces
         cairo_surface_mark_dirty(surface);
     }
@@ -158,16 +164,24 @@ inline void cairo_image_surface_blur(cairo_surface_t* surface, double blur_h, do
 
 #ifdef _WIN32
 #include "textconv.hpp"
+#else
+#error "Not implented"
+#endif
 
 class NativeFont{
     private:
+#ifdef _WIN32
         // Platform dependent font data
         HDC dc;
         HFONT font;
         HGDIOBJ old_font;
         // Upscale / quality / precision
         constexpr static double UPSCALE = 64;
+#else
+#error "Not implented"
+#endif
     public:
+#ifdef _WIN32
         // Ctor & dtor
         NativeFont(std::string& family, bool bold, bool italic, bool underline, bool strikeout, unsigned short int size){
             this->dc = CreateCompatibleDC(NULL);
@@ -268,7 +282,7 @@ class NativeFont{
             // Remove path from windows context
             AbortPath(this->dc);
         }
-};
 #else
-#   error "Not implented"
+#error "Not implented"
 #endif
+};
