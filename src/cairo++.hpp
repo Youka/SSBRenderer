@@ -18,7 +18,7 @@ Permission is granted to anyone to use this software for any purpose, including 
 #include <cairo.h>
 #include <vector>
 #include <cmath>
-#include "thread.hpp"
+#include <xmmintrin.h>
 
 class CairoImage{
     private:
@@ -123,15 +123,28 @@ inline void cairo_path_filter(cairo_t* ctx, std::function<void(double&, double&)
     cairo_path_destroy(path);
 }
 
-// SSE2 vector type for parallel single-precision floating-point arithmetric
-union v4sf{
-    float __attribute__ ((vector_size(16))) x;
-    float v[4];
-};
+inline cairo_pattern_t* cairo_pattern_create_rect_color(cairo_rectangle_t rect,
+                                                        double r0, double g0, double b0, double a0,
+                                                        double r1, double g1, double b1, double a1,
+                                                        double r2, double g2, double b2, double a2,
+                                                        double r3, double g3, double b3, double a3){
+    cairo_pattern_t* mesh = cairo_pattern_create_mesh();
+    cairo_mesh_pattern_begin_patch(mesh);
+    cairo_mesh_pattern_move_to(mesh, rect.x, rect.y);
+    cairo_mesh_pattern_line_to(mesh, rect.x + rect.width, rect.y);
+    cairo_mesh_pattern_line_to(mesh, rect.x + rect.width, rect.y + rect.height);
+    cairo_mesh_pattern_line_to(mesh, rect.x, rect.y + rect.height);
+    cairo_mesh_pattern_set_corner_color_rgba(mesh, 0, r0, g0, b0, a0);
+    cairo_mesh_pattern_set_corner_color_rgba(mesh, 1, r1, g1, b1, a1);
+    cairo_mesh_pattern_set_corner_color_rgba(mesh, 2, r2, g2, b2, a2);
+    cairo_mesh_pattern_set_corner_color_rgba(mesh, 3, r3, g3, b3, a3);
+    cairo_mesh_pattern_end_patch(mesh);
+    return mesh;
+}
 
 inline void cairo_image_surface_blur(cairo_surface_t* surface, double blur_h, double blur_v){
     // Valid blur range?
-    if(blur_h > 0 || blur_v > 0){
+    if(blur_h >= 0 && blur_v >= 0 && (blur_h > 0 || blur_v > 0)){
         // Get surface data
         int width = cairo_image_surface_get_width(surface);
         int height = cairo_image_surface_get_height(surface);
@@ -145,18 +158,84 @@ inline void cairo_image_surface_blur(cairo_surface_t* surface, double blur_h, do
         std::vector<float> fdata(size);
         std::copy(data, data + size, fdata.data());
         // Create blur kernel
-        struct{
-            unsigned int rx = blur_h < 0 ? 0 : ceil(blur_h),
-                        ry = blur_v < 0 ? 0 : ceil(blur_v),
-                        width = (rx << 1) + 1,
-                        height = (ry << 1) + 1;
-            std::vector<float> data;
-        } kernel;
 #pragma message "Implent cairo surface blurring"
-        // Run threads
-        Thread t([&](){
-
-        });
+        /*int kernel_radius_x = ceil(blur_h),
+            kernel_radius_y = ceil(blur_v),
+            kernel_width = (kernel_radius_x << 1) + 1,
+            kernel_height = (kernel_radius_y << 1) + 1;
+        std::vector<float> kernel_data(kernel_width * kernel_height);*/
+        int kernel_radius_x = 1,
+            kernel_radius_y = 1,
+            kernel_width = (kernel_radius_x << 1) + 1,
+            kernel_height = (kernel_radius_y << 1) + 1;
+        std::vector<float> kernel_data(kernel_width * kernel_height);
+        std::fill(kernel_data.begin(), kernel_data.end(), 1.0/kernel_data.size());
+        // Apply kernel on image
+        if(format == CAIRO_FORMAT_A8){
+            unsigned char* row_dst;
+            float accum;
+            int image_x, image_y;
+            for(int y = 0; y < height; ++y){
+                row_dst = data + y * stride;
+                for(int x = 0; x < width; ++x){
+                    accum = 0;
+                    for(int kernel_y = 0; kernel_y < kernel_height; ++kernel_y){
+                        image_y = y + kernel_y - kernel_radius_y;
+                        if(image_y < 0 || image_y >= height)
+                            continue;
+                        for(int kernel_x = 0; kernel_x < kernel_width; ++kernel_x){
+                            image_x = x + kernel_x - kernel_radius_x;
+                            if(image_x < 0 || image_x >= width)
+                                continue;
+                            accum += fdata[image_y * stride + image_x] * kernel_data[kernel_y * kernel_width + kernel_x];
+                        }
+                    }
+                    *row_dst++ = accum < 0.0 ? 0.0 : (accum > 255.0f ? 255.0f : accum);
+                }
+            }
+        }else if(format == CAIRO_FORMAT_ARGB32 || format == CAIRO_FORMAT_RGB24){
+            unsigned char* row_dst;
+            alignas(16) float accum_buf[4];
+            int image_x, image_y;
+            for(int y = 0; y < height; ++y){
+                row_dst = data + y * stride;
+                for(int x = 0; x < width; ++x){
+                    __m128 accum = _mm_setzero_ps();
+                    for(int kernel_y = 0; kernel_y < kernel_height; ++kernel_y){
+                        image_y = y + kernel_y - kernel_radius_y;
+                        if(image_y < 0 || image_y >= height)
+                            continue;
+                        for(int kernel_x = 0; kernel_x < kernel_width; ++kernel_x){
+                            image_x = x + kernel_x - kernel_radius_x;
+                            if(image_x < 0 || image_x >= width)
+                                continue;
+                            accum = _mm_add_ps(
+                                accum,
+                                _mm_mul_ps(
+                                    _mm_loadu_ps(&fdata[image_y * stride + (image_x << 2)]),
+                                    _mm_set_ps1(kernel_data[kernel_y * kernel_width + kernel_x])
+                                )
+                            );
+                        }
+                    }
+                    _mm_storeu_ps(  // Somehow MinGW32 doesn't support 16 byte alignment
+                        accum_buf,
+                        _mm_max_ps(
+                            _mm_setzero_ps(),
+                            _mm_min_ps(
+                                _mm_set_ps1(255.0f),
+                                accum
+                            )
+                        )
+                    );
+                    row_dst[0] = accum_buf[0];
+                    row_dst[1] = accum_buf[1];
+                    row_dst[2] = accum_buf[2];
+                    row_dst[3] = accum_buf[3];
+                    row_dst += 4;
+                }
+            }
+        }
         // Signal changes on surfaces
         cairo_surface_mark_dirty(surface);
     }

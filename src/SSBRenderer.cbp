@@ -153,9 +153,6 @@
 		<Unit filename="textconv.hpp">
 			<Option virtualFolder="Utils/" />
 		</Unit>
-		<Unit filename="thread.hpp">
-			<Option virtualFolder="Utils/" />
-		</Unit>
 		<Unit filename="user.cpp">
 			<Option virtualFolder="Interfaces/" />
 		</Unit>
