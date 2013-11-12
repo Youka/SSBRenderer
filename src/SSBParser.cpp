@@ -555,7 +555,7 @@ namespace{
                 else if(warnings)
                     throw_parse_error(line_i, "Invalid blending");
             }else if(tags_token.compare(0, 5, "blur=") == 0){
-                std::string tag_value = tags_token.substr(6);
+                std::string tag_value = tags_token.substr(5);
                 decltype(SSBBlur::x) x, y;
                 if(string_to_number(tag_value, x) && x >= 0)
                     ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBBlur(SSBBlur::Type::BOTH, x)));

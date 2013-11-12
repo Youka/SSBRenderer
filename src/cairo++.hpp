@@ -18,6 +18,7 @@ Permission is granted to anyone to use this software for any purpose, including 
 #include <cairo.h>
 #include <vector>
 #include <cmath>
+#include <algorithm>
 #include <xmmintrin.h>
 
 class CairoImage{
@@ -158,18 +159,28 @@ inline void cairo_image_surface_blur(cairo_surface_t* surface, double blur_h, do
         std::vector<float> fdata(size);
         std::copy(data, data + size, fdata.data());
         // Create blur kernel
-#pragma message "Implent cairo surface blurring"
-        /*int kernel_radius_x = ceil(blur_h),
+        int kernel_radius_x = ceil(blur_h),
             kernel_radius_y = ceil(blur_v),
             kernel_width = (kernel_radius_x << 1) + 1,
             kernel_height = (kernel_radius_y << 1) + 1;
-        std::vector<float> kernel_data(kernel_width * kernel_height);*/
-        int kernel_radius_x = 1,
-            kernel_radius_y = 1,
-            kernel_width = (kernel_radius_x << 1) + 1,
-            kernel_height = (kernel_radius_y << 1) + 1;
         std::vector<float> kernel_data(kernel_width * kernel_height);
-        std::fill(kernel_data.begin(), kernel_data.end(), 1.0/kernel_data.size());
+        // Fill blur kernel (box blur)
+        std::fill(kernel_data.begin(), kernel_data.end(), 1.0f);
+        float kernel_border_x = 1 - (kernel_radius_x - blur_h),
+                kernel_border_y = 1 - (kernel_radius_y - blur_v);
+        if(kernel_border_x > 0)
+            for(int kernel_y = 0; kernel_y < kernel_height; ++kernel_y){
+                kernel_data[kernel_y * kernel_width] *= kernel_border_x;
+                kernel_data[kernel_y * kernel_width + kernel_width-1] *= kernel_border_x;
+            }
+        if(kernel_border_y > 0)
+            for(int kernel_x = 0; kernel_x < kernel_width; ++kernel_x){
+                kernel_data[kernel_x] *= kernel_border_y;
+                kernel_data[(kernel_height-1) * kernel_width + kernel_x] *= kernel_border_y;
+            }
+        // Normalize blur kernel
+        float divisor = std::accumulate(kernel_data.begin(), kernel_data.end(), 0.0f);
+        std::for_each(kernel_data.begin(), kernel_data.end(), [&divisor](float& v){v /= divisor;});
         // Apply kernel on image
         if(format == CAIRO_FORMAT_A8){
             unsigned char* row_dst;
