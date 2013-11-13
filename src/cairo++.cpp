@@ -17,6 +17,7 @@ Permission is granted to anyone to use this software for any purpose, including 
 #include <cmath>
 #include <algorithm>
 #include <xmmintrin.h>
+#include <pthread.h>
 
 void cairo_path_filter(cairo_t* ctx, std::function<void(double&, double&)> filter){
     // Get flatten path
@@ -111,12 +112,7 @@ namespace{
         int kernel_radius_x, kernel_radius_y, kernel_width, kernel_height;
         float* kernel_data;
     };
-#ifdef _WIN32
-    DWORD WINAPI
-#else
-#error "Not implented"
-#endif
-    __attribute__ ((force_align_arg_pointer)) blur_filter(void* userdata){
+    void* __attribute__ ((force_align_arg_pointer)) blur_filter(void* userdata){
         ThreadData* tdata = reinterpret_cast<ThreadData*>(userdata);
         if(tdata->format == CAIRO_FORMAT_A8){
             unsigned char* row_dst;
@@ -184,7 +180,7 @@ namespace{
                 }
             }
         }
-        return 0;
+        return NULL;
     }
 }
 
@@ -226,28 +222,20 @@ void cairo_image_surface_blur(cairo_surface_t* surface, double blur_h, double bl
         // Normalize blur kernel
         float divisor = std::accumulate(kernel_data.begin(), kernel_data.end(), 0.0f);
         std::for_each(kernel_data.begin(), kernel_data.end(), [&divisor](float& v){v /= divisor;});
-#ifdef _WIN32
-        // Get logical processor number
-        SYSTEM_INFO si;
-        GetSystemInfo(&si);
-        int max_threads = si.dwNumberOfProcessors;
+        // Get logical processors number
+        int max_threads = pthread_num_processors_np();
         // Create thread data
         std::vector<ThreadData> threads_data(max_threads);
         for(int i = 0; i < max_threads; ++i)
             threads_data[i] = {width, height, format, stride, data, fdata.data(), i, max_threads, kernel_radius_x, kernel_radius_y, kernel_width, kernel_height, kernel_data.data()};
         // Run threads
-        std::vector<HANDLE> threads(max_threads-1);
+        std::vector<pthread_t> threads(max_threads-1);
         for(int i = 0; i < max_threads-1; ++i)
-           threads[i] = CreateThread(NULL, 0, blur_filter, &threads_data[i], 0x0, NULL);
+            pthread_create(&threads[i], NULL, blur_filter, &threads_data[i]);
         blur_filter(&threads_data[max_threads-1]);
-        // Wait for & clean threads
-        for(HANDLE& thread : threads){
-            WaitForSingleObject(thread, INFINITE);
-            CloseHandle(thread);
-        }
-#else
-#error "Not implented"
-#endif
+        // Wait for threads
+        for(pthread_t& thread : threads)
+            pthread_join(thread, NULL);
         // Signal changes on surfaces
         cairo_surface_mark_dirty(surface);
     }

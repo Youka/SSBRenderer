@@ -72,8 +72,10 @@ class FileReader{
         // Read bytes from file
         unsigned long read(unsigned long nbytes, unsigned char* bytes){
             // Clear buffer (bytes back to stream)
-            SetFilePointer(this->file, -static_cast<int>(buffer_end-buffer_start), 0, FILE_CURRENT);
-            this->buffer_start = this->buffer_end;
+            if(this->buffer_end != buffer_start){
+                SetFilePointer(this->file, -static_cast<int>(buffer_end-buffer_start), 0, FILE_CURRENT);
+                this->buffer_start = this->buffer_end;
+            }
             // Read bytes
             DWORD readbytes;
             if(!ReadFile(this->file, bytes, nbytes, &readbytes, NULL))
