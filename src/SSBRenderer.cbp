@@ -19,7 +19,7 @@
 				<Option createStaticLib="1" />
 				<Compiler>
 					<Add option="-Os" />
-					<Add option="-O3" />
+					<Add option="-O2" />
 					<Add option="-Winit-self" />
 					<Add option="-Wredundant-decls" />
 					<Add option="-Wundef" />
@@ -69,6 +69,8 @@
 				<Option createDefFile="1" />
 				<Option createStaticLib="1" />
 				<Compiler>
+					<Add option="-Os" />
+					<Add option="-O2" />
 					<Add option="-Winit-self" />
 					<Add option="-Wredundant-decls" />
 					<Add option="-Wundef" />
@@ -134,6 +136,9 @@
 		<Unit filename="avisynth.cpp">
 			<Option virtualFolder="Interfaces/" />
 		</Unit>
+		<Unit filename="cairo++.cpp">
+			<Option virtualFolder="Utils/" />
+		</Unit>
 		<Unit filename="cairo++.hpp">
 			<Option virtualFolder="Utils/" />
 		</Unit>
@@ -151,9 +156,6 @@
 			<Option virtualFolder="Meta/" />
 		</Unit>
 		<Unit filename="textconv.hpp">
-			<Option virtualFolder="Utils/" />
-		</Unit>
-		<Unit filename="thread.hpp">
 			<Option virtualFolder="Utils/" />
 		</Unit>
 		<Unit filename="user.cpp">
