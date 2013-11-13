@@ -16,6 +16,7 @@ Permission is granted to anyone to use this software for any purpose, including 
 #pragma once
 
 #include <cairo.h>
+#include "FileReader.hpp"
 #include <vector>
 #include <cmath>
 #include <algorithm>
@@ -31,6 +32,19 @@ class CairoImage{
         // Ctor & dtor
         CairoImage() : surface(cairo_image_surface_create(CAIRO_FORMAT_A1, 1, 1)), context(nullptr){}
         CairoImage(int width, int height, cairo_format_t format) : surface(cairo_image_surface_create(format, width, height)), context(nullptr){}
+        CairoImage(std::string png_filename){
+            FileReader file(png_filename);
+            if(file){
+                this->surface = cairo_image_surface_create_from_png_stream([](void* closure, unsigned char* data, unsigned int length){
+                    if(reinterpret_cast<FileReader*>(closure)->read(length, data) == length)
+                        return CAIRO_STATUS_SUCCESS;
+                    else
+                        return CAIRO_STATUS_READ_ERROR;
+                }, &file);
+                this->context = nullptr;
+            }else
+                CairoImage();
+        }
         ~CairoImage(){
             if(this->context)
                 cairo_destroy(this->context);
@@ -209,12 +223,13 @@ inline void cairo_image_surface_blur(cairo_surface_t* surface, double blur_h, do
                 }
             }else if(format == CAIRO_FORMAT_ARGB32 || format == CAIRO_FORMAT_RGB24){
                 unsigned char* row_dst;
+                __m128 accum;
                 float accum_buf[4];
                 int image_x, image_y;
                 for(int y = first_row; y < height; y += max_threads){
                     row_dst = data + y * stride;
                     for(int x = 0; x < width; ++x){
-                        __m128 accum = _mm_setzero_ps();
+                        accum = _mm_xor_ps(accum, accum);
                         for(int kernel_y = 0; kernel_y < kernel_height; ++kernel_y){
                             image_y = y + kernel_y - kernel_radius_y;
                             if(image_y < 0 || image_y >= height)

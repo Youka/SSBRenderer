@@ -69,6 +69,18 @@ class FileReader{
                 this->buffer_start = this->buffer_end;
             }
         }
+        // Read bytes from file
+        unsigned long read(unsigned long nbytes, unsigned char* bytes){
+            // Clear buffer (bytes back to stream)
+            SetFilePointer(this->file, -static_cast<int>(buffer_end-buffer_start), 0, FILE_CURRENT);
+            this->buffer_start = this->buffer_end;
+            // Read bytes
+            DWORD readbytes;
+            if(!ReadFile(this->file, bytes, nbytes, &readbytes, NULL))
+                return 0;
+            else
+                return readbytes;
+        }
         // Read one line from file
         bool getline(std::string& line){
             if(this->file != INVALID_HANDLE_VALUE){
@@ -119,7 +131,12 @@ class FileReader{
         }
         // Reset file pointer
         void reset(){
-            file.seekg(0);
+            this->file.seekg(0);
+        }
+        // Read bytes from file
+        unsigned long read(unsigned long nbytes, unsigned char* bytes){
+            this->file.read(bytes, nbytes);
+            return this->file.gcount();
         }
         // Read one line from file
         bool getline(std::string& line){
