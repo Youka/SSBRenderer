@@ -20,6 +20,7 @@ Permission is granted to anyone to use this software for any purpose, including 
 #include <cmath>
 #include <algorithm>
 #include <xmmintrin.h>
+#include "thread.hpp"
 
 class CairoImage{
     private:
@@ -182,71 +183,79 @@ inline void cairo_image_surface_blur(cairo_surface_t* surface, double blur_h, do
         float divisor = std::accumulate(kernel_data.begin(), kernel_data.end(), 0.0f);
         std::for_each(kernel_data.begin(), kernel_data.end(), [&divisor](float& v){v /= divisor;});
         // Apply kernel on image
-        if(format == CAIRO_FORMAT_A8){
-            unsigned char* row_dst;
-            float accum;
-            int image_x, image_y;
-            for(int y = 0; y < height; ++y){
-                row_dst = data + y * stride;
-                for(int x = 0; x < width; ++x){
-                    accum = 0;
-                    for(int kernel_y = 0; kernel_y < kernel_height; ++kernel_y){
-                        image_y = y + kernel_y - kernel_radius_y;
-                        if(image_y < 0 || image_y >= height)
-                            continue;
-                        for(int kernel_x = 0; kernel_x < kernel_width; ++kernel_x){
-                            image_x = x + kernel_x - kernel_radius_x;
-                            if(image_x < 0 || image_x >= width)
+        int max_threads = Thread<int>::get_logical_processors();
+        auto filter = [&](int first_row){
+            if(format == CAIRO_FORMAT_A8){
+                unsigned char* row_dst;
+                float accum;
+                int image_x, image_y;
+                for(int y = first_row; y < height; y += max_threads){
+                    row_dst = data + y * stride;
+                    for(int x = 0; x < width; ++x){
+                        accum = 0;
+                        for(int kernel_y = 0; kernel_y < kernel_height; ++kernel_y){
+                            image_y = y + kernel_y - kernel_radius_y;
+                            if(image_y < 0 || image_y >= height)
                                 continue;
-                            accum += fdata[image_y * stride + image_x] * kernel_data[kernel_y * kernel_width + kernel_x];
+                            for(int kernel_x = 0; kernel_x < kernel_width; ++kernel_x){
+                                image_x = x + kernel_x - kernel_radius_x;
+                                if(image_x < 0 || image_x >= width)
+                                    continue;
+                                accum += fdata[image_y * stride + image_x] * kernel_data[kernel_y * kernel_width + kernel_x];
+                            }
                         }
+                        *row_dst++ = accum < 0.0 ? 0.0 : (accum > 255.0f ? 255.0f : accum);
                     }
-                    *row_dst++ = accum < 0.0 ? 0.0 : (accum > 255.0f ? 255.0f : accum);
                 }
-            }
-        }else if(format == CAIRO_FORMAT_ARGB32 || format == CAIRO_FORMAT_RGB24){
-            unsigned char* row_dst;
-            alignas(16) float accum_buf[4];
-            int image_x, image_y;
-            for(int y = 0; y < height; ++y){
-                row_dst = data + y * stride;
-                for(int x = 0; x < width; ++x){
-                    __m128 accum = _mm_setzero_ps();
-                    for(int kernel_y = 0; kernel_y < kernel_height; ++kernel_y){
-                        image_y = y + kernel_y - kernel_radius_y;
-                        if(image_y < 0 || image_y >= height)
-                            continue;
-                        for(int kernel_x = 0; kernel_x < kernel_width; ++kernel_x){
-                            image_x = x + kernel_x - kernel_radius_x;
-                            if(image_x < 0 || image_x >= width)
+            }else if(format == CAIRO_FORMAT_ARGB32 || format == CAIRO_FORMAT_RGB24){
+                unsigned char* row_dst;
+                float accum_buf[4];
+                int image_x, image_y;
+                for(int y = first_row; y < height; y += max_threads){
+                    row_dst = data + y * stride;
+                    for(int x = 0; x < width; ++x){
+                        __m128 accum = _mm_setzero_ps();
+                        for(int kernel_y = 0; kernel_y < kernel_height; ++kernel_y){
+                            image_y = y + kernel_y - kernel_radius_y;
+                            if(image_y < 0 || image_y >= height)
                                 continue;
-                            accum = _mm_add_ps(
-                                accum,
-                                _mm_mul_ps(
-                                    _mm_loadu_ps(&fdata[image_y * stride + (image_x << 2)]),
-                                    _mm_set_ps1(kernel_data[kernel_y * kernel_width + kernel_x])
+                            for(int kernel_x = 0; kernel_x < kernel_width; ++kernel_x){
+                                image_x = x + kernel_x - kernel_radius_x;
+                                if(image_x < 0 || image_x >= width)
+                                    continue;
+                                accum = _mm_add_ps(
+                                    accum,
+                                    _mm_mul_ps(
+                                        _mm_loadu_ps(&fdata[image_y * stride + (image_x << 2)]),
+                                        _mm_set_ps1(kernel_data[kernel_y * kernel_width + kernel_x])
+                                    )
+                                );
+                            }
+                        }
+                        _mm_storeu_ps(  // Somehow MinGW32 doesn't support 16 byte alignment
+                            accum_buf,
+                            _mm_max_ps(
+                                _mm_setzero_ps(),
+                                _mm_min_ps(
+                                    _mm_set_ps1(255.0f),
+                                    accum
                                 )
-                            );
-                        }
-                    }
-                    _mm_storeu_ps(  // Somehow MinGW32 doesn't support 16 byte alignment
-                        accum_buf,
-                        _mm_max_ps(
-                            _mm_setzero_ps(),
-                            _mm_min_ps(
-                                _mm_set_ps1(255.0f),
-                                accum
                             )
-                        )
-                    );
-                    row_dst[0] = accum_buf[0];
-                    row_dst[1] = accum_buf[1];
-                    row_dst[2] = accum_buf[2];
-                    row_dst[3] = accum_buf[3];
-                    row_dst += 4;
+                        );
+                        row_dst[0] = accum_buf[0];
+                        row_dst[1] = accum_buf[1];
+                        row_dst[2] = accum_buf[2];
+                        row_dst[3] = accum_buf[3];
+                        row_dst += 4;
+                    }
                 }
             }
-        }
+        };
+        std::vector<std::shared_ptr<Thread<int>>> threads(max_threads);
+        for(int i = 0; i < max_threads; ++i)
+            threads[i] = std::shared_ptr<Thread<int>>(new Thread<int>(filter, i));
+        for(std::shared_ptr<Thread<int>>& thread : threads)
+            thread->join();
         // Signal changes on surfaces
         cairo_surface_mark_dirty(surface);
     }

@@ -19,7 +19,7 @@
 				<Option createStaticLib="1" />
 				<Compiler>
 					<Add option="-Os" />
-					<Add option="-O2" />
+					<Add option="-O3" />
 					<Add option="-Winit-self" />
 					<Add option="-Wredundant-decls" />
 					<Add option="-Wundef" />
@@ -151,6 +151,9 @@
 			<Option virtualFolder="Meta/" />
 		</Unit>
 		<Unit filename="textconv.hpp">
+			<Option virtualFolder="Utils/" />
+		</Unit>
+		<Unit filename="thread.hpp">
 			<Option virtualFolder="Utils/" />
 		</Unit>
 		<Unit filename="user.cpp">
