@@ -143,7 +143,7 @@ namespace{
         }else if(tdata->format == CAIRO_FORMAT_ARGB32 || tdata->format == CAIRO_FORMAT_RGB24){
             unsigned char* row_dst;
             __m128 accum;
-            float accum_buf[4];
+            alignas(16) float accum_buf[4];
             int image_x, image_y;
             for(int y = tdata->first_row; y < tdata->height; y += tdata->row_step){
                 row_dst = tdata->dst_data + y * tdata->stride;
@@ -166,7 +166,7 @@ namespace{
                             );
                         }
                     }
-                    _mm_storeu_ps(  // Somehow MinGW32 doesn't support 16 byte alignment
+                    _mm_store_ps(
                         accum_buf,
                         _mm_max_ps(
                             _mm_setzero_ps(),
@@ -235,7 +235,7 @@ void cairo_image_surface_blur(cairo_surface_t* surface, double blur_h, double bl
         std::vector<ThreadData> threads_data(max_threads);
         for(int i = 0; i < max_threads; ++i)
             threads_data[i] = {width, height, format, stride, data, fdata.data(), i, max_threads, kernel_radius_x, kernel_radius_y, kernel_width, kernel_height, kernel_data.data()};
-        // Create threads
+        // Run threads
         std::vector<HANDLE> threads(max_threads-1);
         for(int i = 0; i < max_threads-1; ++i)
            threads[i] = CreateThread(NULL, 0, blur_filter, &threads_data[i], 0x0, NULL);
