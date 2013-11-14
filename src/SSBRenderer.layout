@@ -1,11 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <CodeBlocks_layout_file>
 	<ActiveTarget name="Release - Windows" />
-	<File name="sse.hpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="2794" topLine="0" />
-		</Cursor>
-	</File>
 	<File name="Renderer.hpp" open="0" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
 			<Cursor1 position="1220" topLine="11" />
@@ -31,14 +26,14 @@
 			<Cursor1 position="1672" topLine="15" />
 		</Cursor>
 	</File>
-	<File name="cairo++.cpp" open="1" top="1" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="cairo++.cpp" open="0" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="11127" topLine="207" />
+			<Cursor1 position="961" topLine="0" />
 		</Cursor>
 	</File>
 	<File name="cairo++.hpp" open="0" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="3318" topLine="53" />
+			<Cursor1 position="1985" topLine="18" />
 		</Cursor>
 	</File>
 	<File name="file_info.hpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
@@ -59,6 +54,11 @@
 	<File name="resources.rc" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
 			<Cursor1 position="44" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="sse.hpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="2794" topLine="0" />
 		</Cursor>
 	</File>
 	<File name="textconv.hpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
@@ -88,7 +88,7 @@
 	</File>
 	<File name="FileReader.hpp" open="0" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="1359" topLine="111" />
+			<Cursor1 position="1380" topLine="21" />
 		</Cursor>
 	</File>
 	<File name="RenderState.hpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
@@ -96,9 +96,9 @@
 			<Cursor1 position="2120" topLine="688" />
 		</Cursor>
 	</File>
-	<File name="Renderer.cpp" open="0" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="Renderer.cpp" open="1" top="1" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="8620" topLine="155" />
+			<Cursor1 position="9568" topLine="153" />
 		</Cursor>
 	</File>
 </CodeBlocks_layout_file>

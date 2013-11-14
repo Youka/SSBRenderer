@@ -28,18 +28,14 @@ class CairoImage{
         // Ctor & dtor
         CairoImage() : surface(cairo_image_surface_create(CAIRO_FORMAT_A1, 1, 1)), context(nullptr){}
         CairoImage(int width, int height, cairo_format_t format) : surface(cairo_image_surface_create(format, width, height)), context(nullptr){}
-        CairoImage(std::string png_filename){
+        CairoImage(std::string png_filename) : context(nullptr){
             FileReader file(png_filename);
-            if(file){
-                this->surface = cairo_image_surface_create_from_png_stream([](void* closure, unsigned char* data, unsigned int length){
+            this->surface = file ? cairo_image_surface_create_from_png_stream([](void* closure, unsigned char* data, unsigned int length){
                     if(reinterpret_cast<FileReader*>(closure)->read(length, data) == length)
                         return CAIRO_STATUS_SUCCESS;
                     else
                         return CAIRO_STATUS_READ_ERROR;
-                }, &file);
-                this->context = nullptr;
-            }else
-                CairoImage();
+                }, &file) : cairo_image_surface_create(CAIRO_FORMAT_INVALID, 1, 1);
         }
         ~CairoImage(){
             if(this->context)

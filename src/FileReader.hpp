@@ -36,8 +36,6 @@ class FileReader{
     public:
 #ifdef _WIN32
         // Constructors
-        FileReader()
-        : file(INVALID_HANDLE_VALUE){}
         FileReader(std::string& filename)
         : file(CreateFileW(utf8_to_utf16(filename).c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL)){}
         FileReader(std::wstring& filename)
@@ -63,17 +61,20 @@ class FileReader{
         }
         // Read bytes from file
         unsigned long read(unsigned long nbytes, unsigned char* bytes){
-            // Clear buffer (bytes back to stream)
-            if(this->buffer_end != buffer_start){
-                SetFilePointer(this->file, -static_cast<int>(buffer_end-buffer_start), 0, FILE_CURRENT);
-                this->buffer_start = this->buffer_end;
+            if(this->file != INVALID_HANDLE_VALUE){
+                // Clear buffer (bytes back to stream)
+                if(this->buffer_end != buffer_start){
+                    SetFilePointer(this->file, -static_cast<int>(buffer_end-buffer_start), 0, FILE_CURRENT);
+                    this->buffer_start = this->buffer_end;
+                }
+                // Read bytes
+                DWORD readbytes;
+                if(!ReadFile(this->file, bytes, nbytes, &readbytes, NULL))
+                    return 0;
+                else
+                    return readbytes;
             }
-            // Read bytes
-            DWORD readbytes;
-            if(!ReadFile(this->file, bytes, nbytes, &readbytes, NULL))
-                return 0;
-            else
-                return readbytes;
+            return 0;
         }
         // Read one line from file
         bool getline(std::string& line){

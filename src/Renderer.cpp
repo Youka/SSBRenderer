@@ -166,6 +166,13 @@ void Renderer::render(unsigned char* image, int pitch, unsigned long int start_m
                         cairo_set_source_rgb(context, rs.colors.front().r, rs.colors.front().g, rs.colors.front().b);
                         cairo_fill(context);
                         cairo_image_surface_blur(surface, rs.blur_h, rs.blur_v);
+                        if(!rs.texture.empty()){
+                            CairoImage texture(rs.texture);
+                            if(cairo_surface_status(texture) == CAIRO_STATUS_SUCCESS){
+                                cairo_set_source_surface(context, texture, 0, 0);
+                                cairo_paint(context);
+                            }
+                        }
                         cairo_destroy(context);
                         cairo_surface_destroy(surface);
                     }
