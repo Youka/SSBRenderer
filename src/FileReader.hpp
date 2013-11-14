@@ -42,17 +42,9 @@ class FileReader{
         : file(CreateFileW(utf8_to_utf16(filename).c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL)){}
         FileReader(std::wstring& filename)
         : file(CreateFileW(filename.c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL)){}
-        FileReader(FileReader& reader)
-        : file(reader.file){reader.file = INVALID_HANDLE_VALUE;}
-        // Assign operator
-        FileReader& operator =(FileReader& reader){
-            if(this->file != INVALID_HANDLE_VALUE)
-                CloseHandle(this->file);
-            this->file = reader.file;
-            this->buffer_start = this->buffer_end;
-            reader.file = INVALID_HANDLE_VALUE;
-            return *this;
-        }
+        // No copy
+        FileReader(const FileReader& other) = delete;
+        FileReader& operator =(const FileReader& other) = delete;
         // Destructor
         ~FileReader(){
             if(this->file != INVALID_HANDLE_VALUE)
@@ -122,9 +114,9 @@ class FileReader{
         // Constructors
         FileReader() = default;
         FileReader(std::string& filename) : file(filename){}
-        FileReader(const FileReader& reader) = default;
+        FileReader(const FileReader&) = default;
         // Assign operator
-        FileReader& operator =(const FileReader& reader) = default;
+        FileReader& operator =(const FileReader&) = default;
         // Destructor
         ~FileReader() = default;
         // Check file state

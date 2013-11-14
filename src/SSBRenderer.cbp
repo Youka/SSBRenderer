@@ -32,7 +32,7 @@
 					<Add option="-Wextra" />
 					<Add option="-Wall" />
 					<Add option="-static" />
-					<Add option="-msse2" />
+					<Add option="-msse" />
 					<Add option="-DBUILD_DLL" />
 					<Add option="-D_WIN32" />
 					<Add option="-DWIN32_LEAN_AND_MEAN" />
@@ -85,7 +85,7 @@
 					<Add option="-pg" />
 					<Add option="-g" />
 					<Add option="-static" />
-					<Add option="-msse2" />
+					<Add option="-msse" />
 					<Add option="-DDEBUG" />
 					<Add option="-DBUILD_DLL" />
 					<Add option="-D_WIN32" />
@@ -154,6 +154,9 @@
 		<Unit filename="resources.rc">
 			<Option compilerVar="WINDRES" />
 			<Option virtualFolder="Meta/" />
+		</Unit>
+		<Unit filename="sse.hpp">
+			<Option virtualFolder="Utils/" />
 		</Unit>
 		<Unit filename="textconv.hpp">
 			<Option virtualFolder="Utils/" />

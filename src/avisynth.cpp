@@ -31,6 +31,9 @@ namespace AVS{
             // Allocate & free resources
             AVSClip(AVS_ScriptEnvironment* env, AVS_Value val) : clip(avs_new_c_filter(env, &this->filter_info, val, 1)){}
             ~AVSClip(){avs_release_clip(this->clip);}
+            // No copy
+            AVSClip(const AVSClip&) = delete;
+            AVSClip& operator=(const AVSClip&) = delete;
             // Data access
             AVS_FilterInfo* info() const {return this->filter_info;}
             operator AVS_Clip*() const {return this->clip;}

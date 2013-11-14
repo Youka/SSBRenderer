@@ -16,8 +16,8 @@ Permission is granted to anyone to use this software for any purpose, including 
 #include "cairo++.hpp"
 #include <cmath>
 #include <algorithm>
-#include <xmmintrin.h>
 #include <pthread.h>
+#include "sse.hpp"
 
 void cairo_path_filter(cairo_t* ctx, std::function<void(double&, double&)> filter){
     // Get flatten path
@@ -156,7 +156,7 @@ namespace{
                             accum = _mm_add_ps(
                                 accum,
                                 _mm_mul_ps(
-                                    _mm_loadu_ps(&tdata->src_data[image_y * tdata->stride + (image_x << 2)]),
+                                    _mm_load_ps(&tdata->src_data[image_y * tdata->stride + (image_x << 2)]),
                                     _mm_set_ps1(tdata->kernel_data[kernel_y * tdata->kernel_width + kernel_x])
                                 )
                             );
@@ -195,10 +195,10 @@ void cairo_image_surface_blur(cairo_surface_t* surface, double blur_h, double bl
         unsigned char* data = cairo_image_surface_get_data(surface);
         // Flush pending operations on surface
         cairo_surface_flush(surface);
-        // Create data in float format for vector operations
+        // Create data in aligned float format for vector operations
         const unsigned long int size = height * stride;
-        std::vector<float> fdata(size);
-        std::copy(data, data + size, fdata.data());
+        aligned_memory<float,16> fdata(size);
+        std::copy(data, data + size, &fdata[0]);
         // Create blur kernel
         int kernel_radius_x = ceil(blur_h),
             kernel_radius_y = ceil(blur_v),
@@ -227,7 +227,7 @@ void cairo_image_surface_blur(cairo_surface_t* surface, double blur_h, double bl
         // Create thread data
         std::vector<ThreadData> threads_data(max_threads);
         for(int i = 0; i < max_threads; ++i)
-            threads_data[i] = {width, height, format, stride, data, fdata.data(), i, max_threads, kernel_radius_x, kernel_radius_y, kernel_width, kernel_height, kernel_data.data()};
+            threads_data[i] = {width, height, format, stride, data, fdata, i, max_threads, kernel_radius_x, kernel_radius_y, kernel_width, kernel_height, kernel_data.data()};
         // Run threads
         std::vector<pthread_t> threads(max_threads-1);
         for(int i = 0; i < max_threads-1; ++i)
