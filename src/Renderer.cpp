@@ -38,7 +38,8 @@ void Renderer::blend(cairo_surface_t* src, int dst_x, int dst_y,
     unsigned char* src_data = cairo_image_surface_get_data(src);
     // Anything to overlay?
     if(dst_x < this->width && dst_y < this->height &&
-       dst_x + src_width > 0 && dst_y + src_height > 0){
+       dst_x + src_width > 0 && dst_y + src_height > 0 &&
+       src_format == CAIRO_FORMAT_ARGB32){
         // Calculate source rectangle to overlay
         int src_rect_x = dst_x < 0 ? -dst_x : 0;
         int src_rect_y = dst_y < 0 ? -dst_y : 0;
@@ -47,44 +48,82 @@ void Renderer::blend(cairo_surface_t* src, int dst_x, int dst_y,
         // Calculate destination offsets for overlay
         int dst_offset_x = dst_x < 0 ? 0 : dst_x;
         int dst_offset_y = this->height - 1 - (dst_y < 0 ? 0 : dst_y);
-        // Overlay just with RGBA sources (currently)
-        if(src_format == CAIRO_FORMAT_ARGB32){
-            unsigned char* src_row = src_data + src_rect_y * src_stride + (src_rect_x << 2);
-            int src_modulo = src_stride - (src_rect_width << 2);
-#pragma message "Implent blending"
-            // Overlay by destination format
-            switch(this->format){
-                case Renderer::Colorspace::BGR:
-                    break;
-                case Renderer::Colorspace::BGRX:
-                    break;
-                case Renderer::Colorspace::BGRA:
-                    {
-                        unsigned char* dst_row = dst_data + dst_offset_y * dst_stride + (dst_offset_x << 2);
-                        int dst_modulo = dst_stride - (src_rect_width << 2);
-                        if(blend_mode == SSBBlend::Mode::OVER)
-                            for(int src_y = 0; src_y < src_rect_height; ++src_y){
-                                for(int src_x = 0; src_x < src_rect_width; ++src_x){
-                                    if(src_row[3] == 255){
-                                        dst_row[0] = src_row[0];
-                                        dst_row[1] = src_row[1];
-                                        dst_row[2] = src_row[2];
-                                    }else if(src_row[3] > 0){
-                                        double alpha = static_cast<double>(src_row[3]) / 255;
-                                        double color_reset = 1.0 / alpha;
-                                        dst_row[0] += (src_row[0] * color_reset - dst_row[0]) * alpha;
-                                        dst_row[1] += (src_row[1] * color_reset - dst_row[1]) * alpha;
-                                        dst_row[2] += (src_row[2] * color_reset - dst_row[2]) * alpha;
-                                    }
-                                    dst_row += 4;
-                                    src_row += 4;
-                                }
-                                src_row += src_modulo;
-                                dst_row += -dst_stride + dst_modulo - dst_stride;
-                            }
+        // Processing data
+        int dst_pix_size = this->format == Renderer::Colorspace::BGR ? 3 : 4;
+        unsigned char* src_row = src_data + src_rect_y * src_stride + (src_rect_x << 2);
+        unsigned char* dst_row = dst_data + dst_offset_y * dst_stride + (dst_offset_x * dst_pix_size);
+        int src_modulo = src_stride - (src_rect_width << 2);
+        int dst_modulo = dst_stride - (src_rect_width * dst_pix_size);
+        // Overlay by blending mode (hint: source has premultiplied alpha)
+        switch(blend_mode){
+            case SSBBlend::Mode::OVER:
+                for(int src_y = 0; src_y < src_rect_height; ++src_y){
+                    for(int src_x = 0; src_x < src_rect_width; ++src_x){
+                        if(src_row[3] == 255){
+                            dst_row[0] = src_row[0];
+                            dst_row[1] = src_row[1];
+                            dst_row[2] = src_row[2];
+                        }else if(src_row[3] > 0){
+                            unsigned char inv_alpha = 255 - src_row[3];
+                            dst_row[0] = dst_row[0] * inv_alpha / 255 + src_row[0];
+                            dst_row[1] = dst_row[1] * inv_alpha / 255 + src_row[1];
+                            dst_row[2] = dst_row[2] * inv_alpha / 255 + src_row[2];
+                        }
+                        dst_row += dst_pix_size;
+                        src_row += 4;
                     }
-                    break;
-            }
+                    src_row += src_modulo;
+                    dst_row += -dst_stride + dst_modulo - dst_stride;
+                }
+                break;
+            case SSBBlend::Mode::ADD:
+                for(int src_y = 0; src_y < src_rect_height; ++src_y){
+                    for(int src_x = 0; src_x < src_rect_width; ++src_x){
+                        if(src_row[3] > 0){
+                            dst_row[0] = dst_row[0] + src_row[0] > 255 ? 255 : dst_row[0] + src_row[0];
+                            dst_row[1] = dst_row[1] + src_row[1] > 255 ? 255 : dst_row[1] + src_row[1];
+                            dst_row[2] = dst_row[2] + src_row[2] > 255 ? 255 : dst_row[2] + src_row[2];
+                        }
+                        dst_row += dst_pix_size;
+                        src_row += 4;
+                    }
+                    src_row += src_modulo;
+                    dst_row += -dst_stride + dst_modulo - dst_stride;
+                }
+                break;
+            case SSBBlend::Mode::MULTIPLY:
+                for(int src_y = 0; src_y < src_rect_height; ++src_y){
+                    for(int src_x = 0; src_x < src_rect_width; ++src_x){
+                        if(src_row[3] > 0){
+                            unsigned char inv_alpha = 255 - src_row[3];
+                            // Restore original color (invert premultiplied alpha) -> multiply color with destination -> multiply color with alpha -> continue like in OVER
+                            dst_row[0] = dst_row[0] * inv_alpha / 255 + dst_row[0] * (src_row[0] * 255 / src_row[3]) / 255 * src_row[3] / 255;
+                            dst_row[1] = dst_row[1] * inv_alpha / 255 + dst_row[1] * (src_row[1] * 255 / src_row[3]) / 255 * src_row[3] / 255;
+                            dst_row[2] = dst_row[2] * inv_alpha / 255 + dst_row[2] * (src_row[2] * 255 / src_row[3]) / 255 * src_row[3] / 255;
+                        }
+                        dst_row += dst_pix_size;
+                        src_row += 4;
+                    }
+                    src_row += src_modulo;
+                    dst_row += -dst_stride + dst_modulo - dst_stride;
+                }
+                break;
+            case SSBBlend::Mode::INVERT:
+                for(int src_y = 0; src_y < src_rect_height; ++src_y){
+                    for(int src_x = 0; src_x < src_rect_width; ++src_x){
+                        if(src_row[3] > 0){
+                            unsigned char inv_alpha = 255 - src_row[3];
+                            dst_row[0] = dst_row[0] * inv_alpha / 255 + (255 - dst_row[0]) * src_row[3] / 255;
+                            dst_row[1] = dst_row[1] * inv_alpha / 255 + (255 - dst_row[1]) * src_row[3] / 255;
+                            dst_row[2] = dst_row[2] * inv_alpha / 255 + (255 - dst_row[2]) * src_row[3] / 255;
+                        }
+                        dst_row += dst_pix_size;
+                        src_row += 4;
+                    }
+                    src_row += src_modulo;
+                    dst_row += -dst_stride + dst_modulo - dst_stride;
+                }
+                break;
         }
     }
 }
