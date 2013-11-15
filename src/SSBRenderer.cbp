@@ -5,7 +5,6 @@
 		<Option title="SSBRenderer" />
 		<Option platforms="Windows;Unix;" />
 		<Option pch_mode="2" />
-		<Option default_target="Debug - Windows" />
 		<Option compiler="gcc" />
 		<Option virtualFolders="Meta\;Interfaces\;Filter\;Utils\;" />
 		<Build>
@@ -33,6 +32,7 @@
 					<Add option="-Wall" />
 					<Add option="-static" />
 					<Add option="-msse" />
+					<Add option="-mstackrealign" />
 					<Add option="-DBUILD_DLL" />
 					<Add option="-D_WIN32" />
 					<Add option="-DWIN32_LEAN_AND_MEAN" />
@@ -86,6 +86,7 @@
 					<Add option="-g" />
 					<Add option="-static" />
 					<Add option="-msse" />
+					<Add option="-mstackrealign" />
 					<Add option="-DDEBUG" />
 					<Add option="-DBUILD_DLL" />
 					<Add option="-D_WIN32" />

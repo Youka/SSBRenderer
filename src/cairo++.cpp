@@ -112,7 +112,7 @@ namespace{
         int kernel_radius_x, kernel_radius_y, kernel_width, kernel_height;
         float* kernel_data;
     };
-    void* __attribute__ ((force_align_arg_pointer)) blur_filter(void* userdata){
+    void* __attribute__((force_align_arg_pointer)) blur_filter(void* userdata){
         ThreadData* tdata = reinterpret_cast<ThreadData*>(userdata);
         if(tdata->format == CAIRO_FORMAT_A8){
             unsigned char* row_dst;
@@ -139,7 +139,7 @@ namespace{
         }else if(tdata->format == CAIRO_FORMAT_ARGB32 || tdata->format == CAIRO_FORMAT_RGB24){
             unsigned char* row_dst;
             __m128 accum;
-            alignas(16) float accum_buf[4];
+            float __attribute__((aligned(16))) accum_buf[4];
             int image_x, image_y;
             for(int y = tdata->first_row; y < tdata->height; y += tdata->row_step){
                 row_dst = tdata->dst_data + y * tdata->stride;

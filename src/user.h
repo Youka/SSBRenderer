@@ -28,7 +28,7 @@ Permission is granted to anyone to use this software for any purpose, including 
 #       define DLL_EXPORT EXTERN_C __declspec(dllimport)
 #   endif
 #else
-#   define DLL_EXPORT EXTERN_C __attribute__ ((visibility("default")))
+#   define DLL_EXPORT EXTERN_C __attribute__((visibility("default")))
 #endif
 
 /// Renderer handle
