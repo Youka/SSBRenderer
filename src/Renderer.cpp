@@ -26,7 +26,59 @@ void Renderer::set_target(int width, int height, Colorspace format){
     this->format = format;
 }
 
-// Helper functions for rendering
+void Renderer::blend(cairo_surface_t* src, int dst_x, int dst_y,
+                        unsigned char* dst_data, int dst_stride,
+                        SSBBlend::Mode blend_mode){
+    // Get source data
+    int src_width = cairo_image_surface_get_width(src);
+    int src_height = cairo_image_surface_get_height(src);
+    cairo_format_t src_format = cairo_image_surface_get_format(src);
+    int src_stride = cairo_image_surface_get_stride(src);
+    unsigned char* src_data = cairo_image_surface_get_data(src);
+    // Anything to overlay?
+    if(dst_x < this->width && dst_y < this->height &&
+       dst_x + src_width > 0 && dst_y + src_height > 0){
+        // Calculate source rectangle to overlay
+        int src_rect_x = dst_x < 0 ? -dst_x : 0;
+        int src_rect_y = dst_y < 0 ? -dst_y : 0;
+        int src_rect_width = dst_x + src_width > this->width ? this->width - dst_x : src_width;
+        int src_rect_height = dst_y + src_height > this->height ? this->height - dst_y : src_height;
+        // Calculate destination offsets for overlay
+        int dst_offset_x = dst_x < 0 ? 0 : dst_x;
+        int dst_offset_y = this->height - 1 - (dst_y < 0 ? 0 : dst_y);
+        // Overlay just with RGBA sources (currently)
+        if(src_format == CAIRO_FORMAT_ARGB32){
+            unsigned char* src_row = src_data + src_rect_y * src_stride + (src_rect_x << 2);
+            int src_modulo = src_stride - (src_rect_width << 2);
+#pragma message "Implent blending"
+            // Overlay by destination format
+            switch(this->format){
+                case Renderer::Colorspace::BGR:
+                    break;
+                case Renderer::Colorspace::BGRX:
+                    break;
+                case Renderer::Colorspace::BGRA:
+                    {
+                        unsigned char* dst_row = dst_data + dst_offset_y * dst_stride + (dst_offset_x << 2);
+                        int dst_modulo = dst_stride - (src_rect_width << 2);
+                        if(blend_mode == SSBBlend::Mode::SOURCE)
+                            for(int src_y = 0; src_y < src_rect_height; ++src_y){
+                                for(int src_x = 0; src_x < src_rect_width; ++src_x){
+                                    *dst_data++ = *src_data++;
+                                    *dst_data++ = *src_data++;
+                                    *dst_data++ = *src_data++;
+                                    ++dst_data; ++src_data;
+                                }
+                                src_row += src_modulo;
+                                dst_row += -dst_stride + dst_modulo - dst_stride;
+                            }
+                    }
+                    break;
+            }
+        }
+    }
+}
+
 namespace{
     // Converts SSB geometry to cairo path
     inline void geometry_to_path(SSBGeometry* geometry, RenderState& rs, cairo_t* ctx){
@@ -95,7 +147,6 @@ namespace{
                 break;
             case SSBGeometry::Type::TEXT:
                 {
-#pragma message "Implent SSB text paths correctly"
                     NativeFont font(rs.font_family, rs.bold, rs.italic, rs.underline, rs.strikeout, rs.font_size);
                     NativeFont::FontMetrics metrics = font.get_metrics();
                     std::stringstream text(dynamic_cast<SSBText*>(geometry)->text);
@@ -109,6 +160,28 @@ namespace{
                 }
                 break;
         }
+    }
+    // Applies deform filter on path
+    void path_deform(cairo_t* ctx, RenderState& rs){
+        mu::Parser parser_x, parser_y;
+        double x_buf, y_buf;
+        parser_x.SetExpr(rs.deform_x);
+        parser_y.SetExpr(rs.deform_y);
+        parser_x.DefineConst("t", rs.deform_progress);
+        parser_y.DefineConst("t", rs.deform_progress);
+        parser_x.DefineVar("x", &x_buf);
+        parser_y.DefineVar("x", &x_buf);
+        parser_x.DefineVar("y", &y_buf);
+        parser_y.DefineVar("y", &y_buf);
+        cairo_path_filter(ctx,
+            [&parser_x,&parser_y,&x_buf,&y_buf](double& x, double& y){
+                x_buf = x;
+                y_buf = y;
+                try{
+                    x = parser_x.Eval();
+                    y = parser_y.Eval();
+                }catch(...){}
+            });
     }
 }
 
@@ -139,27 +212,8 @@ void Renderer::render(unsigned char* image, int pitch, unsigned long int start_m
                         cairo_matrix_translate(&matrix, 0, -this->height);
                         cairo_matrix_multiply(&matrix, &rs.matrix, &matrix);
                         cairo_set_matrix(context, &matrix);
-                        if(!rs.deform_x.empty() || !rs.deform_y.empty()){
-                            mu::Parser parser_x, parser_y;
-                            double x_buf, y_buf;
-                            parser_x.SetExpr(rs.deform_x);
-                            parser_y.SetExpr(rs.deform_y);
-                            parser_x.DefineConst("t", rs.deform_progress);
-                            parser_y.DefineConst("t", rs.deform_progress);
-                            parser_x.DefineVar("x", &x_buf);
-                            parser_y.DefineVar("x", &x_buf);
-                            parser_x.DefineVar("y", &y_buf);
-                            parser_y.DefineVar("y", &y_buf);
-                            cairo_path_filter(this->path_buffer,
-                                [&parser_x,&parser_y,&x_buf,&y_buf](double& x, double& y){
-                                    x_buf = x;
-                                    y_buf = y;
-                                    try{
-                                        x = parser_x.Eval();
-                                        y = parser_y.Eval();
-                                    }catch(...){}
-                                });
-                        }
+                        if(!rs.deform_x.empty() || !rs.deform_y.empty())
+                            path_deform(this->path_buffer, rs);
                         cairo_path_t* path = cairo_copy_path(this->path_buffer);
                         cairo_append_path(context, path);
                         cairo_path_destroy(path);

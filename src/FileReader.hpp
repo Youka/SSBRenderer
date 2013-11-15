@@ -37,9 +37,9 @@ class FileReader{
 #ifdef _WIN32
         // Constructors
         FileReader(std::string& filename)
-        : file(CreateFileW(utf8_to_utf16(filename).c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL)){}
+        : file(CreateFileW(utf8_to_utf16(filename).c_str(), FILE_READ_DATA|STANDARD_RIGHTS_READ|SYNCHRONIZE, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL)){}
         FileReader(std::wstring& filename)
-        : file(CreateFileW(filename.c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL)){}
+        : file(CreateFileW(filename.c_str(), FILE_READ_DATA|STANDARD_RIGHTS_READ|SYNCHRONIZE, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL)){}
         // No copy
         FileReader(const FileReader& other) = delete;
         FileReader& operator =(const FileReader& other) = delete;

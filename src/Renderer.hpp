@@ -30,6 +30,10 @@ class Renderer{
         SSBData ssb;
         // Path buffer
         CairoImage path_buffer;
+        // Blend image on frame
+        void blend(cairo_surface_t* src, int dst_x, int dst_y,
+                   unsigned char* dst_data, int dst_stride,
+                   SSBBlend::Mode blend_mode);
     public:
         // Frame meta informations saving + SSB parsing + path buffer creation
         Renderer(int width, int height, Colorspace format, std::string& script, bool warnings);
