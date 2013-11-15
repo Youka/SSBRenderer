@@ -34,6 +34,7 @@ void Renderer::blend(cairo_surface_t* src, int dst_x, int dst_y,
     int src_height = cairo_image_surface_get_height(src);
     cairo_format_t src_format = cairo_image_surface_get_format(src);
     int src_stride = cairo_image_surface_get_stride(src);
+    cairo_surface_flush(src);   // Flush pending operations on surface
     unsigned char* src_data = cairo_image_surface_get_data(src);
     // Anything to overlay?
     if(dst_x < this->width && dst_y < this->height &&
@@ -61,13 +62,22 @@ void Renderer::blend(cairo_surface_t* src, int dst_x, int dst_y,
                     {
                         unsigned char* dst_row = dst_data + dst_offset_y * dst_stride + (dst_offset_x << 2);
                         int dst_modulo = dst_stride - (src_rect_width << 2);
-                        if(blend_mode == SSBBlend::Mode::SOURCE)
+                        if(blend_mode == SSBBlend::Mode::OVER)
                             for(int src_y = 0; src_y < src_rect_height; ++src_y){
                                 for(int src_x = 0; src_x < src_rect_width; ++src_x){
-                                    *dst_data++ = *src_data++;
-                                    *dst_data++ = *src_data++;
-                                    *dst_data++ = *src_data++;
-                                    ++dst_data; ++src_data;
+                                    if(src_row[3] == 255){
+                                        dst_row[0] = src_row[0];
+                                        dst_row[1] = src_row[1];
+                                        dst_row[2] = src_row[2];
+                                    }else if(src_row[3] > 0){
+                                        double alpha = static_cast<double>(src_row[3]) / 255;
+                                        double color_reset = 1.0 / alpha;
+                                        dst_row[0] += (src_row[0] * color_reset - dst_row[0]) * alpha;
+                                        dst_row[1] += (src_row[1] * color_reset - dst_row[1]) * alpha;
+                                        dst_row[2] += (src_row[2] * color_reset - dst_row[2]) * alpha;
+                                    }
+                                    dst_row += 4;
+                                    src_row += 4;
                                 }
                                 src_row += src_modulo;
                                 dst_row += -dst_stride + dst_modulo - dst_stride;
@@ -185,7 +195,7 @@ namespace{
     }
 }
 
-void Renderer::render(unsigned char* image, int pitch, unsigned long int start_ms) noexcept{
+void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_ms) noexcept{
     // Iterate through SSB events
     for(SSBEvent& event : this->ssb.events)
         // Process active SSB event
@@ -204,32 +214,24 @@ void Renderer::render(unsigned char* image, int pitch, unsigned long int start_m
                     geometry_to_path(dynamic_cast<SSBGeometry*>(obj.get()), rs, this->path_buffer);
 #pragma message "Implent SSB rendering"
                     // Test
-                    if(this->format == Renderer::Colorspace::BGRX || this->format == Renderer::Colorspace::BGRA){
-                        cairo_surface_t* surface = cairo_image_surface_create_for_data(image, this->format == Renderer::Colorspace::BGRA ? CAIRO_FORMAT_ARGB32 : CAIRO_FORMAT_RGB24, this->width, this->height, pitch);
-                        cairo_t* context = cairo_create(surface);
-                        cairo_matrix_t matrix = {1, 0, 0, 1, 0, 0};
-                        cairo_matrix_scale(&matrix, 1, -1);
-                        cairo_matrix_translate(&matrix, 0, -this->height);
-                        cairo_matrix_multiply(&matrix, &rs.matrix, &matrix);
-                        cairo_set_matrix(context, &matrix);
-                        if(!rs.deform_x.empty() || !rs.deform_y.empty())
-                            path_deform(this->path_buffer, rs);
-                        cairo_path_t* path = cairo_copy_path(this->path_buffer);
-                        cairo_append_path(context, path);
-                        cairo_path_destroy(path);
-                        cairo_set_source_rgb(context, rs.colors.front().r, rs.colors.front().g, rs.colors.front().b);
-                        cairo_fill(context);
-                        cairo_image_surface_blur(surface, rs.blur_h, rs.blur_v);
-                        if(!rs.texture.empty()){
-                            CairoImage texture(rs.texture);
-                            if(cairo_surface_status(texture) == CAIRO_STATUS_SUCCESS){
-                                cairo_set_source_surface(context, texture, 0, 0);
-                                cairo_paint(context);
-                            }
+                    CairoImage image(this->width, this->height, CAIRO_FORMAT_ARGB32);
+                    cairo_transform(image, &rs.matrix);
+                    if(!rs.deform_x.empty() || !rs.deform_y.empty())
+                        path_deform(this->path_buffer, rs);
+                    cairo_path_t* path = cairo_copy_path(this->path_buffer);
+                    cairo_append_path(image, path);
+                    cairo_path_destroy(path);
+                    cairo_set_source_rgb(image, rs.colors.front().r, rs.colors.front().g, rs.colors.front().b);
+                    cairo_fill(image);
+                    cairo_image_surface_blur(image, rs.blur_h, rs.blur_v);
+                    if(!rs.texture.empty()){
+                        CairoImage texture(rs.texture);
+                        if(cairo_surface_status(texture) == CAIRO_STATUS_SUCCESS){
+                            cairo_set_source_surface(image, texture, 0, 0);
+                            cairo_paint(image);
                         }
-                        cairo_destroy(context);
-                        cairo_surface_destroy(surface);
                     }
+                    this->blend(image, 0, 0, frame, pitch, rs.blend_mode);
                     // Create image with fitting size
 
                     // Draw on image

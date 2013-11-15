@@ -544,8 +544,6 @@ namespace{
                 std::string tag_value = tags_token.substr(6);
                 if(tag_value == "over")
                     ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBBlend(SSBBlend::Mode::OVER)));
-                else if(tag_value == "source")
-                    ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBBlend(SSBBlend::Mode::SOURCE)));
                 else if(tag_value == "add")
                     ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBBlend(SSBBlend::Mode::ADD)));
                 else if(tag_value == "multiply")

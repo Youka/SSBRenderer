@@ -192,9 +192,8 @@ void cairo_image_surface_blur(cairo_surface_t* surface, double blur_h, double bl
         int height = cairo_image_surface_get_height(surface);
         cairo_format_t format = cairo_image_surface_get_format(surface);
         int stride = cairo_image_surface_get_stride(surface);
+        cairo_surface_flush(surface);   // Flush pending operations on surface
         unsigned char* data = cairo_image_surface_get_data(surface);
-        // Flush pending operations on surface
-        cairo_surface_flush(surface);
         // Create data in aligned float format for vector operations
         const unsigned long int size = height * stride;
         aligned_memory<float,16> fdata(size);
