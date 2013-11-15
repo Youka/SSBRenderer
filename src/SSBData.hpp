@@ -334,7 +334,7 @@ class SSBTexFill : public SSBTag{
 // Blend state
 class SSBBlend : public SSBTag{
     public:
-        enum class Mode{OVER, ADD, MULTIPLY, INVERT} mode;
+        enum class Mode{OVER, ADDITION, MULTIPLY, DIFFERENT} mode;
         SSBBlend(Mode mode) : SSBTag(SSBTag::Type::BLEND), mode(mode){}
 };
 

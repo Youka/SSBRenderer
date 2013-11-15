@@ -545,11 +545,11 @@ namespace{
                 if(tag_value == "over")
                     ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBBlend(SSBBlend::Mode::OVER)));
                 else if(tag_value == "add")
-                    ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBBlend(SSBBlend::Mode::ADD)));
-                else if(tag_value == "multiply")
+                    ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBBlend(SSBBlend::Mode::ADDITION)));
+                else if(tag_value == "mult")
                     ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBBlend(SSBBlend::Mode::MULTIPLY)));
-                else if(tag_value == "invert")
-                    ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBBlend(SSBBlend::Mode::INVERT)));
+                else if(tag_value == "differ")
+                    ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBBlend(SSBBlend::Mode::DIFFERENT)));
                 else if(warnings)
                     throw_parse_error(line_i, "Invalid blending");
             }else if(tags_token.compare(0, 5, "blur=") == 0){
