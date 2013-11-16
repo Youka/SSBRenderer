@@ -115,8 +115,8 @@ namespace{
     void* __attribute__((force_align_arg_pointer)) blur_filter(void* userdata){
         ThreadData* tdata = reinterpret_cast<ThreadData*>(userdata);
         if(tdata->format == CAIRO_FORMAT_A8){
-            unsigned char* row_dst;
             float accum;
+            unsigned char* row_dst;
             int image_x, image_y;
             for(int y = tdata->first_row; y < tdata->height; y += tdata->row_step){
                 row_dst = tdata->dst_data + y * tdata->stride;
@@ -133,13 +133,13 @@ namespace{
                             accum += tdata->src_data[image_y * tdata->stride + image_x] * tdata->kernel_data[kernel_y * tdata->kernel_width + kernel_x];
                         }
                     }
-                    *row_dst++ = accum < 0.0 ? 0.0 : (accum > 255.0f ? 255.0f : accum);
+                    *row_dst++ = accum < 0.0f ? 0.0f : (accum > 255.0f ? 255.0f : accum);
                 }
             }
         }else if(tdata->format == CAIRO_FORMAT_ARGB32 || tdata->format == CAIRO_FORMAT_RGB24){
-            unsigned char* row_dst;
             __m128 accum;
             float __attribute__((aligned(16))) accum_buf[4];
+            unsigned char* row_dst;
             int image_x, image_y;
             for(int y = tdata->first_row; y < tdata->height; y += tdata->row_step){
                 row_dst = tdata->dst_data + y * tdata->stride;
@@ -179,6 +179,90 @@ namespace{
                     row_dst += 4;
                 }
             }
+            /*// SSE available
+            if(sse_supported()){
+                const float min_val[4] = {0, 0, 0, 0}, max_val[4] = {255, 255, 255, 255};
+                asm(
+                    "movups (%0), %%xmm1\n"
+                    "movups (%1), %%xmm2"
+                    : // No output
+                    : "r" (max_val), "r" (min_val)
+                );
+                aligned_memory<float,16> aligned_buf(4);
+                unsigned char* row_dst;
+                int image_x, image_y;
+                for(int y = tdata->first_row; y < tdata->height; y += tdata->row_step){
+                    row_dst = tdata->dst_data + y * tdata->stride;
+                    for(int x = 0; x < tdata->width; ++x){
+                        asm("xorps %xmm0, %xmm0");  // Set accumulator to zero
+                        for(int kernel_y = 0; kernel_y < tdata->kernel_height; ++kernel_y){
+                            image_y = y + kernel_y - tdata->kernel_radius_y;
+                            if(image_y < 0 || image_y >= tdata->height)
+                                continue;
+                            for(int kernel_x = 0; kernel_x < tdata->kernel_width; ++kernel_x){
+                                image_x = x + kernel_x - tdata->kernel_radius_x;
+                                if(image_x < 0 || image_x >= tdata->width)
+                                    continue;
+                                aligned_buf[0] = aligned_buf[1] = aligned_buf[2] = aligned_buf[3] = tdata->kernel_data[kernel_y * tdata->kernel_width + kernel_x];
+                                asm(
+                                    "movaps (%0), %%xmm3\n"
+                                    "movaps (%1), %%xmm4\n"
+                                    "mulps %%xmm4, %%xmm3\n"
+                                    "addps %%xmm3, %%xmm0"
+                                    : // No output
+                                    : "r" (aligned_buf.begin()), "r" (&tdata->src_data[image_y * tdata->stride + (image_x << 2)])
+                                );
+                            }
+                        }
+                        asm(
+                            "minps %%xmm1, %%xmm0\n"
+                            "maxps %%xmm2, %%xmm0\n"
+                            "movaps %%xmm0, (%0)"
+                            : // No output
+                            : "r" (aligned_buf.begin())
+                        );
+                        row_dst[0] = aligned_buf[0];
+                        row_dst[1] = aligned_buf[1];
+                        row_dst[2] = aligned_buf[2];
+                        row_dst[3] = aligned_buf[3];
+                        row_dst += 4;
+                    }
+                }
+            // No SSE
+            }else{
+                float accum[4];
+                float* pixel;
+                float kernel_value;
+                unsigned char* row_dst;
+                int image_x, image_y;
+                for(int y = tdata->first_row; y < tdata->height; y += tdata->row_step){
+                    row_dst = tdata->dst_data + y * tdata->stride;
+                    for(int x = 0; x < tdata->width; ++x){
+                        accum[0] = accum[1] = accum[2] = accum[3] = 0;
+                        for(int kernel_y = 0; kernel_y < tdata->kernel_height; ++kernel_y){
+                            image_y = y + kernel_y - tdata->kernel_radius_y;
+                            if(image_y < 0 || image_y >= tdata->height)
+                                continue;
+                            for(int kernel_x = 0; kernel_x < tdata->kernel_width; ++kernel_x){
+                                image_x = x + kernel_x - tdata->kernel_radius_x;
+                                if(image_x < 0 || image_x >= tdata->width)
+                                    continue;
+                                pixel = &tdata->src_data[image_y * tdata->stride + (image_x << 2)];
+                                kernel_value = tdata->kernel_data[kernel_y * tdata->kernel_width + kernel_x];
+                                accum[0] += pixel[0] * kernel_value;
+                                accum[1] += pixel[1] * kernel_value;
+                                accum[2] += pixel[2] * kernel_value;
+                                accum[3] += pixel[3] * kernel_value;
+                            }
+                        }
+                        row_dst[0] = accum[0] < 0.0f ? 0.0f : (accum[0] > 255.0f ? 255.0f : accum[0]);
+                        row_dst[1] = accum[1] < 0.0f ? 0.0f : (accum[1] > 255.0f ? 255.0f : accum[1]);
+                        row_dst[2] = accum[2] < 0.0f ? 0.0f : (accum[2] > 255.0f ? 255.0f : accum[2]);
+                        row_dst[3] = accum[3] < 0.0f ? 0.0f : (accum[3] > 255.0f ? 255.0f : accum[3]);
+                        row_dst += 4;
+                    }
+                }
+            }*/
         }
         return NULL;
     }
@@ -195,9 +279,8 @@ void cairo_image_surface_blur(cairo_surface_t* surface, double blur_h, double bl
         cairo_surface_flush(surface);   // Flush pending operations on surface
         unsigned char* data = cairo_image_surface_get_data(surface);
         // Create data in aligned float format for vector operations
-        const unsigned long int size = height * stride;
-        aligned_memory<float,16> fdata(size);
-        std::copy(data, data + size, &fdata[0]);
+        aligned_memory<float,16> fdata(height * stride);
+        std::copy(data, data + fdata.size(), fdata.begin());
         // Create blur kernel
         int kernel_radius_x = ceil(blur_h),
             kernel_radius_y = ceil(blur_v),

@@ -50,15 +50,19 @@ class aligned_memory{
         // Memory storage
         void* p;
         T* aligned_p;
+        // Memory size
+        size_t msize;
     public:
         // Ctor / allocate
         aligned_memory(size_t size) : reference_counter(new unsigned int){
             *this->reference_counter = 1;
-            if(size == 0 || align == 0)
+            if(size == 0 || align == 0){
                 this->p = this->aligned_p = NULL;
-            else{
+                this->msize = 0;
+            }else{
                 this->p = malloc(sizeof(T) * size + align);
                 this->aligned_p = this->p ? reinterpret_cast<T*>(reinterpret_cast<size_t>(this->p) + (align - reinterpret_cast<size_t>(this->p) % align)) : NULL;
+                this->msize = this->aligned_p ? size : 0;
             }
         }
         // Dtor / deallocate
@@ -69,7 +73,7 @@ class aligned_memory{
             }
         }
         // Copy
-        aligned_memory(aligned_memory& other) : reference_counter(other.reference_counter), p(other.p), aligned_p(other.aligned_p){
+        aligned_memory(aligned_memory& other) : reference_counter(other.reference_counter), p(other.p), aligned_p(other.aligned_p), msize(other.msize){
             *this->reference_counter += 1;
         }
         aligned_memory& operator=(aligned_memory& other){
@@ -81,9 +85,13 @@ class aligned_memory{
             this->reference_counter += 1;
             this->p = other.p;
             this->aligned_p = other.aligned_p;
+            this->msize = other.msize;
             return *this;
         }
         // Data access
-        operator T*(){return this->aligned_p;}
         T& operator [](const int i){return aligned_p[i];}
+        operator T*() const{return this->aligned_p;}
+        size_t size() const{return this->msize;}
+        T* begin() const{return this->aligned_p;}
+        T* end() const{return this->aligned_p + this->msize;}
 };
