@@ -181,12 +181,14 @@ namespace{
             }
             /*// SSE available
             if(sse_supported()){
-                const float min_val[4] = {0, 0, 0, 0}, max_val[4] = {255, 255, 255, 255};
+                const float min_val = 0.0f, max_val = 255.0f;
                 asm(
-                    "movups (%0), %%xmm1\n"
-                    "movups (%1), %%xmm2"
+                    "movss (%0), %%xmm1\n"
+                    "shufps $0x0, %%xmm1, %%xmm1\n"
+                    "movss (%1), %%xmm2\n"
+                    "shufps $0x0, %%xmm2, %%xmm2\n"
                     : // No output
-                    : "r" (max_val), "r" (min_val)
+                    : "r" (&max_val), "r" (&min_val)
                 );
                 aligned_memory<float,16> aligned_buf(4);
                 unsigned char* row_dst;
@@ -194,7 +196,7 @@ namespace{
                 for(int y = tdata->first_row; y < tdata->height; y += tdata->row_step){
                     row_dst = tdata->dst_data + y * tdata->stride;
                     for(int x = 0; x < tdata->width; ++x){
-                        asm("xorps %xmm0, %xmm0");  // Set accumulator to zero
+                        asm __volatile__("xorps %xmm0, %xmm0");  // Set accumulator to zero
                         for(int kernel_y = 0; kernel_y < tdata->kernel_height; ++kernel_y){
                             image_y = y + kernel_y - tdata->kernel_radius_y;
                             if(image_y < 0 || image_y >= tdata->height)
@@ -203,28 +205,32 @@ namespace{
                                 image_x = x + kernel_x - tdata->kernel_radius_x;
                                 if(image_x < 0 || image_x >= tdata->width)
                                     continue;
-                                aligned_buf[0] = aligned_buf[1] = aligned_buf[2] = aligned_buf[3] = tdata->kernel_data[kernel_y * tdata->kernel_width + kernel_x];
-                                asm(
-                                    "movaps (%0), %%xmm3\n"
-                                    "movaps (%1), %%xmm4\n"
-                                    "mulps %%xmm4, %%xmm3\n"
+                                asm __volatile__(
+                                    "movss (%0), %%xmm3\n"
+                                    "shufps $0x0, %%xmm3, %%xmm3\n"
+                                    "mulps (%1), %%xmm3\n"
                                     "addps %%xmm3, %%xmm0"
                                     : // No output
-                                    : "r" (aligned_buf.begin()), "r" (&tdata->src_data[image_y * tdata->stride + (image_x << 2)])
+                                    : "r" (&tdata->kernel_data[kernel_y * tdata->kernel_width + kernel_x]), "r" (&tdata->src_data[image_y * tdata->stride + (image_x << 2)])
                                 );
                             }
                         }
-                        asm(
+                        asm __volatile__(
                             "minps %%xmm1, %%xmm0\n"
                             "maxps %%xmm2, %%xmm0\n"
-                            "movaps %%xmm0, (%0)"
+                            "movaps %%xmm0, (%0)\n"
+                            "cvttss2si (%0), %%eax\n"
+                            "movb %%al, (%1)\n"
+                            "cvttss2si 4(%0), %%eax\n"
+                            "movb %%al, 1(%1)\n"
+                            "cvttss2si 8(%0), %%eax\n"
+                            "movb %%al, 2(%1)\n"
+                            "cvttss2si 12(%0), %%eax\n"
+                            "movb %%al, 3(%1)"
                             : // No output
-                            : "r" (aligned_buf.begin())
+                            : "r" (aligned_buf.begin()), "r" (row_dst)
+                            : "%eax"
                         );
-                        row_dst[0] = aligned_buf[0];
-                        row_dst[1] = aligned_buf[1];
-                        row_dst[2] = aligned_buf[2];
-                        row_dst[3] = aligned_buf[3];
                         row_dst += 4;
                     }
                 }

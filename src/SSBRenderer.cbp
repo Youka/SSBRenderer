@@ -31,7 +31,7 @@
 					<Add option="-Wextra" />
 					<Add option="-Wall" />
 					<Add option="-static" />
-					<Add option="-msse" />
+					<Add option="-msse2" />
 					<Add option="-mstackrealign" />
 					<Add option="-DBUILD_DLL" />
 					<Add option="-D_WIN32" />
@@ -85,7 +85,7 @@
 					<Add option="-pg" />
 					<Add option="-g" />
 					<Add option="-static" />
-					<Add option="-msse" />
+					<Add option="-msse2" />
 					<Add option="-mstackrealign" />
 					<Add option="-DDEBUG" />
 					<Add option="-DBUILD_DLL" />
