@@ -16,6 +16,7 @@ Permission is granted to anyone to use this software for any purpose, including 
 #pragma once
 
 #include <xmmintrin.h>
+#include <stdlib.h>
 
 inline bool sse_supported(){
     // Storage for cpu feature bits
@@ -44,37 +45,45 @@ inline bool sse_supported(){
 template<typename T, size_t align>
 class aligned_memory{
     private:
-        // Memory storage
-        T* p;
         // "Copy" counter
         unsigned int* reference_counter;
+        // Memory storage
+        void* p;
+        T* aligned_p;
     public:
         // Ctor / allocate
-        aligned_memory(size_t size) : p(reinterpret_cast<T*>(_mm_malloc(sizeof(T) * size, align))), reference_counter(new unsigned int){
+        aligned_memory(size_t size) : reference_counter(new unsigned int){
             *this->reference_counter = 1;
+            if(size == 0 || align == 0)
+                this->p = this->aligned_p = NULL;
+            else{
+                this->p = malloc(sizeof(T) * size + align);
+                this->aligned_p = this->p ? reinterpret_cast<T*>(reinterpret_cast<size_t>(this->p) + (align - reinterpret_cast<size_t>(this->p) % align)) : NULL;
+            }
         }
         // Dtor / deallocate
         ~aligned_memory(){
             if(--*this->reference_counter == 0){
-                _mm_free(this->p);
                 delete this->reference_counter;
+                if(this->p) free(this->p);
             }
         }
         // Copy
-        aligned_memory(aligned_memory& other) : p(other.p), reference_counter(other.reference_counter){
+        aligned_memory(aligned_memory& other) : reference_counter(other.reference_counter), p(other.p), aligned_p(other.aligned_p){
             *this->reference_counter += 1;
         }
         aligned_memory& operator=(aligned_memory& other){
             if(--*this->reference_counter == 0){
-                _mm_free(this->p);
                 delete this->reference_counter;
+                if(this->p) free(this->p);
             }
-            this->p = other.p;
             this->reference_counter = other.reference_counter;
             this->reference_counter += 1;
+            this->p = other.p;
+            this->aligned_p = other.aligned_p;
             return *this;
         }
         // Data access
-        operator T*(){return this->p;}
-        T& operator [](const int i){return p[i];}
+        operator T*(){return this->aligned_p;}
+        T& operator [](const int i){return aligned_p[i];}
 };
