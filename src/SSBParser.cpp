@@ -548,6 +548,8 @@ namespace{
                     ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBBlend(SSBBlend::Mode::ADDITION)));
                 else if(tag_value == "mult")
                     ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBBlend(SSBBlend::Mode::MULTIPLY)));
+                else if(tag_value == "screen")
+                    ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBBlend(SSBBlend::Mode::SCREEN)));
                 else if(tag_value == "differ")
                     ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBBlend(SSBBlend::Mode::DIFFERENT)));
                 else if(warnings)

@@ -363,7 +363,7 @@ namespace{
                     double progress = inner_ms < animate_start ? 0 : (inner_ms > animate_end ? 1 : static_cast<double>(inner_ms - animate_start) / (animate_end - animate_start));
                     // Recalulate progress by formula
                     if(!animate->progress_formula.empty()){
-                        static mu::Parser parser;
+                        mu::Parser parser;
                         parser.SetExpr(animate->progress_formula);
                         parser.DefineConst("t", progress);
                         try{

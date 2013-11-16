@@ -50,10 +50,10 @@ void Renderer::blend(cairo_surface_t* src, int dst_x, int dst_y,
         int dst_offset_y = this->height - 1 - (dst_y < 0 ? 0 : dst_y);
         // Processing data
         int dst_pix_size = this->format == Renderer::Colorspace::BGR ? 3 : 4;
-        unsigned char* src_row = src_data + src_rect_y * src_stride + (src_rect_x << 2);
-        unsigned char* dst_row = dst_data + dst_offset_y * dst_stride + (dst_offset_x * dst_pix_size);
         int src_modulo = src_stride - (src_rect_width << 2);
         int dst_modulo = dst_stride - (src_rect_width * dst_pix_size);
+        unsigned char* src_row = src_data + src_rect_y * src_stride + (src_rect_x << 2);
+        unsigned char* dst_row = dst_data + dst_offset_y * dst_stride + (dst_offset_x * dst_pix_size);
         // Overlay by blending mode (hint: source has premultiplied alpha)
         switch(blend_mode){
             case SSBBlend::Mode::OVER:
@@ -94,7 +94,11 @@ void Renderer::blend(cairo_surface_t* src, int dst_x, int dst_y,
             case SSBBlend::Mode::MULTIPLY:
                 for(int src_y = 0; src_y < src_rect_height; ++src_y){
                     for(int src_x = 0; src_x < src_rect_width; ++src_x){
-                        if(src_row[3] > 0){
+                        if(src_row[3] == 255){
+                            dst_row[0] = dst_row[0] * src_row[0] / 255;
+                            dst_row[1] = dst_row[1] * src_row[1] / 255;
+                            dst_row[2] = dst_row[2] * src_row[2] / 255;
+                        }else if(src_row[3] > 0){
                             unsigned char inv_alpha = 255 - src_row[3];
                             // Restore original color (invert premultiplied alpha) -> multiply color with destination -> multiply color with alpha -> continue like in OVER
                             dst_row[0] = dst_row[0] * inv_alpha / 255 + dst_row[0] * (src_row[0] * 255 / src_row[3]) / 255 * src_row[3] / 255;
@@ -108,10 +112,34 @@ void Renderer::blend(cairo_surface_t* src, int dst_x, int dst_y,
                     dst_row += -dst_stride + dst_modulo - dst_stride;
                 }
                 break;
+            case SSBBlend::Mode::SCREEN:
+                for(int src_y = 0; src_y < src_rect_height; ++src_y){
+                    for(int src_x = 0; src_x < src_rect_width; ++src_x){
+                        if(src_row[3] == 255){
+                            dst_row[0] = 255 - (255 - dst_row[0]) * (255 - src_row[0]) / 255;
+                            dst_row[1] = 255 - (255 - dst_row[1]) * (255 - src_row[1]) / 255;
+                            dst_row[2] = 255 - (255 - dst_row[2]) * (255 - src_row[2]) / 255;
+                        }else if(src_row[3] > 0){
+                            unsigned char inv_alpha = 255 - src_row[3];
+                            dst_row[0] = dst_row[0] * inv_alpha / 255 + (255 - (255 - dst_row[0]) * (255 - src_row[0] * 255 / src_row[3]) / 255) * src_row[3] / 255;
+                            dst_row[1] = dst_row[1] * inv_alpha / 255 + (255 - (255 - dst_row[1]) * (255 - src_row[1] * 255 / src_row[3]) / 255) * src_row[3] / 255;
+                            dst_row[2] = dst_row[2] * inv_alpha / 255 + (255 - (255 - dst_row[2]) * (255 - src_row[2] * 255 / src_row[3]) / 255) * src_row[3] / 255;
+                        }
+                        dst_row += dst_pix_size;
+                        src_row += 4;
+                    }
+                    src_row += src_modulo;
+                    dst_row += -dst_stride + dst_modulo - dst_stride;
+                }
+                break;
             case SSBBlend::Mode::DIFFERENT:
                 for(int src_y = 0; src_y < src_rect_height; ++src_y){
                     for(int src_x = 0; src_x < src_rect_width; ++src_x){
-                        if(src_row[3] > 0){
+                        if(src_row[3] == 255){
+                            dst_row[0] = abs(dst_row[0] - src_row[0]);
+                            dst_row[1] = abs(dst_row[1] - src_row[1]);
+                            dst_row[2] = abs(dst_row[2] - src_row[2]);
+                        }else if(src_row[3] > 0){
                             unsigned char inv_alpha = 255 - src_row[3];
                             dst_row[0] = dst_row[0] * inv_alpha / 255 + abs(dst_row[0] - src_row[0] * 255 / src_row[3]) * src_row[3] / 255;
                             dst_row[1] = dst_row[1] * inv_alpha / 255 + abs(dst_row[1] - src_row[1] * 255 / src_row[3]) * src_row[3] / 255;
