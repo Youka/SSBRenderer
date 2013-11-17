@@ -1,7 +1,7 @@
 - Implementation
-	* Renderer
-	* Plugin interfaces
-		+ (DirectShow)
+	* Text lines & geometries size precalculation (needed for alignment, auto-position)
+	* Render!
+	* Plugin interfaces (Unix port)
 		+ Avxsynth
 		+ GStreamer
 - Documentation

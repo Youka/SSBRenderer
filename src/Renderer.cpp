@@ -158,29 +158,6 @@ void Renderer::blend(cairo_surface_t* src, int dst_x, int dst_y,
 }
 
 namespace{
-    // Calculate rotation of one rectangle around another
-    cairo_rectangle_t rotate_rect_on_rect(cairo_rectangle_t& orig, cairo_rectangle_t& target, double rad){
-        // Rectangle centers
-        double orig_cx = orig.x + orig.width / 2,
-                orig_cy = orig.y + orig.height / 2,
-                target_cx = target.x + target.width / 2,
-                target_cy = target.y + target.height / 2;
-        // Centers distance
-        double dist_x = target_cx - orig_cx,
-                dist_y = target_cy - orig_cy;
-        // Get rotated target rectangle
-        double new_cx = orig_cx + cos(rad) * dist_x,
-                new_cy = orig_cy + sin(rad) * dist_y;
-        cairo_rectangle_t new_rect = {
-            new_cx - target.width / 2,
-            new_cy - target.height / 2,
-            target.width,
-            target.height
-        };
-        // Fix distance for no collision
-
-#pragma message "Implent box rotation"
-    }
     // Converts SSB geometry to cairo path
     inline void geometry_to_path(SSBGeometry* geometry, RenderState& rs, cairo_t* ctx){
         switch(geometry->type){
