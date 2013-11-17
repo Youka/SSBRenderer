@@ -64,6 +64,7 @@ namespace{
         SSBStencil::Mode stencil_mode = SSBStencil::Mode::CLEAR;
         // Karaoke
         long int karaoke_start = -1, karaoke_duration = 0;
+        RGB karaoke_color = {1, 0, 0};
     };
     // Updates render state by SSB tag
     inline void tag_to_render_state(SSBTag* tag, SSBTime inner_ms, SSBTime inner_duration, RenderState& rs){
@@ -692,6 +693,10 @@ namespace{
                             case SSBTag::Type::KARAOKE:
                                 // Doesn't exist in an animation
                                 break;
+                            case SSBTag::Type::KARAOKE_COLOR:
+                                if(progress >= threshold)
+                                    rs.karaoke_color = dynamic_cast<SSBKaraokeColor*>(animate_tag)->color;
+                                break;
                         }
                     }
                 }
@@ -712,6 +717,9 @@ namespace{
                             break;
                     }
                 }
+                break;
+            case SSBTag::Type::KARAOKE_COLOR:
+                rs.karaoke_color = dynamic_cast<SSBKaraokeColor*>(tag)->color;
                 break;
         }
     }

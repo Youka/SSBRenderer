@@ -3,17 +3,17 @@
 	<ActiveTarget name="Release - Windows" />
 	<File name="Renderer.hpp" open="0" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="1016" topLine="0" />
+			<Cursor1 position="1457" topLine="15" />
 		</Cursor>
 	</File>
 	<File name="SSBData.hpp" open="0" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="12656" topLine="345" />
+			<Cursor1 position="14171" topLine="379" />
 		</Cursor>
 	</File>
 	<File name="SSBParser.cpp" open="0" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="35013" topLine="570" />
+			<Cursor1 position="42971" topLine="691" />
 		</Cursor>
 	</File>
 	<File name="SSBParser.hpp" open="0" top="0" tabpos="2" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
@@ -23,7 +23,7 @@
 	</File>
 	<File name="avisynth.cpp" open="0" top="0" tabpos="2" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="1672" topLine="15" />
+			<Cursor1 position="3366" topLine="56" />
 		</Cursor>
 	</File>
 	<File name="cairo++.cpp" open="0" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
@@ -78,7 +78,7 @@
 	</File>
 	<File name="virtualdub.cpp" open="0" top="0" tabpos="3" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="920" topLine="199" />
+			<Cursor1 position="7613" topLine="140" />
 		</Cursor>
 	</File>
 	<File name="virtualdub_dialog.hpp" open="0" top="0" tabpos="3" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
@@ -93,12 +93,12 @@
 	</File>
 	<File name="RenderState.hpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="16972" topLine="314" />
+			<Cursor1 position="45409" topLine="679" />
 		</Cursor>
 	</File>
-	<File name="Renderer.cpp" open="1" top="1" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="Renderer.cpp" open="0" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="17861" topLine="309" />
+			<Cursor1 position="920" topLine="9" />
 		</Cursor>
 	</File>
 </CodeBlocks_layout_file>

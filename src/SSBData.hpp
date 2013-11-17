@@ -69,7 +69,8 @@ class SSBTag : public SSBObject{
             STENCIL,
             FADE,
             ANIMATE,
-            KARAOKE
+            KARAOKE,
+            KARAOKE_COLOR
         } const type;
         SSBTag(const SSBTag&) = delete;
         SSBTag& operator =(const SSBTag&) = delete;
@@ -384,12 +385,19 @@ class SSBAnimate : public SSBTag{
         SSBAnimate(SSBDuration start, SSBDuration end, std::string progress_formula, std::vector<std::shared_ptr<SSBObject>> objects) : SSBTag(SSBTag::Type::ANIMATE), start(start), end(end), progress_formula(progress_formula), objects(objects){}
 };
 
-// Karaoke state
+// Karaoke time state
 class SSBKaraoke : public SSBTag{
     public:
         enum class Type{DURATION, SET} type;
         SSBTime time;
         SSBKaraoke(Type type, SSBTime time) : SSBTag(SSBTag::Type::KARAOKE), type(type), time(time){}
+};
+
+// Karaoke color state
+class SSBKaraokeColor : public SSBTag{
+    public:
+        RGB color;
+        SSBKaraokeColor(double r, double g, double b) : SSBTag(SSBTag::Type::KARAOKE_COLOR), color({r, g, b}){}
 };
 
 // Point structure for geometries

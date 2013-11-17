@@ -700,6 +700,16 @@ namespace{
                     ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBKaraoke(SSBKaraoke::Type::SET, time)));
                 }else if(warnings)
                     throw_parse_error(line_i, "Invalid karaoke set");
+            }else if(tags_token.compare(0, 7, "kcolor=") == 0){
+                unsigned long int rgb;
+                if(hex_string_to_number(tags_token.substr(7), rgb) && rgb <= 0xffffff)
+                    ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBKaraokeColor(
+                                                static_cast<decltype(RGB::r)>(rgb >> 16) / 0xff,
+                                                static_cast<decltype(RGB::g)>(rgb >> 8 && 0xff) / 0xff,
+                                                static_cast<decltype(RGB::b)>(rgb & 0xff) / 0xff
+                                                                                       )));
+                else if(warnings)
+                    throw_parse_error(line_i, "Invalid karaoke color");
             }else if(warnings)
                 throw_parse_error(line_i, "Invalid tag");
 	}
