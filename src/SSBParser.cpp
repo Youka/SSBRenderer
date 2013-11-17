@@ -340,9 +340,13 @@ namespace{
                 else if(warnings)
                     throw_parse_error(line_i, "Invalid vertical margin");
             }else if(tags_token.compare(0, 10, "direction=") == 0){
-                decltype(SSBDirection::angle) angle;
-                if(string_to_number(tags_token.substr(10), angle))
-                    ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBDirection(angle)));
+                std::string tag_value = tags_token.substr(10);
+                if(tag_value == "ltr")
+                    ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBDirection(SSBDirection::Mode::LTR)));
+                else if(tag_value == "rtl")
+                    ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBDirection(SSBDirection::Mode::RTL)));
+                else if(tag_value == "ttb")
+                    ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBDirection(SSBDirection::Mode::TTB)));
                 else if(warnings)
                     throw_parse_error(line_i, "Invalid direction");
             }else if(tags_token == "identity")

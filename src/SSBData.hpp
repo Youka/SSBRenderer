@@ -208,8 +208,8 @@ class SSBMargin : public SSBTag{
 // Direction state
 class SSBDirection : public SSBTag{
     public:
-        double angle;
-        SSBDirection(double angle) : SSBTag(SSBTag::Type::DIRECTION), angle(angle){}
+        enum class Mode{LTR, RTL, TTB} mode;
+        SSBDirection(Mode mode) : SSBTag(SSBTag::Type::DIRECTION), mode(mode){}
 };
 
 // Identity state

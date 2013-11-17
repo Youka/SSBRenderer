@@ -44,7 +44,7 @@ namespace{
         double pos_x = std::numeric_limits<double>::max(), pos_y = std::numeric_limits<double>::max();  // 'Unset' in case of maximum values
         SSBAlign::Align align = SSBAlign::Align::CENTER_BOTTOM;
         double margin_h = 0, margin_v = 0;
-        double direction_angle = 0;
+        SSBDirection::Mode direction = SSBDirection::Mode::LTR;
         // Transformation
         cairo_matrix_t matrix = {1, 0, 0, 1, 0, 0};
         // Color
@@ -160,7 +160,7 @@ namespace{
                 }
                 break;
             case SSBTag::Type::DIRECTION:
-                rs.direction_angle = dynamic_cast<SSBDirection*>(tag)->angle;
+                rs.direction = dynamic_cast<SSBDirection*>(tag)->mode;
                 break;
             case SSBTag::Type::IDENTITY:
                 cairo_matrix_init_identity(&rs.matrix);
@@ -468,7 +468,8 @@ namespace{
                                 }
                                 break;
                             case SSBTag::Type::DIRECTION:
-                                rs.direction_angle += progress * (dynamic_cast<SSBDirection*>(animate_tag)->angle - rs.direction_angle);
+                                if(progress >= threshold)
+                                    rs.direction = dynamic_cast<SSBDirection*>(animate_tag)->mode;
                                 break;
                             case SSBTag::Type::IDENTITY:
                                 if(progress >= threshold)
