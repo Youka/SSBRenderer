@@ -112,7 +112,7 @@ namespace{
         int kernel_radius_x, kernel_radius_y, kernel_width, kernel_height;
         float* kernel_data;
     };
-    void* __attribute__((force_align_arg_pointer)) blur_filter(void* userdata){
+    void* __attribute__((force_align_arg_pointer)) convolution_filter(void* userdata){
         ThreadData* tdata = reinterpret_cast<ThreadData*>(userdata);
         if(tdata->format == CAIRO_FORMAT_A8){
             float accum;
@@ -319,8 +319,8 @@ void cairo_image_surface_blur(cairo_surface_t* surface, double blur_h, double bl
         // Run threads
         std::vector<pthread_t> threads(max_threads-1);
         for(int i = 0; i < max_threads-1; ++i)
-            pthread_create(&threads[i], NULL, blur_filter, &threads_data[i]);
-        blur_filter(&threads_data[max_threads-1]);
+            pthread_create(&threads[i], NULL, convolution_filter, &threads_data[i]);
+        convolution_filter(&threads_data[max_threads-1]);
         // Wait for threads
         for(pthread_t& thread : threads)
             pthread_join(thread, NULL);

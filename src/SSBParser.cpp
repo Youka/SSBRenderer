@@ -575,20 +575,20 @@ namespace{
                     ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBBlur(SSBBlur::Type::VERTICAL, y)));
                 else if(warnings)
                     throw_parse_error(line_i, "Invalid vertical blur");
-            }else if(tags_token.compare(0, 7, "clip=") == 0){
-                std::string tag_value = tags_token.substr(7);
+            }else if(tags_token.compare(0, 8, "stencil=") == 0){
+                std::string tag_value = tags_token.substr(8);
                 if(tag_value == "clear")
-                    ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBClip(SSBClip::Mode::CLEAR)));
+                    ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBStencil(SSBStencil::Mode::CLEAR)));
                 else if(tag_value == "set")
-                    ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBClip(SSBClip::Mode::SET)));
+                    ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBStencil(SSBStencil::Mode::SET)));
                 else if(tag_value == "unset")
-                    ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBClip(SSBClip::Mode::UNSET)));
+                    ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBStencil(SSBStencil::Mode::UNSET)));
                 else if(tag_value == "in")
-                    ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBClip(SSBClip::Mode::INSIDE)));
+                    ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBStencil(SSBStencil::Mode::INSIDE)));
                 else if(tag_value == "out")
-                    ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBClip(SSBClip::Mode::OUTSIDE)));
+                    ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBStencil(SSBStencil::Mode::OUTSIDE)));
                 else if(warnings)
-                    throw_parse_error(line_i, "Invalid clipping mode");
+                    throw_parse_error(line_i, "Invalid stencil mode");
             }else if(tags_token.compare(0, 5, "fade=") == 0){
                 std::string tag_value = tags_token.substr(5);
                 decltype(SSBFade::in) in, out;

@@ -66,7 +66,7 @@ class SSBTag : public SSBObject{
             TEXFILL,
             BLEND,
             BLUR,
-            CLIP,
+            STENCIL,
             FADE,
             ANIMATE,
             KARAOKE
@@ -353,11 +353,11 @@ class SSBBlur : public SSBTag{
         }
 };
 
-// Clip state
-class SSBClip : public SSBTag{
+// Stencil state
+class SSBStencil : public SSBTag{
     public:
         enum class Mode{CLEAR, SET, UNSET, INSIDE, OUTSIDE} mode;
-        SSBClip(Mode mode) : SSBTag(SSBTag::Type::CLIP), mode(mode){}
+        SSBStencil(Mode mode) : SSBTag(SSBTag::Type::STENCIL), mode(mode){}
 };
 
 // Fade state

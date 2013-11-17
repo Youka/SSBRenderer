@@ -61,7 +61,7 @@ namespace{
         // Rastering
         SSBBlend::Mode blend_mode = SSBBlend::Mode::OVER;
         double blur_h = 0, blur_v = 0;
-        SSBClip::Mode clip_mode = SSBClip::Mode::CLEAR;
+        SSBStencil::Mode stencil_mode = SSBStencil::Mode::CLEAR;
         // Karaoke
         long int karaoke_start = -1, karaoke_duration = 0;
     };
@@ -326,8 +326,8 @@ namespace{
                     }
                 }
                 break;
-            case SSBTag::Type::CLIP:
-                rs.clip_mode = dynamic_cast<SSBClip*>(tag)->mode;
+            case SSBTag::Type::STENCIL:
+                rs.stencil_mode = dynamic_cast<SSBStencil*>(tag)->mode;
                 break;
             case SSBTag::Type::FADE:
                 {
@@ -678,9 +678,9 @@ namespace{
                                     }
                                 }
                                 break;
-                            case SSBTag::Type::CLIP:
+                            case SSBTag::Type::STENCIL:
                                 if(progress >= threshold)
-                                    rs.clip_mode = dynamic_cast<SSBClip*>(animate_tag)->mode;
+                                    rs.stencil_mode = dynamic_cast<SSBStencil*>(animate_tag)->mode;
                                 break;
                             case SSBTag::Type::FADE:
                                 // Doesn't exist in an animation
