@@ -17,12 +17,12 @@ Permission is granted to anyone to use this software for any purpose, including 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #include <vd2/vdvideofilt.h>
 #pragma GCC diagnostic pop
-#include "file_info.hpp"
+#include "file_info.h"
 #include "Renderer.hpp"
-#include "virtualdub_dialog.hpp"
+#include "virtualdub_dialog.h"
 #include "textconv.hpp" // Unicode conversion for dialog in-&output
 #include <commdlg.h>    // File selection dialog
-#include "module.hpp" // Module needed for windows
+#include "module.h" // Module needed for windows
 #include <cstdio>   // _snprintf for description filling
 
 namespace VDub{

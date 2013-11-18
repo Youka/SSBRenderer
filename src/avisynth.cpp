@@ -17,7 +17,7 @@ Permission is granted to anyone to use this software for any purpose, including 
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
 #include <avisynth_c.h>
 #pragma GCC diagnostic pop
-#include "file_info.hpp"
+#include "file_info.h"
 #include "Renderer.hpp"
 
 namespace AVS{

@@ -14,8 +14,8 @@ Permission is granted to anyone to use this software for any purpose, including 
 */
 
 #include <winresrc.h>
-#include "file_info.hpp"
-#include "virtualdub_dialog.hpp"
+#include "file_info.h"
+#include "virtualdub_dialog.h"
 
 // Build type
 #ifdef DEBUG

@@ -1,6 +1,6 @@
 /*
 Project: SSBRenderer
-File: virtualdub_dialog.hpp
+File: module.c
 
 Copyright (c) 2013, Christoph "Youka" Spanknebel
 
@@ -13,10 +13,19 @@ Permission is granted to anyone to use this software for any purpose, including 
     This notice may not be removed or altered from any source distribution.
 */
 
-#pragma once
+#include <windows.h>
+#include "module.h"
 
-#define FILTER_LOGO 101
-#define VDUB_DIALOG 102
-#define VDUB_DIALOG_FILENAME 103
-#define VDUB_DIALOG_FILENAME_CHOOSE 104
-#define VDUB_DIALOG_CHECK 105
+// See "module.h"
+void* module;
+// DLL entry point
+#ifdef __cplusplus
+extern "C"
+#endif
+BOOL APIENTRY DllMain(HANDLE dll_module, DWORD reason, LPVOID){
+    // Save module handle for global access
+    if(reason == DLL_PROCESS_ATTACH)
+        module = dll_module;
+    // No errors
+    return TRUE;
+}

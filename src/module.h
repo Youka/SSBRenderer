@@ -1,6 +1,6 @@
 /*
 Project: SSBRenderer
-File: module.cpp
+File: module.h
 
 Copyright (c) 2013, Christoph "Youka" Spanknebel
 
@@ -13,16 +13,7 @@ Permission is granted to anyone to use this software for any purpose, including 
     This notice may not be removed or altered from any source distribution.
 */
 
-#include <windows.h>
-#include "module.hpp"
+#pragma once
 
-// See "module.hpp"
-void* module;
-// DLL entry point
-extern "C" BOOL APIENTRY DllMain(HANDLE dll_module, DWORD reason, LPVOID){
-    // Save module handle for global access
-    if(reason == DLL_PROCESS_ATTACH)
-        module = dll_module;
-    // No errors
-    return TRUE;
-}
+// DLL module from DLLMain
+extern void* module;

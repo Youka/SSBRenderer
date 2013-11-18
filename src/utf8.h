@@ -15,7 +15,7 @@ Permission is granted to anyone to use this software for any purpose, including 
 
 #pragma once
 
-#include <cstring>
+#include <string.h>
 
 inline size_t utf8_clen(char* s, size_t pos){
     unsigned char c = s[pos];

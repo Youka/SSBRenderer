@@ -16,9 +16,9 @@ Permission is granted to anyone to use this software for any purpose, including 
 #pragma once
 
 #include <xmmintrin.h>
-#include <stdlib.h>
+#include <cstdlib>
 
-inline bool sse_supported(){
+inline bool sse2_supported(){
     // Storage for cpu feature bits
     uint32_t cpu_features;
     asm(
@@ -38,8 +38,8 @@ inline bool sse_supported(){
         "push %%eax"
         : "=r" (cpu_features)
     );
-    // 25th bit marks SSE support
-    return cpu_features & 0x02000000;
+    // 26th bit marks SSE2 support
+    return cpu_features & 0x04000000;
 }
 
 template<typename T, size_t align>

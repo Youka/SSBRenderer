@@ -143,13 +143,14 @@
 		<Unit filename="cairo++.hpp">
 			<Option virtualFolder="Utils/" />
 		</Unit>
-		<Unit filename="file_info.hpp">
+		<Unit filename="file_info.h">
 			<Option virtualFolder="Meta/" />
 		</Unit>
-		<Unit filename="module.cpp">
+		<Unit filename="module.c">
+			<Option compilerVar="CPP" />
 			<Option virtualFolder="Utils/" />
 		</Unit>
-		<Unit filename="module.hpp">
+		<Unit filename="module.h">
 			<Option virtualFolder="Utils/" />
 		</Unit>
 		<Unit filename="resources.rc">
@@ -174,7 +175,7 @@
 		<Unit filename="virtualdub.cpp">
 			<Option virtualFolder="Interfaces/" />
 		</Unit>
-		<Unit filename="virtualdub_dialog.hpp">
+		<Unit filename="virtualdub_dialog.h">
 			<Option virtualFolder="Interfaces/" />
 		</Unit>
 		<Extensions>

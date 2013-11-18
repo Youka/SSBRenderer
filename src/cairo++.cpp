@@ -180,7 +180,7 @@ namespace{
                 }
             }
             /*// SSE available
-            if(sse_supported()){
+            if(sse2_supported()){
                 const float min_val = 0.0f, max_val = 255.0f;
                 asm(
                     "movss (%0), %%xmm1\n"
