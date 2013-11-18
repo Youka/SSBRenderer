@@ -168,6 +168,9 @@
 		<Unit filename="user.h">
 			<Option virtualFolder="Interfaces/" />
 		</Unit>
+		<Unit filename="utf8.h">
+			<Option virtualFolder="Utils/" />
+		</Unit>
 		<Unit filename="virtualdub.cpp">
 			<Option virtualFolder="Interfaces/" />
 		</Unit>

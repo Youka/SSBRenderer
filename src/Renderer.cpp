@@ -16,6 +16,7 @@ Permission is granted to anyone to use this software for any purpose, including 
 #include "Renderer.hpp"
 #include "SSBParser.hpp"
 #include "RenderState.hpp"
+#include "utf8.h"
 
 Renderer::Renderer(int width, int height, Colorspace format, std::string& script, bool warnings)
 : width(width), height(height), format(format), ssb(SSBParser(script, warnings).data()), stencil_path_buffer(width, height, CAIRO_FORMAT_A1){}
