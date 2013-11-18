@@ -99,7 +99,7 @@ class NativeFont{
     public:
 #ifdef _WIN32
         // Ctor & dtor
-        NativeFont(std::string& family, bool bold, bool italic, bool underline, bool strikeout, unsigned short int size){
+        NativeFont(std::wstring family, bool bold, bool italic, bool underline, bool strikeout, unsigned short int size){
             this->dc = CreateCompatibleDC(NULL);
             SetMapMode(this->dc, MM_TEXT);
             SetBkMode(this->dc, TRANSPARENT);
@@ -115,10 +115,12 @@ class NativeFont{
             lf.lfCharSet = DEFAULT_CHARSET;
             lf.lfOutPrecision = OUT_TT_PRECIS;
             lf.lfQuality = ANTIALIASED_QUALITY;
-            lf.lfFaceName[utf8_to_utf16(family).copy(lf.lfFaceName, LF_FACESIZE - 1)] = L'\0';
+            lf.lfFaceName[family.copy(lf.lfFaceName, LF_FACESIZE - 1)] = L'\0';
             this->font = CreateFontIndirectW(&lf);
             this->old_font = SelectObject(this->dc, this->font);
         }
+        NativeFont(std::string& family, bool bold, bool italic, bool underline, bool strikeout, unsigned short int size)
+        : NativeFont(utf8_to_utf16(family), bold, italic, underline, strikeout, size){}
         ~NativeFont(){
             SelectObject(this->dc, this->old_font);
             DeleteObject(this->font);
@@ -144,18 +146,20 @@ class NativeFont{
             };
         }
         // Get text width
-        double get_text_width(std::string& text){
-            std::wstring textw = utf8_to_utf16(text);
+        double get_text_width(std::wstring& text){
             SIZE sz;
-            GetTextExtentPoint32W(this->dc, textw.c_str(), textw.length(), &sz);
+            GetTextExtentPoint32W(this->dc, text.c_str(), text.length(), &sz);
             return static_cast<double>(sz.cx) / UPSCALE;
         }
-        // Add text path to cairo context
-        void text_path_to_cairo(std::string& text, cairo_t* ctx){
+        double get_text_width(std::string& text){
             std::wstring textw = utf8_to_utf16(text);
+            return this->get_text_width(textw);
+        }
+        // Add text path to cairo context
+        void text_path_to_cairo(std::wstring& text, cairo_t* ctx){
             // Add path to windows context
             BeginPath(this->dc);
-            ExtTextOutW(this->dc, 0, 0, 0x0, NULL, textw.c_str(), textw.length(), NULL);
+            ExtTextOutW(this->dc, 0, 0, 0x0, NULL, text.c_str(), text.length(), NULL);
             EndPath(this->dc);
             // Get windows path
             int points_n = GetPath(this->dc, NULL, NULL, 0);
@@ -197,6 +201,10 @@ class NativeFont{
             }
             // Remove path from windows context
             AbortPath(this->dc);
+        }
+        void text_path_to_cairo(std::string& text, cairo_t* ctx){
+            std::wstring textw = utf8_to_utf16(text);
+            this->text_path_to_cairo(textw, ctx);
         }
 #else
 #error "Not implented"

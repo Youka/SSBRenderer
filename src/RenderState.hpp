@@ -42,6 +42,7 @@ namespace{
         double deform_progress = 0;
         // Position
         double pos_x = std::numeric_limits<double>::max(), pos_y = std::numeric_limits<double>::max();  // 'Unset' in case of maximum values
+        double off_x = 0, off_y = 0;
         SSBAlign::Align align = SSBAlign::Align::CENTER_BOTTOM;
         double margin_h = 0, margin_v = 0;
         SSBDirection::Mode direction = SSBDirection::Mode::LTR;

@@ -18,12 +18,13 @@ Permission is granted to anyone to use this software for any purpose, including 
 #include "RenderState.hpp"
 
 Renderer::Renderer(int width, int height, Colorspace format, std::string& script, bool warnings)
-: width(width), height(height), format(format), ssb(SSBParser(script, warnings).data()){}
+: width(width), height(height), format(format), ssb(SSBParser(script, warnings).data()), stencil_path_buffer(width, height, CAIRO_FORMAT_A1){}
 
 void Renderer::set_target(int width, int height, Colorspace format){
     this->width = width;
     this->height = height;
     this->format = format;
+    this->stencil_path_buffer = CairoImage(width, height, CAIRO_FORMAT_A1);
 }
 
 void Renderer::blend(cairo_surface_t* src, int dst_x, int dst_y,
@@ -158,88 +159,7 @@ void Renderer::blend(cairo_surface_t* src, int dst_x, int dst_y,
 }
 
 namespace{
-    // Converts SSB geometry to cairo path
-    inline void geometry_to_path(SSBGeometry* geometry, RenderState& rs, cairo_t* ctx){
-        switch(geometry->type){
-            case SSBGeometry::Type::POINTS:
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wfloat-equal"
-                if(rs.line_width == 1)
-#pragma GCC diagnostic pop
-                    for(const Point& point : dynamic_cast<SSBPoints*>(geometry)->points)
-                        cairo_rectangle(ctx, point.x, point.y, rs.line_width, rs.line_width);   // Creates a move + lines + close = closed shape
-                else
-                    for(const Point& point : dynamic_cast<SSBPoints*>(geometry)->points){
-                        cairo_new_sub_path(ctx);
-                        cairo_arc(ctx, point.x, point.y, rs.line_width / 2, 0, M_PI * 2);
-                        cairo_close_path(ctx);
-                    }
-                break;
-            case SSBGeometry::Type::PATH:
-                {
-                    const std::vector<SSBPath::Segment>& segments = dynamic_cast<SSBPath*>(geometry)->segments;
-                    for(size_t i = 0; i < segments.size();)
-                        switch(segments[i].type){
-                            case SSBPath::SegmentType::MOVE_TO:
-                                cairo_move_to(ctx, segments[i].point.x, segments[i].point.y);
-                                ++i;
-                                break;
-                            case SSBPath::SegmentType::LINE_TO:
-                                cairo_line_to(ctx, segments[i].point.x, segments[i].point.y);
-                                ++i;
-                                break;
-                            case SSBPath::SegmentType::CURVE_TO:
-                                cairo_curve_to(ctx,
-                                                segments[i].point.x, segments[i].point.y,
-                                                segments[i+1].point.x, segments[i+1].point.y,
-                                                segments[i+2].point.x, segments[i+2].point.y);
-                                i += 3;
-                                break;
-                            case SSBPath::SegmentType::ARC_TO:
-                                if(cairo_has_current_point(ctx)){
-                                    double lx, ly; cairo_get_current_point(ctx, &lx, &ly);
-                                    double xc = segments[i].point.x,
-                                            yc = segments[i].point.y,
-                                            r = hypot(ly - yc, lx - xc),
-                                            angle1 = atan2(ly - yc, lx - xc),
-                                            angle2 = angle1 + DEG_TO_RAD(segments[i+1].angle);
-                                    if(angle2 > angle1)
-                                        cairo_arc(ctx,
-                                                    xc, yc,
-                                                    r,
-                                                    angle1, angle2);
-                                    else
-                                        cairo_arc_negative(ctx,
-                                                    xc, yc,
-                                                    r,
-                                                    angle1, angle2);
-                                }
-                                i += 2;
-                                break;
-                            case SSBPath::SegmentType::CLOSE:
-                                cairo_close_path(ctx);
-                                ++i;
-                                break;
-                        }
-                }
-                break;
-            case SSBGeometry::Type::TEXT:
-                {
-                    NativeFont font(rs.font_family, rs.bold, rs.italic, rs.underline, rs.strikeout, rs.font_size);
-                    NativeFont::FontMetrics metrics = font.get_metrics();
-                    std::stringstream text(dynamic_cast<SSBText*>(geometry)->text);
-                    std::string line;
-                    cairo_save(ctx);
-                    while(std::getline(text, line)){
-                        font.text_path_to_cairo(line, ctx);
-                        cairo_translate(ctx, 0, metrics.height + metrics.external_lead);
-                    }
-                    cairo_restore(ctx);
-                }
-                break;
-        }
-    }
-    // Applies deform filter on path
+    // Applies deform filter on cairo path
     void path_deform(cairo_t* ctx, RenderState& rs){
         mu::Parser parser_x, parser_y;
         double x_buf, y_buf;
@@ -261,6 +181,93 @@ namespace{
                 }catch(...){}
             });
     }
+    // Converts SSB points to cairo path
+    inline void points_to_cairo(SSBPoints* points, double size, cairo_t* ctx){
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wfloat-equal"
+        if(size == 1)
+#pragma GCC diagnostic pop
+            for(const Point& point : points->points)
+                cairo_rectangle(ctx, point.x, point.y, size, size);   // Creates a move + lines + close = closed shape
+        else
+            for(const Point& point : points->points){
+                cairo_new_sub_path(ctx);
+                cairo_arc(ctx, point.x, point.y, size / 2, 0, M_PI * 2);
+                cairo_close_path(ctx);
+            }
+    }
+    // Converts SSB path to cairo path
+    inline void path_to_cairo(SSBPath* path, cairo_t* ctx){
+        const std::vector<SSBPath::Segment>& segments = path->segments;
+            for(size_t i = 0; i < segments.size();)
+                switch(segments[i].type){
+                    case SSBPath::SegmentType::MOVE_TO:
+                        cairo_move_to(ctx, segments[i].point.x, segments[i].point.y);
+                        ++i;
+                        break;
+                    case SSBPath::SegmentType::LINE_TO:
+                        cairo_line_to(ctx, segments[i].point.x, segments[i].point.y);
+                        ++i;
+                        break;
+                    case SSBPath::SegmentType::CURVE_TO:
+                        cairo_curve_to(ctx,
+                                        segments[i].point.x, segments[i].point.y,
+                                        segments[i+1].point.x, segments[i+1].point.y,
+                                        segments[i+2].point.x, segments[i+2].point.y);
+                        i += 3;
+                        break;
+                    case SSBPath::SegmentType::ARC_TO:
+                        if(cairo_has_current_point(ctx)){
+                            double lx, ly; cairo_get_current_point(ctx, &lx, &ly);
+                            double xc = segments[i].point.x,
+                                    yc = segments[i].point.y,
+                                    r = hypot(ly - yc, lx - xc),
+                                    angle1 = atan2(ly - yc, lx - xc),
+                                    angle2 = angle1 + DEG_TO_RAD(segments[i+1].angle);
+                            if(angle2 > angle1)
+                                cairo_arc(ctx,
+                                            xc, yc,
+                                            r,
+                                            angle1, angle2);
+                            else
+                                cairo_arc_negative(ctx,
+                                            xc, yc,
+                                            r,
+                                            angle1, angle2);
+                        }
+                        i += 2;
+                        break;
+                    case SSBPath::SegmentType::CLOSE:
+                        cairo_close_path(ctx);
+                        ++i;
+                        break;
+                }
+    }
+    // Converts SSB geometry to cairo path
+    inline void geometry_to_path(SSBGeometry* geometry, RenderState& rs, cairo_t* ctx){
+        switch(geometry->type){
+            case SSBGeometry::Type::POINTS:
+                points_to_cairo(dynamic_cast<SSBPoints*>(geometry), rs.line_width, ctx);
+                break;
+            case SSBGeometry::Type::PATH:
+                path_to_cairo(dynamic_cast<SSBPath*>(geometry), ctx);
+                break;
+            case SSBGeometry::Type::TEXT:
+                {
+                    NativeFont font(rs.font_family, rs.bold, rs.italic, rs.underline, rs.strikeout, rs.font_size);
+                    NativeFont::FontMetrics metrics = font.get_metrics();
+                    std::stringstream text(dynamic_cast<SSBText*>(geometry)->text);
+                    std::string line;
+                    cairo_save(ctx);
+                    while(std::getline(text, line)){
+                        font.text_path_to_cairo(line, ctx);
+                        cairo_translate(ctx, 0, metrics.height + metrics.external_lead);
+                    }
+                    cairo_restore(ctx);
+                }
+                break;
+        }
+    }
 }
 
 void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_ms) noexcept{
@@ -270,6 +277,20 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
         if(start_ms >= event.start_ms && start_ms < event.end_ms){
             // Create render state for rendering behaviour
             RenderState rs;
+#pragma message "Implent SSB rendersize precalculations"
+            // Geometry line dimensions (by position group -> by text line -> accumulated dimensions)
+            std::vector<std::vector<Point>> line_dimensions = {{{0, 0}}};
+            // Process SSB objects of event
+            for(std::shared_ptr<SSBObject>& obj : event.objects)
+                if(obj->type == SSBObject::Type::TAG){
+                    // Apply tag to render state
+                    tag_to_render_state(dynamic_cast<SSBTag*>(obj.get()), start_ms - event.start_ms, event.end_ms - event.start_ms, rs);
+                }else{  // obj->type == SSBObject::Type::GEOMETRY
+
+                }
+#pragma message "Implent SSB rendering"
+            // Reset render state
+            rs = {};
             // Process SSB objects of event
             for(std::shared_ptr<SSBObject>& obj : event.objects)
                 if(obj->type == SSBObject::Type::TAG){
@@ -279,14 +300,13 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                     // Set transformations
 
                     // Apply geometry to image path
-                    geometry_to_path(dynamic_cast<SSBGeometry*>(obj.get()), rs, this->path_buffer);
-#pragma message "Implent SSB rendering"
+                    geometry_to_path(dynamic_cast<SSBGeometry*>(obj.get()), rs, this->stencil_path_buffer);
                     // Test
                     CairoImage image(this->width, this->height, CAIRO_FORMAT_ARGB32);
                     cairo_transform(image, &rs.matrix);
                     if(!rs.deform_x.empty() || !rs.deform_y.empty())
-                        path_deform(this->path_buffer, rs);
-                    cairo_path_t* path = cairo_copy_path(this->path_buffer);
+                        path_deform(this->stencil_path_buffer, rs);
+                    cairo_path_t* path = cairo_copy_path(this->stencil_path_buffer);
                     cairo_append_path(image, path);
                     cairo_path_destroy(path);
                     cairo_set_source_rgb(image, rs.colors.front().r, rs.colors.front().g, rs.colors.front().b);
@@ -305,7 +325,7 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                     // Draw on image
 
                     // Clear image path
-                    cairo_new_path(this->path_buffer);
+                    cairo_new_path(this->stencil_path_buffer);
                     // Calculate image rectangle for blending on frame
 
                     // Blend image on frame

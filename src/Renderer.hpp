@@ -29,7 +29,7 @@ class Renderer{
         // SSB data
         SSBData ssb;
         // Path buffer
-        CairoImage path_buffer;
+        CairoImage stencil_path_buffer;
         // Blend image on frame
         void blend(cairo_surface_t* src, int dst_x, int dst_y,
                    unsigned char* dst_data, int dst_stride,
