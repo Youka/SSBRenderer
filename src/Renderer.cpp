@@ -255,16 +255,59 @@ namespace{
                 break;
             case SSBGeometry::Type::TEXT:
                 {
+                    // Get font informations
                     NativeFont font(rs.font_family, rs.bold, rs.italic, rs.underline, rs.strikeout, rs.font_size);
                     NativeFont::FontMetrics metrics = font.get_metrics();
+                    // Iterate through text lines
                     std::stringstream text(dynamic_cast<SSBText*>(geometry)->text);
+                    unsigned long int line_i = 0;
                     std::string line;
-                    cairo_save(ctx);
                     while(std::getline(text, line)){
-                        font.text_path_to_cairo(line, ctx);
-                        cairo_translate(ctx, 0, metrics.height + metrics.external_lead);
+                        // Update inner-line position on newline
+                        if(++line_i > 1){
+                            rs.off_x = 0;
+                            rs.off_y += metrics.height + metrics.external_lead + rs.font_space_v;
+                        }
+                        // Draw by direction
+                        switch(rs.direction){
+                            case SSBDirection::Mode::LTR:
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wfloat-equal"
+                                if(rs.font_space_h != 0){
+#pragma GCC diagnostic pop
+                                    // Iterate through utf8 characters
+                                    std::string utf8_char;
+                                    size_t ulen = utf8_slen(line.c_str());
+                                    for(size_t upos = 0, pos = 0, clen; upos < ulen; ++upos, pos += clen){
+                                        // Extract utf8 character
+                                        clen = utf8_clen(line.c_str(), pos);
+                                        utf8_char = line.substr(pos, clen);
+                                        // Set horizontal space
+                                        if(upos > 0) rs.off_x += rs.font_space_h;
+                                        // Draw text
+                                        cairo_save(ctx);
+                                        cairo_translate(ctx, rs.off_x, rs.off_y);
+                                        font.text_path_to_cairo(utf8_char, ctx);
+                                        cairo_restore(ctx);
+                                        // Update horizontal offset
+                                        rs.off_x += font.get_text_width(utf8_char);
+                                    }
+                                }else{
+                                    // Draw text
+                                    cairo_save(ctx);
+                                    cairo_translate(ctx, rs.off_x, rs.off_y);
+                                    font.text_path_to_cairo(line, ctx);
+                                    cairo_restore(ctx);
+                                    // Update horizontal offset
+                                    rs.off_x += font.get_text_width(line);
+                                }
+                                break;
+                            case SSBDirection::Mode::TTB:
+                                break;
+                            case SSBDirection::Mode::RTL:
+                                break;
+                        }
                     }
-                    cairo_restore(ctx);
                 }
                 break;
         }

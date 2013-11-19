@@ -137,7 +137,8 @@ namespace{
                 }
             }
         }else if(tdata->format == CAIRO_FORMAT_ARGB32 || tdata->format == CAIRO_FORMAT_RGB24){
-            __m128 accum;
+            // Buggy MinGW SSE causes crashes in this code
+            /*__m128 accum;
             float __attribute__((aligned(16))) accum_buf[4];
             unsigned char* row_dst;
             int image_x, image_y;
@@ -178,10 +179,10 @@ namespace{
                     row_dst[3] = accum_buf[3];
                     row_dst += 4;
                 }
-            }
-            /*// SSE available
+            }*/
+            // SSE2 available
             if(sse2_supported()){
-                const float min_val = 0.0f, max_val = 255.0f;
+                constexpr float min_val = 0.0f, max_val = 255.0f;
                 asm(
                     "movss (%0), %%xmm1\n"
                     "shufps $0x0, %%xmm1, %%xmm1\n"
@@ -268,7 +269,7 @@ namespace{
                         row_dst += 4;
                     }
                 }
-            }*/
+            }
         }
         return NULL;
     }
