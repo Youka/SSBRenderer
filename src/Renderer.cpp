@@ -161,13 +161,13 @@ void Renderer::blend(cairo_surface_t* src, int dst_x, int dst_y,
 
 namespace{
     // Applies deform filter on cairo path
-    void path_deform(cairo_t* ctx, RenderState& rs){
+    void path_deform(cairo_t* ctx, std::string& deform_x, std::string& deform_y, double progress){
         mu::Parser parser_x, parser_y;
         double x_buf, y_buf;
-        parser_x.SetExpr(rs.deform_x);
-        parser_y.SetExpr(rs.deform_y);
-        parser_x.DefineConst("t", rs.deform_progress);
-        parser_y.DefineConst("t", rs.deform_progress);
+        parser_x.SetExpr(deform_x);
+        parser_y.SetExpr(deform_y);
+        parser_x.DefineConst("t", progress);
+        parser_y.DefineConst("t", progress);
         parser_x.DefineVar("x", &x_buf);
         parser_y.DefineVar("x", &x_buf);
         parser_x.DefineVar("y", &y_buf);
@@ -278,16 +278,14 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
         if(start_ms >= event.start_ms && start_ms < event.end_ms){
             // Create render state for rendering behaviour
             RenderState rs;
-#pragma message "Implent SSB rendersize precalculations"
-            // Geometry line dimensions (by position group -> by text line -> accumulated dimensions)
-            std::vector<std::vector<Point>> line_dimensions = {{{0, 0}}};
-            // Process SSB objects of event
+            // Collect geometry line dimensions (by position group -> by text line -> accumulated dimensions)
+            std::vector<std::vector<Point>> pos_line_dim = {{{0, 0}}};
             for(std::shared_ptr<SSBObject>& obj : event.objects)
                 if(obj->type == SSBObject::Type::TAG){
-                    // Apply tag to render state
-                    rs.eval_tag(dynamic_cast<SSBTag*>(obj.get()), start_ms - event.start_ms, event.end_ms - event.start_ms);
+                    if(rs.eval_tag(dynamic_cast<SSBTag*>(obj.get()), start_ms - event.start_ms, event.end_ms - event.start_ms).position)
+                        pos_line_dim.push_back({{0, 0}});
                 }else{  // obj->type == SSBObject::Type::GEOMETRY
-
+#pragma message "Implent SSB rendersize precalculations"
                 }
 #pragma message "Implent SSB rendering"
             // Reset render state
@@ -296,7 +294,16 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
             for(std::shared_ptr<SSBObject>& obj : event.objects)
                 if(obj->type == SSBObject::Type::TAG){
                     // Apply tag to render state
-                    rs.eval_tag(dynamic_cast<SSBTag*>(obj.get()), start_ms - event.start_ms, event.end_ms - event.start_ms);
+                    RenderState::StateChange state_change = rs.eval_tag(dynamic_cast<SSBTag*>(obj.get()), start_ms - event.start_ms, event.end_ms - event.start_ms);
+                    if(state_change.position)
+                        ;//pos_line_dim.push_back({{0, 0}});
+                    else if(state_change.stencil && rs.stencil_mode == SSBStencil::Mode::CLEAR){
+                        // Clear stencil buffer
+                        cairo_set_operator(this->stencil_path_buffer, CAIRO_OPERATOR_SOURCE);
+                        cairo_set_source_rgba(this->stencil_path_buffer, 0, 0, 0, 0);
+                        cairo_paint(this->stencil_path_buffer);
+                        cairo_set_operator(this->stencil_path_buffer, CAIRO_OPERATOR_OVER);
+                    }
                 }else{  // obj->type == SSBObject::Type::GEOMETRY
                     // Set transformations
 
@@ -306,7 +313,7 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                     CairoImage image(this->width, this->height, CAIRO_FORMAT_ARGB32);
                     cairo_transform(image, &rs.matrix);
                     if(!rs.deform_x.empty() || !rs.deform_y.empty())
-                        path_deform(this->stencil_path_buffer, rs);
+                        path_deform(this->stencil_path_buffer, rs.deform_x, rs.deform_y, rs.deform_progress);
                     cairo_path_t* path = cairo_copy_path(this->stencil_path_buffer);
                     cairo_append_path(image, path);
                     cairo_path_destroy(path);

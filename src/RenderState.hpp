@@ -67,8 +67,12 @@ namespace{
         long int karaoke_start = -1, karaoke_duration = 0;
         RGB karaoke_color = {1, 0, 0};
         // State modifier
-        enum class StateChange{NONE, POSITION, CLIP};
+        struct StateChange{
+            bool position = false,
+                stencil = false;
+        };
         StateChange eval_tag(SSBTag* tag, SSBTime inner_ms, SSBTime inner_duration){
+            StateChange change;
             switch(tag->type){
                 case SSBTag::Type::FONT_FAMILY:
                     this->font_family = dynamic_cast<SSBFontFamily*>(tag)->family;
@@ -146,6 +150,7 @@ namespace{
                             this->pos_x = pos->x;
                             this->pos_y = pos->y;
                         }
+                        change.position = true;
                     }
                     break;
                 case SSBTag::Type::ALIGN:
@@ -330,6 +335,7 @@ namespace{
                     break;
                 case SSBTag::Type::STENCIL:
                     this->stencil_mode = dynamic_cast<SSBStencil*>(tag)->mode;
+                    change.stencil = true;
                     break;
                 case SSBTag::Type::FADE:
                     {
@@ -453,6 +459,7 @@ namespace{
                                             this->pos_x += progress * (pos->x - this->pos_x);
                                             this->pos_y += progress * (pos->y - this->pos_y);
                                         }
+                                        change.position = true;
                                     }
                                     break;
                                 case SSBTag::Type::ALIGN:
@@ -682,8 +689,10 @@ namespace{
                                     }
                                     break;
                                 case SSBTag::Type::STENCIL:
-                                    if(progress >= threshold)
+                                    if(progress >= threshold){
                                         this->stencil_mode = dynamic_cast<SSBStencil*>(animate_tag)->mode;
+                                        change.stencil = true;
+                                    }
                                     break;
                                 case SSBTag::Type::FADE:
                                     // Doesn't exist in an animation
@@ -723,7 +732,7 @@ namespace{
                     this->karaoke_color = dynamic_cast<SSBKaraokeColor*>(tag)->color;
                     break;
             }
-            return StateChange::NONE;
+            return change;
         }
     };
 }
