@@ -43,7 +43,7 @@
 	</File>
 	<File name="module.c" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="1047" topLine="2" />
+			<Cursor1 position="1017" topLine="2" />
 		</Cursor>
 	</File>
 	<File name="module.h" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
@@ -78,7 +78,7 @@
 	</File>
 	<File name="utf8.h" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="1037" topLine="16" />
+			<Cursor1 position="1651" topLine="31" />
 		</Cursor>
 	</File>
 	<File name="virtualdub.cpp" open="0" top="0" tabpos="3" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
@@ -103,7 +103,7 @@
 	</File>
 	<File name="Renderer.cpp" open="1" top="1" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="14528" topLine="254" />
+			<Cursor1 position="17520" topLine="295" />
 		</Cursor>
 	</File>
 </CodeBlocks_layout_file>

@@ -244,74 +244,6 @@ namespace{
                         break;
                 }
     }
-    // Converts SSB geometry to cairo path
-    inline void geometry_to_path(SSBGeometry* geometry, RenderState& rs, cairo_t* ctx){
-        switch(geometry->type){
-            case SSBGeometry::Type::POINTS:
-                points_to_cairo(dynamic_cast<SSBPoints*>(geometry), rs.line_width, ctx);
-                break;
-            case SSBGeometry::Type::PATH:
-                path_to_cairo(dynamic_cast<SSBPath*>(geometry), ctx);
-                break;
-            case SSBGeometry::Type::TEXT:
-                {
-                    // Get font informations
-                    NativeFont font(rs.font_family, rs.bold, rs.italic, rs.underline, rs.strikeout, rs.font_size);
-                    NativeFont::FontMetrics metrics = font.get_metrics();
-                    // Iterate through text lines
-                    std::stringstream text(dynamic_cast<SSBText*>(geometry)->text);
-                    unsigned long int line_i = 0;
-                    std::string line;
-                    while(std::getline(text, line)){
-                        // Update inner-line position on newline
-                        if(++line_i > 1){
-                            rs.off_x = 0;
-                            rs.off_y += metrics.height + metrics.external_lead + rs.font_space_v;
-                        }
-                        // Draw by direction
-                        switch(rs.direction){
-                            case SSBDirection::Mode::LTR:
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wfloat-equal"
-                                if(rs.font_space_h != 0){
-#pragma GCC diagnostic pop
-                                    // Iterate through utf8 characters
-                                    std::string utf8_char;
-                                    size_t ulen = utf8_slen(line.c_str());
-                                    for(size_t upos = 0, pos = 0, clen; upos < ulen; ++upos, pos += clen){
-                                        // Extract utf8 character
-                                        clen = utf8_clen(line.c_str(), pos);
-                                        utf8_char = line.substr(pos, clen);
-                                        // Set horizontal space
-                                        if(upos > 0) rs.off_x += rs.font_space_h;
-                                        // Draw text
-                                        cairo_save(ctx);
-                                        cairo_translate(ctx, rs.off_x, rs.off_y);
-                                        font.text_path_to_cairo(utf8_char, ctx);
-                                        cairo_restore(ctx);
-                                        // Update horizontal offset
-                                        rs.off_x += font.get_text_width(utf8_char);
-                                    }
-                                }else{
-                                    // Draw text
-                                    cairo_save(ctx);
-                                    cairo_translate(ctx, rs.off_x, rs.off_y);
-                                    font.text_path_to_cairo(line, ctx);
-                                    cairo_restore(ctx);
-                                    // Update horizontal offset
-                                    rs.off_x += font.get_text_width(line);
-                                }
-                                break;
-                            case SSBDirection::Mode::TTB:
-                                break;
-                            case SSBDirection::Mode::RTL:
-                                break;
-                        }
-                    }
-                }
-                break;
-        }
-    }
 }
 
 void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_ms) noexcept{
@@ -330,11 +262,11 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                 }else{  // obj->type == SSBObject::Type::GEOMETRY
 #pragma message "Implent SSB rendersize precalculations"
                 }
-#pragma message "Implent SSB rendering"
             // Reset render state
             rs = {};
             // Process SSB objects of event
             for(std::shared_ptr<SSBObject>& obj : event.objects)
+#pragma message "Implent SSB rendering"
                 if(obj->type == SSBObject::Type::TAG){
                     // Apply tag to render state
                     RenderState::StateChange state_change = rs.eval_tag(dynamic_cast<SSBTag*>(obj.get()), start_ms - event.start_ms, event.end_ms - event.start_ms);
@@ -351,7 +283,97 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                     // Set transformations
 
                     // Apply geometry to image path
-                    geometry_to_path(dynamic_cast<SSBGeometry*>(obj.get()), rs, this->stencil_path_buffer);
+                    SSBGeometry* geometry = dynamic_cast<SSBGeometry*>(obj.get());
+                    switch(geometry->type){
+                        case SSBGeometry::Type::POINTS:
+                            points_to_cairo(dynamic_cast<SSBPoints*>(geometry), rs.line_width, this->stencil_path_buffer);
+                            break;
+                        case SSBGeometry::Type::PATH:
+                            path_to_cairo(dynamic_cast<SSBPath*>(geometry), this->stencil_path_buffer);
+                            break;
+                        case SSBGeometry::Type::TEXT:
+                            {
+                                // Get font informations
+                                NativeFont font(rs.font_family, rs.bold, rs.italic, rs.underline, rs.strikeout, rs.font_size);
+                                NativeFont::FontMetrics metrics = font.get_metrics();
+                                // Iterate through text lines
+                                std::stringstream text(dynamic_cast<SSBText*>(geometry)->text);
+                                unsigned long int line_i = 0;
+                                std::string line;
+                                switch(rs.direction){
+                                    case SSBDirection::Mode::LTR:
+                                        while(std::getline(text, line)){
+                                            // Update inner-line position on newline
+                                            if(++line_i > 1){
+                                                rs.off_x = 0;
+                                                rs.off_y += metrics.height + metrics.external_lead + rs.font_space_v;
+                                            }
+                                            // Draw formatted text
+            #pragma GCC diagnostic push
+            #pragma GCC diagnostic ignored "-Wfloat-equal"
+                                            if(rs.font_space_h != 0){
+            #pragma GCC diagnostic pop
+                                                // Iterate through utf8 characters
+                                                std::vector<std::string> chars = utf8_chars(line);
+                                                for(size_t i = 0; i < chars.size(); ++i){
+                                                    // Set horizontal space
+                                                    if(i > 0) rs.off_x += rs.font_space_h;
+                                                    // Draw text
+                                                    cairo_save(this->stencil_path_buffer);
+                                                    cairo_translate(this->stencil_path_buffer, rs.off_x, rs.off_y);
+                                                    font.text_path_to_cairo(chars[i], this->stencil_path_buffer);
+                                                    cairo_restore(this->stencil_path_buffer);
+                                                    // Update horizontal offset
+                                                    rs.off_x += font.get_text_width(chars[i]);
+                                                }
+                                            }else{
+                                                // Draw text
+                                                cairo_save(this->stencil_path_buffer);
+                                                cairo_translate(this->stencil_path_buffer, rs.off_x, rs.off_y);
+                                                font.text_path_to_cairo(line, this->stencil_path_buffer);
+                                                cairo_restore(this->stencil_path_buffer);
+                                                // Update horizontal offset
+                                                rs.off_x += font.get_text_width(line);
+                                            }
+                                        }
+                                        break;
+                                    case SSBDirection::Mode::TTB:
+                                        {
+                                            double max_width = 0;
+                                            while(std::getline(text, line)){
+                                                // Update inner-line position on newline
+                                                if(++line_i > 1){
+                                                    rs.off_x += max_width + metrics.external_lead + rs.font_space_h;
+                                                    rs.off_y = 0;
+                                                    max_width = 0;
+                                                }
+                                                // Draw formatted text
+                                                std::vector<std::string> chars = utf8_chars(line);
+                                                for(size_t i = 0; i < chars.size(); ++i){
+                                                    // Set vertical space
+                                                    if(i > 0) rs.off_y += rs.font_space_v;
+                                                    // Draw text
+                                                    cairo_save(this->stencil_path_buffer);
+                                                    cairo_translate(this->stencil_path_buffer, rs.off_x, rs.off_y);
+                                                    font.text_path_to_cairo(chars[i], this->stencil_path_buffer);
+                                                    cairo_restore(this->stencil_path_buffer);
+                                                    // Update vertical offset
+                                                    rs.off_y += metrics.height;
+                                                    // Update maximal character width for next line offset
+                                                    max_width = std::max(max_width, font.get_text_width(chars[i]));
+                                                }
+                                            }
+                                        }
+                                        break;
+                                    case SSBDirection::Mode::RTL:
+                                        while(std::getline(text, line)){
+
+                                        }
+                                        break;
+                                }
+                            }
+                            break;
+                    }
                     // Test
                     CairoImage image(this->width, this->height, CAIRO_FORMAT_ARGB32);
                     cairo_transform(image, &rs.matrix);

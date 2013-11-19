@@ -43,3 +43,18 @@ inline size_t utf8_slen(const char* s){
     if(pos != len) --n;
     return n;
 }
+
+#ifdef __cplusplus
+#include <vector>
+#include <string>
+
+inline std::vector<std::string> utf8_chars(std::string& s){
+    std::vector<std::string> chars;
+    for(size_t pos = 0, clen; pos < s.length(); pos += clen){
+        clen = utf8_clen(s.c_str(), pos);
+        if(pos + clen <= s.length())
+            chars.push_back(s.substr(pos, clen));
+    }
+    return chars;
+}
+#endif
