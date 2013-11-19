@@ -19,13 +19,13 @@ Permission is granted to anyone to use this software for any purpose, including 
 #include "utf8.h"
 
 Renderer::Renderer(int width, int height, Colorspace format, std::string& script, bool warnings)
-: width(width), height(height), format(format), ssb(SSBParser(script, warnings).data()), stencil_path_buffer(width, height, CAIRO_FORMAT_A1){}
+: width(width), height(height), format(format), ssb(SSBParser(script, warnings).data()), stencil_path_buffer(width, height, CAIRO_FORMAT_A8){}
 
 void Renderer::set_target(int width, int height, Colorspace format){
     this->width = width;
     this->height = height;
     this->format = format;
-    this->stencil_path_buffer = CairoImage(width, height, CAIRO_FORMAT_A1);
+    this->stencil_path_buffer = CairoImage(width, height, CAIRO_FORMAT_A8);
 }
 
 void Renderer::blend(cairo_surface_t* src, int dst_x, int dst_y,
@@ -285,7 +285,7 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
             for(std::shared_ptr<SSBObject>& obj : event.objects)
                 if(obj->type == SSBObject::Type::TAG){
                     // Apply tag to render state
-                    tag_to_render_state(dynamic_cast<SSBTag*>(obj.get()), start_ms - event.start_ms, event.end_ms - event.start_ms, rs);
+                    rs.eval_tag(dynamic_cast<SSBTag*>(obj.get()), start_ms - event.start_ms, event.end_ms - event.start_ms);
                 }else{  // obj->type == SSBObject::Type::GEOMETRY
 
                 }
@@ -296,7 +296,7 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
             for(std::shared_ptr<SSBObject>& obj : event.objects)
                 if(obj->type == SSBObject::Type::TAG){
                     // Apply tag to render state
-                    tag_to_render_state(dynamic_cast<SSBTag*>(obj.get()), start_ms - event.start_ms, event.end_ms - event.start_ms, rs);
+                    rs.eval_tag(dynamic_cast<SSBTag*>(obj.get()), start_ms - event.start_ms, event.end_ms - event.start_ms);
                 }else{  // obj->type == SSBObject::Type::GEOMETRY
                     // Set transformations
 
