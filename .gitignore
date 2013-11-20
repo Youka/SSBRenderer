@@ -1,5 +1,6 @@
 # Builds
-/src/bin
+/bin
+/src/obj
 /src/obj
 
 # Code::Blocks project files

@@ -11,7 +11,7 @@
 			<Target title="Release - Windows">
 				<Option platforms="Windows;" />
 				<Option output="bin/Release/SSBRenderer" prefix_auto="1" extension_auto="1" />
-				<Option object_output="obj/Release/" />
+				<Option object_output="src/obj/Release/" />
 				<Option type="3" />
 				<Option compiler="gcc" />
 				<Option createDefFile="1" />
@@ -35,12 +35,12 @@
 					<Add option="-D_WIN32" />
 					<Add option="-DWIN32_LEAN_AND_MEAN" />
 					<Add option="-DWIN32_EXTRA_LEAN" />
-					<Add directory="include" />
-					<Add directory="include/cairo" />
-					<Add directory="include/muparser" />
+					<Add directory="src/include" />
+					<Add directory="src/include/cairo" />
+					<Add directory="src/include/muparser" />
 				</Compiler>
 				<ResourceCompiler>
-					<Add directory="res" />
+					<Add directory="src/res" />
 				</ResourceCompiler>
 				<Linker>
 					<Add option="-s" />
@@ -52,13 +52,13 @@
 					<Add library="z" />
 					<Add library="libmuparser.a" />
 					<Add library="gdi32" />
-					<Add directory="libs" />
+					<Add directory="src/libs" />
 				</Linker>
 			</Target>
 			<Target title="Debug - Windows">
 				<Option platforms="Windows;" />
 				<Option output="bin/Debug/SSBRenderer_debug" prefix_auto="1" extension_auto="1" />
-				<Option object_output="obj/Debug/" />
+				<Option object_output="src/obj/Debug/" />
 				<Option type="3" />
 				<Option compiler="gcc" />
 				<Option parameters='&quot;E:\PROJEKTE\SSBRenderer\TODO\test_debug.avs&quot;' />
@@ -88,12 +88,12 @@
 					<Add option="-D_WIN32" />
 					<Add option="-DWIN32_LEAN_AND_MEAN" />
 					<Add option="-DWIN32_EXTRA_LEAN" />
-					<Add directory="include" />
-					<Add directory="include/cairo" />
-					<Add directory="include/muparser" />
+					<Add directory="src/include" />
+					<Add directory="src/include/cairo" />
+					<Add directory="src/include/muparser" />
 				</Compiler>
 				<ResourceCompiler>
-					<Add directory="res" />
+					<Add directory="src/res" />
 				</ResourceCompiler>
 				<Linker>
 					<Add option="-pg -lgmon" />
@@ -105,73 +105,73 @@
 					<Add library="z" />
 					<Add library="libmuparser.a" />
 					<Add library="gdi32" />
-					<Add directory="libs" />
+					<Add directory="src/libs" />
 				</Linker>
 			</Target>
 		</Build>
-		<Unit filename="FileReader.hpp">
+		<Unit filename="src/FileReader.hpp">
 			<Option virtualFolder="Utils/" />
 		</Unit>
-		<Unit filename="RenderState.hpp">
+		<Unit filename="src/RenderState.hpp">
 			<Option virtualFolder="Filter/" />
 		</Unit>
-		<Unit filename="Renderer.cpp">
+		<Unit filename="src/Renderer.cpp">
 			<Option virtualFolder="Filter/" />
 		</Unit>
-		<Unit filename="Renderer.hpp">
+		<Unit filename="src/Renderer.hpp">
 			<Option virtualFolder="Filter/" />
 		</Unit>
-		<Unit filename="SSBData.hpp">
+		<Unit filename="src/SSBData.hpp">
 			<Option virtualFolder="Filter/" />
 		</Unit>
-		<Unit filename="SSBParser.cpp">
+		<Unit filename="src/SSBParser.cpp">
 			<Option virtualFolder="Filter/" />
 		</Unit>
-		<Unit filename="SSBParser.hpp">
+		<Unit filename="src/SSBParser.hpp">
 			<Option virtualFolder="Filter/" />
 		</Unit>
-		<Unit filename="avisynth.cpp">
+		<Unit filename="src/avisynth.cpp">
 			<Option virtualFolder="Interfaces/" />
 		</Unit>
-		<Unit filename="cairo++.cpp">
+		<Unit filename="src/cairo++.cpp">
 			<Option virtualFolder="Utils/" />
 		</Unit>
-		<Unit filename="cairo++.hpp">
+		<Unit filename="src/cairo++.hpp">
 			<Option virtualFolder="Utils/" />
 		</Unit>
-		<Unit filename="file_info.h">
+		<Unit filename="src/file_info.h">
 			<Option virtualFolder="Meta/" />
 		</Unit>
-		<Unit filename="module.c">
+		<Unit filename="src/module.c">
 			<Option compilerVar="CPP" />
 			<Option virtualFolder="Utils/" />
 		</Unit>
-		<Unit filename="module.h">
+		<Unit filename="src/module.h">
 			<Option virtualFolder="Utils/" />
 		</Unit>
-		<Unit filename="resources.rc">
+		<Unit filename="src/resources.rc">
 			<Option compilerVar="WINDRES" />
 			<Option virtualFolder="Meta/" />
 		</Unit>
-		<Unit filename="sse.hpp">
+		<Unit filename="src/sse.hpp">
 			<Option virtualFolder="Utils/" />
 		</Unit>
-		<Unit filename="textconv.hpp">
+		<Unit filename="src/textconv.hpp">
 			<Option virtualFolder="Utils/" />
 		</Unit>
-		<Unit filename="user.cpp">
+		<Unit filename="src/user.cpp">
 			<Option virtualFolder="Interfaces/" />
 		</Unit>
-		<Unit filename="user.h">
+		<Unit filename="src/user.h">
 			<Option virtualFolder="Interfaces/" />
 		</Unit>
-		<Unit filename="utf8.h">
+		<Unit filename="src/utf8.h">
 			<Option virtualFolder="Utils/" />
 		</Unit>
-		<Unit filename="virtualdub.cpp">
+		<Unit filename="src/virtualdub.cpp">
 			<Option virtualFolder="Interfaces/" />
 		</Unit>
-		<Unit filename="virtualdub_dialog.h">
+		<Unit filename="src/virtualdub_dialog.h">
 			<Option virtualFolder="Interfaces/" />
 		</Unit>
 		<Extensions>
