@@ -164,14 +164,14 @@ namespace{
     void path_deform(cairo_t* ctx, std::string& deform_x, std::string& deform_y, double progress){
         mu::Parser parser_x, parser_y;
         double x_buf, y_buf;
-        parser_x.SetExpr(deform_x);
-        parser_y.SetExpr(deform_y);
         parser_x.DefineConst("t", progress);
         parser_y.DefineConst("t", progress);
         parser_x.DefineVar("x", &x_buf);
         parser_y.DefineVar("x", &x_buf);
         parser_x.DefineVar("y", &y_buf);
         parser_y.DefineVar("y", &y_buf);
+        parser_x.SetExpr(deform_x);
+        parser_y.SetExpr(deform_y);
         cairo_path_filter(ctx,
             [&parser_x,&parser_y,&x_buf,&y_buf](double& x, double& y){
                 x_buf = x;
@@ -270,6 +270,7 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                                 else
                                     path_to_cairo(dynamic_cast<SSBPath*>(geometry), this->stencil_path_buffer);
                                 double x1, y1, x2, y2; cairo_fill_extents(this->stencil_path_buffer, &x1, &y1, &x2, &y2);
+                                cairo_new_path(this->stencil_path_buffer);
                                 if(x2 > 0 && y2 > 0){
                                     pos_line_dim.back().back().x = std::max(pos_line_dim.back().back().x, rs.off_x + x2);
                                     pos_line_dim.back().back().x = std::max(pos_line_dim.back().back().y, rs.off_y + y2);
@@ -339,13 +340,16 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
             // Reset render state
             rs = {};
             // Draw!
+            size_t pos_i = 0, pos_line_i = 0;
             for(std::shared_ptr<SSBObject>& obj : event.objects)
-#pragma message "Implent SSB rendering"
                 if(obj->type == SSBObject::Type::TAG){
                     // Apply tag to render state
                     RenderState::StateChange state_change = rs.eval_tag(dynamic_cast<SSBTag*>(obj.get()), start_ms - event.start_ms, event.end_ms - event.start_ms);
                     if(state_change.position){
-                        ;
+                        if(rs.eval_tag(dynamic_cast<SSBTag*>(obj.get()), start_ms - event.start_ms, event.end_ms - event.start_ms).position){
+                            ++pos_i;
+                            pos_line_i = 0;
+                        }
                     }else if(state_change.stencil && rs.stencil_mode == SSBStencil::Mode::CLEAR){
                         // Clear stencil buffer
                         cairo_set_operator(this->stencil_path_buffer, CAIRO_OPERATOR_SOURCE);
@@ -354,16 +358,22 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                         cairo_set_operator(this->stencil_path_buffer, CAIRO_OPERATOR_OVER);
                     }
                 }else{  // obj->type == SSBObject::Type::GEOMETRY
-                    // Set transformations
-
+#pragma message "Implent SSB rendering"
                     // Apply geometry to image path
                     SSBGeometry* geometry = dynamic_cast<SSBGeometry*>(obj.get());
                     switch(geometry->type){
                         case SSBGeometry::Type::POINTS:
-                            points_to_cairo(dynamic_cast<SSBPoints*>(geometry), rs.line_width, this->stencil_path_buffer);
-                            break;
                         case SSBGeometry::Type::PATH:
-                            path_to_cairo(dynamic_cast<SSBPath*>(geometry), this->stencil_path_buffer);
+                            if(geometry->type == SSBGeometry::Type::POINTS)
+                                points_to_cairo(dynamic_cast<SSBPoints*>(geometry), rs.line_width, this->stencil_path_buffer);
+                            else
+                                path_to_cairo(dynamic_cast<SSBPath*>(geometry), this->stencil_path_buffer);
+                            double x1, y1, x2, y2; cairo_fill_extents(this->stencil_path_buffer, &x1, &y1, &x2, &y2);
+
+
+
+
+
                             break;
                         case SSBGeometry::Type::TEXT:
                             {
