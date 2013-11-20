@@ -67,7 +67,7 @@ void Renderer::blend(cairo_surface_t* src, int dst_x, int dst_y,
                             dst_row[1] = src_row[1];
                             dst_row[2] = src_row[2];
                         }else if(src_row[3] > 0){
-                            inv_alpha = 255 - src_row[3];
+                            inv_alpha = src_row[3] ^ 0xFF;
                             dst_row[0] = dst_row[0] * inv_alpha / 255 + src_row[0];
                             dst_row[1] = dst_row[1] * inv_alpha / 255 + src_row[1];
                             dst_row[2] = dst_row[2] * inv_alpha / 255 + src_row[2];
@@ -102,7 +102,7 @@ void Renderer::blend(cairo_surface_t* src, int dst_x, int dst_y,
                             dst_row[1] = dst_row[1] * src_row[1] / 255;
                             dst_row[2] = dst_row[2] * src_row[2] / 255;
                         }else if(src_row[3] > 0){
-                            inv_alpha = 255 - src_row[3];
+                            inv_alpha = src_row[3] ^ 0xFF;
                             // Restore original color (invert premultiplied alpha) -> multiply color with destination -> multiply color with alpha -> continue like in OVER
                             dst_row[0] = dst_row[0] * inv_alpha / 255 + dst_row[0] * (src_row[0] * 255 / src_row[3]) / 255 * src_row[3] / 255;
                             dst_row[1] = dst_row[1] * inv_alpha / 255 + dst_row[1] * (src_row[1] * 255 / src_row[3]) / 255 * src_row[3] / 255;
@@ -119,14 +119,14 @@ void Renderer::blend(cairo_surface_t* src, int dst_x, int dst_y,
                 for(int src_y = 0; src_y < src_rect_height; ++src_y){
                     for(int src_x = 0; src_x < src_rect_width; ++src_x){
                         if(src_row[3] == 255){
-                            dst_row[0] = 255 - (255 - dst_row[0]) * (255 - src_row[0]) / 255;
-                            dst_row[1] = 255 - (255 - dst_row[1]) * (255 - src_row[1]) / 255;
-                            dst_row[2] = 255 - (255 - dst_row[2]) * (255 - src_row[2]) / 255;
+                            dst_row[0] = (dst_row[0] ^ 0xFF) * (src_row[0] ^ 0xFF) / 255 ^ 0xFF;
+                            dst_row[1] = (dst_row[1] ^ 0xFF) * (src_row[1] ^ 0xFF) / 255 ^ 0xFF;
+                            dst_row[2] = (dst_row[2] ^ 0xFF) * (src_row[2] ^ 0xFF) / 255 ^ 0xFF;
                         }else if(src_row[3] > 0){
-                            inv_alpha = 255 - src_row[3];
-                            dst_row[0] = dst_row[0] * inv_alpha / 255 + (255 - (255 - dst_row[0]) * (255 - src_row[0] * 255 / src_row[3]) / 255) * src_row[3] / 255;
-                            dst_row[1] = dst_row[1] * inv_alpha / 255 + (255 - (255 - dst_row[1]) * (255 - src_row[1] * 255 / src_row[3]) / 255) * src_row[3] / 255;
-                            dst_row[2] = dst_row[2] * inv_alpha / 255 + (255 - (255 - dst_row[2]) * (255 - src_row[2] * 255 / src_row[3]) / 255) * src_row[3] / 255;
+                            inv_alpha = src_row[3] ^ 0xFF;
+                            dst_row[0] = dst_row[0] * inv_alpha / 255 + ((dst_row[0] ^ 0xFF) * (src_row[0] * 255 / src_row[3] ^ 0xFF) / 255 ^ 0xFF) * src_row[3] / 255;
+                            dst_row[1] = dst_row[1] * inv_alpha / 255 + ((dst_row[1] ^ 0xFF) * (src_row[1] * 255 / src_row[3] ^ 0xFF) / 255 ^ 0xFF) * src_row[3] / 255;
+                            dst_row[2] = dst_row[2] * inv_alpha / 255 + ((dst_row[2] ^ 0xFF) * (src_row[2] * 255 / src_row[3] ^ 0xFF) / 255 ^ 0xFF) * src_row[3] / 255;
                         }
                         dst_row += dst_pix_size;
                         src_row += 4;
@@ -143,7 +143,7 @@ void Renderer::blend(cairo_surface_t* src, int dst_x, int dst_y,
                             dst_row[1] = abs(dst_row[1] - src_row[1]);
                             dst_row[2] = abs(dst_row[2] - src_row[2]);
                         }else if(src_row[3] > 0){
-                            inv_alpha = 255 - src_row[3];
+                            inv_alpha = src_row[3] ^ 0xFF;
                             dst_row[0] = dst_row[0] * inv_alpha / 255 + abs(dst_row[0] - src_row[0] * 255 / src_row[3]) * src_row[3] / 255;
                             dst_row[1] = dst_row[1] * inv_alpha / 255 + abs(dst_row[1] - src_row[1] * 255 / src_row[3]) * src_row[3] / 255;
                             dst_row[2] = dst_row[2] * inv_alpha / 255 + abs(dst_row[2] - src_row[2] * 255 / src_row[3]) * src_row[3] / 255;
