@@ -1,7 +1,6 @@
 # Builds
-/src/obj/*.o
-/src/obj/*.res
-/bin/SSBRenderer.*
+/src/obj
+/bin
 
 # Code::Blocks project files
 *.depend

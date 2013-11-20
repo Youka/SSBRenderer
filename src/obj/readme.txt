@@ -1,1 +1,0 @@
-In this folder your compiled objects will be generated!
