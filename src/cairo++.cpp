@@ -16,8 +16,12 @@ Permission is granted to anyone to use this software for any purpose, including 
 #include "cairo++.hpp"
 #include <cmath>
 #include <algorithm>
-#include <pthread.h>
 #include "sse.hpp"
+#ifdef _WIN32
+#include <windows.h>    // Windows threads
+#else
+#include <pthread.h>    // POSIX threads
+#endif
 
 void cairo_path_filter(cairo_t* ctx, std::function<void(double&, double&)> filter){
     // Get flatten path
@@ -112,7 +116,12 @@ namespace{
         int kernel_radius_x, kernel_radius_y, kernel_width, kernel_height;
         float* kernel_data;
     };
-    void* __attribute__((force_align_arg_pointer)) convolution_filter(void* userdata){
+#ifdef _WIN32
+DWORD WINAPI
+#else
+void*
+#endif
+    __attribute__((force_align_arg_pointer)) convolution_filter(void* userdata){
         ThreadData* tdata = reinterpret_cast<ThreadData*>(userdata);
         if(tdata->format == CAIRO_FORMAT_A8){
             float accum;
@@ -271,7 +280,11 @@ namespace{
                 }
             }
         }
+#ifdef _WIN32
+        return 0;
+#else
         return NULL;
+#endif
     }
 }
 
@@ -312,11 +325,29 @@ void cairo_image_surface_blur(cairo_surface_t* surface, double blur_h, double bl
         float divisor = std::accumulate(kernel_data.begin(), kernel_data.end(), 0.0f);
         std::for_each(kernel_data.begin(), kernel_data.end(), [&divisor](float& v){v /= divisor;});
         // Get logical processors number
+#ifdef _WIN32
+        SYSTEM_INFO si;
+        GetSystemInfo(&si);
+        int max_threads = si.dwNumberOfProcessors;
+#else
         int max_threads = pthread_num_processors_np();
+#endif
         // Create thread data
         std::vector<ThreadData> threads_data(max_threads);
         for(int i = 0; i < max_threads; ++i)
             threads_data[i] = {width, height, format, stride, data, fdata, i, max_threads, kernel_radius_x, kernel_radius_y, kernel_width, kernel_height, kernel_data.data()};
+#ifdef _WIN32
+        // Run threads
+        std::vector<HANDLE> threads(max_threads-1);
+        for(int i = 0; i < max_threads-1; ++i)
+            threads[i] = CreateThread(NULL, 0, convolution_filter, &threads_data[i], 0x0, NULL);
+        convolution_filter(&threads_data[max_threads-1]);
+        // Wait for threads & close them
+        for(HANDLE& thread : threads){
+            WaitForSingleObject(thread, INFINITE);
+            CloseHandle(thread);
+        }
+#else
         // Run threads
         std::vector<pthread_t> threads(max_threads-1);
         for(int i = 0; i < max_threads-1; ++i)
@@ -325,6 +356,7 @@ void cairo_image_surface_blur(cairo_surface_t* surface, double blur_h, double bl
         // Wait for threads
         for(pthread_t& thread : threads)
             pthread_join(thread, NULL);
+#endif
         // Signal changes on surfaces
         cairo_surface_mark_dirty(surface);
     }

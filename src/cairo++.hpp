@@ -99,10 +99,12 @@ class NativeFont{
     public:
 #ifdef _WIN32
         // Ctor & dtor
-        NativeFont(std::wstring family, bool bold, bool italic, bool underline, bool strikeout, unsigned short int size){
+        NativeFont(std::wstring family, bool bold, bool italic, bool underline, bool strikeout, unsigned short int size, bool rtl = false){
             this->dc = CreateCompatibleDC(NULL);
             SetMapMode(this->dc, MM_TEXT);
             SetBkMode(this->dc, TRANSPARENT);
+            if(rtl)
+                SetTextAlign(this->dc, TA_RTLREADING);
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
             LOGFONTW lf = {0};
@@ -119,8 +121,8 @@ class NativeFont{
             this->font = CreateFontIndirectW(&lf);
             this->old_font = SelectObject(this->dc, this->font);
         }
-        NativeFont(std::string& family, bool bold, bool italic, bool underline, bool strikeout, unsigned short int size)
-        : NativeFont(utf8_to_utf16(family), bold, italic, underline, strikeout, size){}
+        NativeFont(std::string& family, bool bold, bool italic, bool underline, bool strikeout, unsigned short int size, bool rtl = false)
+        : NativeFont(utf8_to_utf16(family), bold, italic, underline, strikeout, size, rtl){}
         ~NativeFont(){
             SelectObject(this->dc, this->old_font);
             DeleteObject(this->font);

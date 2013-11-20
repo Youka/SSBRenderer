@@ -260,19 +260,62 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                     if(rs.eval_tag(dynamic_cast<SSBTag*>(obj.get()), start_ms - event.start_ms, event.end_ms - event.start_ms).position)
                         pos_line_dim.push_back({{0, 0}});
                 }else{  // obj->type == SSBObject::Type::GEOMETRY
+                    SSBGeometry* geometry = dynamic_cast<SSBGeometry*>(obj.get());
+                    switch(geometry->type){
+                        case SSBGeometry::Type::POINTS:
+                            {
+                                points_to_cairo(dynamic_cast<SSBPoints*>(geometry), rs.line_width, this->stencil_path_buffer);
+                                double x1, y1, x2, y2; cairo_fill_extents(this->stencil_path_buffer, &x1, &y1, &x2, &y2);
+                                if(x2 > 0 && y2 > 0){
+                                    pos_line_dim.back().back().x = std::max(pos_line_dim.back().back().x, rs.off_x + x2);
+                                    pos_line_dim.back().back().x = std::max(pos_line_dim.back().back().y, rs.off_y + y2);
+                                    switch(rs.direction){
+                                        case SSBDirection::Mode::LTR:
+                                        case SSBDirection::Mode::RTL:
+                                            rs.off_x += x2;
+                                            break;
+                                        case SSBDirection::Mode::TTB:
+                                            rs.off_y += y2;
+                                            break;
+                                    }
+                                }
+                            }
+                            break;
+                        case SSBGeometry::Type::PATH:
+                            {
+                                path_to_cairo(dynamic_cast<SSBPath*>(geometry), this->stencil_path_buffer);
+                                double x1, y1, x2, y2; cairo_fill_extents(this->stencil_path_buffer, &x1, &y1, &x2, &y2);
+                                if(x2 > 0 && y2 > 0){
+                                    pos_line_dim.back().back().x = std::max(pos_line_dim.back().back().x, rs.off_x + x2);
+                                    pos_line_dim.back().back().x = std::max(pos_line_dim.back().back().y, rs.off_y + y2);
+                                    switch(rs.direction){
+                                        case SSBDirection::Mode::LTR:
+                                        case SSBDirection::Mode::RTL:
+                                            rs.off_x += x2;
+                                            break;
+                                        case SSBDirection::Mode::TTB:
+                                            rs.off_y += y2;
+                                            break;
+                                    }
+                                }
+                            }
+                            break;
+                        case SSBGeometry::Type::TEXT:
 #pragma message "Implent SSB rendersize precalculations"
+                            break;
+                    }
                 }
             // Reset render state
             rs = {};
-            // Process SSB objects of event
+            // Draw!
             for(std::shared_ptr<SSBObject>& obj : event.objects)
 #pragma message "Implent SSB rendering"
                 if(obj->type == SSBObject::Type::TAG){
                     // Apply tag to render state
                     RenderState::StateChange state_change = rs.eval_tag(dynamic_cast<SSBTag*>(obj.get()), start_ms - event.start_ms, event.end_ms - event.start_ms);
-                    if(state_change.position)
-                        ;//pos_line_dim.push_back({{0, 0}});
-                    else if(state_change.stencil && rs.stencil_mode == SSBStencil::Mode::CLEAR){
+                    if(state_change.position){
+                        ;
+                    }else if(state_change.stencil && rs.stencil_mode == SSBStencil::Mode::CLEAR){
                         // Clear stencil buffer
                         cairo_set_operator(this->stencil_path_buffer, CAIRO_OPERATOR_SOURCE);
                         cairo_set_source_rgba(this->stencil_path_buffer, 0, 0, 0, 0);
@@ -294,7 +337,7 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                         case SSBGeometry::Type::TEXT:
                             {
                                 // Get font informations
-                                NativeFont font(rs.font_family, rs.bold, rs.italic, rs.underline, rs.strikeout, rs.font_size);
+                                NativeFont font(rs.font_family, rs.bold, rs.italic, rs.underline, rs.strikeout, rs.font_size, rs.direction == SSBDirection::Mode::RTL);
                                 NativeFont::FontMetrics metrics = font.get_metrics();
                                 // Iterate through text lines
                                 std::stringstream text(dynamic_cast<SSBText*>(geometry)->text);
@@ -302,6 +345,7 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                                 std::string line;
                                 switch(rs.direction){
                                     case SSBDirection::Mode::LTR:
+                                    case SSBDirection::Mode::RTL:
                                         while(std::getline(text, line)){
                                             // Update inner-line position on newline
                                             if(++line_i > 1){
@@ -363,11 +407,6 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                                                     max_width = std::max(max_width, font.get_text_width(chars[i]));
                                                 }
                                             }
-                                        }
-                                        break;
-                                    case SSBDirection::Mode::RTL:
-                                        while(std::getline(text, line)){
-
                                         }
                                         break;
                                 }

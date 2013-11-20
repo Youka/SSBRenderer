@@ -151,6 +151,7 @@ namespace{
                             this->pos_y = pos->y;
                         }
                         change.position = true;
+                        this->off_x = this->off_y = 0;
                     }
                     break;
                 case SSBTag::Type::ALIGN:
@@ -460,6 +461,7 @@ namespace{
                                             this->pos_y += progress * (pos->y - this->pos_y);
                                         }
                                         change.position = true;
+                                        this->off_x = this->off_y = 0;
                                     }
                                     break;
                                 case SSBTag::Type::ALIGN:
