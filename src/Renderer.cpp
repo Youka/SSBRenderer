@@ -358,8 +358,7 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                         cairo_set_operator(this->stencil_path_buffer, CAIRO_OPERATOR_OVER);
                     }
                 }else{  // obj->type == SSBObject::Type::GEOMETRY
-#pragma message "Implent SSB rendering"
-                    // Apply geometry to image path
+                    // Create geometry
                     SSBGeometry* geometry = dynamic_cast<SSBGeometry*>(obj.get());
                     switch(geometry->type){
                         case SSBGeometry::Type::POINTS:
@@ -369,11 +368,47 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                             else
                                 path_to_cairo(dynamic_cast<SSBPath*>(geometry), this->stencil_path_buffer);
                             double x1, y1, x2, y2; cairo_path_extents(this->stencil_path_buffer, &x1, &y1, &x2, &y2);
+                            double align_off_x, align_off_y;
+                            switch(rs.align){
+                                case SSBAlign::Align::LEFT_BOTTOM:
+                                    break;
+                                case SSBAlign::Align::CENTER_BOTTOM:
+                                    break;
+                                case SSBAlign::Align::RIGHT_BOTTOM:
+                                    break;
+                                case SSBAlign::Align::LEFT_MIDDLE:
+                                    break;
+                                case SSBAlign::Align::CENTER_MIDDLE:
+                                    break;
+                                case SSBAlign::Align::RIGHT_MIDDLE:
+                                    break;
+                                case SSBAlign::Align::LEFT_TOP:
+                                    break;
+                                case SSBAlign::Align::CENTER_TOP:
+                                    break;
+                                case SSBAlign::Align::RIGHT_TOP:
+                                    break;
+                            }
+                            switch(rs.direction){
+                                case SSBDirection::Mode::LTR:
 
 
+                                    if(x2 > 0 && y2 > 0)
+                                        rs.off_x -= x2;
+                                    break;
+                                case SSBDirection::Mode::RTL:
 
 
+                                    if(x2 > 0 && y2 > 0)
+                                        rs.off_x += x2;
+                                    break;
+                                case SSBDirection::Mode::TTB:
 
+
+                                    if(x2 > 0 && y2 > 0)
+                                        rs.off_y += y2;
+                                    break;
+                            }
                             break;
                         case SSBGeometry::Type::TEXT:
                             {
@@ -454,12 +489,37 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                             }
                             break;
                     }
-                    // Test
-                    CairoImage image(this->width, this->height, CAIRO_FORMAT_ARGB32);
-                    cairo_transform(image, &rs.matrix);
+                    // Deform geometry
                     if(!rs.deform_x.empty() || !rs.deform_y.empty())
                         path_deform(this->stencil_path_buffer, rs.deform_x, rs.deform_y, rs.deform_progress);
+                    // Apply transformation & position(+margin) to geometry
                     cairo_path_t* path = cairo_copy_path(this->stencil_path_buffer);
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wfloat-equal"
+                    if(rs.pos_x != std::numeric_limits<decltype(rs.pos_x)>::max() && rs.pos_y != std::numeric_limits<decltype(rs.pos_y)>::max())
+#pragma GCC diagnostic pop
+                        cairo_translate(this->stencil_path_buffer, rs.pos_x, rs.pos_y);
+                    else
+                        switch(rs.align){
+                            case SSBAlign::Align::LEFT_BOTTOM: cairo_translate(this->stencil_path_buffer, rs.margin_h, this->height - rs.margin_v); break;
+                            case SSBAlign::Align::CENTER_BOTTOM: cairo_translate(this->stencil_path_buffer, this->width / 2, this->height - rs.margin_v); break;
+                            case SSBAlign::Align::RIGHT_BOTTOM: cairo_translate(this->stencil_path_buffer, this->width - rs.margin_h, this->height - rs.margin_v); break;
+                            case SSBAlign::Align::LEFT_MIDDLE: cairo_translate(this->stencil_path_buffer, rs.margin_h, this->height / 2); break;
+                            case SSBAlign::Align::CENTER_MIDDLE: cairo_translate(this->stencil_path_buffer, this->width / 2, this->height / 2); break;
+                            case SSBAlign::Align::RIGHT_MIDDLE: cairo_translate(this->stencil_path_buffer, this->width - rs.margin_h, this->height / 2); break;
+                            case SSBAlign::Align::LEFT_TOP: cairo_translate(this->stencil_path_buffer, rs.margin_h, rs.margin_v); break;
+                            case SSBAlign::Align::CENTER_TOP: cairo_translate(this->stencil_path_buffer, this->width / 2, rs.margin_v); break;
+                            case SSBAlign::Align::RIGHT_TOP: cairo_translate(this->stencil_path_buffer, this->width - rs.margin_h, rs.margin_v); break;
+                        }
+                    cairo_transform(this->stencil_path_buffer, &rs.matrix);
+                    cairo_new_path(this->stencil_path_buffer);
+                    cairo_append_path(this->stencil_path_buffer, path);
+                    cairo_identity_matrix(this->stencil_path_buffer);
+                    cairo_path_destroy(path);
+#pragma message "Implent SSB rendering"
+                    // Test
+                    CairoImage image(this->width, this->height, CAIRO_FORMAT_ARGB32);
+                    path = cairo_copy_path(this->stencil_path_buffer);
                     cairo_append_path(image, path);
                     cairo_path_destroy(path);
                     cairo_set_source_rgb(image, rs.colors.front().r, rs.colors.front().g, rs.colors.front().b);
@@ -477,12 +537,13 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
 
                     // Draw on image
 
-                    // Clear image path
-                    cairo_new_path(this->stencil_path_buffer);
                     // Calculate image rectangle for blending on frame
 
                     // Blend image on frame
 
+                    // Clear path & matrix
+                    cairo_new_path(this->stencil_path_buffer);
+                    cairo_identity_matrix(this->stencil_path_buffer);
                 }
         }
 }

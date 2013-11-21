@@ -44,7 +44,7 @@ namespace{
         double pos_x = std::numeric_limits<double>::max(), pos_y = std::numeric_limits<double>::max();  // 'Unset' in case of maximum values
         double off_x = 0, off_y = 0;
         SSBAlign::Align align = SSBAlign::Align::CENTER_BOTTOM;
-        double margin_h = 0, margin_v = 0;
+        double margin_h = 10, margin_v = 10;
         SSBDirection::Mode direction = SSBDirection::Mode::LTR;
         // Transformation
         cairo_matrix_t matrix = {1, 0, 0, 1, 0, 0};
