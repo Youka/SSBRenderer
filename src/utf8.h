@@ -17,8 +17,8 @@ Permission is granted to anyone to use this software for any purpose, including 
 
 #include <string.h>
 
-inline size_t utf8_clen(const char* s, size_t pos){
-    unsigned char c = s[pos];
+inline size_t utf8_clen(const char* s, const size_t pos){
+    const unsigned char c = s[pos];
     if(c < 192)
         return 1;
     else if(c < 224)
@@ -35,7 +35,7 @@ inline size_t utf8_clen(const char* s, size_t pos){
 
 inline size_t utf8_slen(const char* s){
     size_t n = 0, pos = 0;
-    size_t len = strlen(s);
+    const size_t len = strlen(s);
     while(pos < len){
         pos += utf8_clen(s, pos);
         ++n;
