@@ -269,7 +269,7 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                                     points_to_cairo(dynamic_cast<SSBPoints*>(geometry), rs.line_width, this->stencil_path_buffer);
                                 else
                                     path_to_cairo(dynamic_cast<SSBPath*>(geometry), this->stencil_path_buffer);
-                                double x1, y1, x2, y2; cairo_fill_extents(this->stencil_path_buffer, &x1, &y1, &x2, &y2);
+                                double x1, y1, x2, y2; cairo_path_extents(this->stencil_path_buffer, &x1, &y1, &x2, &y2);
                                 cairo_new_path(this->stencil_path_buffer);
                                 if(x2 > 0 && y2 > 0){
                                     pos_line_dim.back().back().x = std::max(pos_line_dim.back().back().x, rs.off_x + x2);
@@ -368,7 +368,7 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                                 points_to_cairo(dynamic_cast<SSBPoints*>(geometry), rs.line_width, this->stencil_path_buffer);
                             else
                                 path_to_cairo(dynamic_cast<SSBPath*>(geometry), this->stencil_path_buffer);
-                            double x1, y1, x2, y2; cairo_fill_extents(this->stencil_path_buffer, &x1, &y1, &x2, &y2);
+                            double x1, y1, x2, y2; cairo_path_extents(this->stencil_path_buffer, &x1, &y1, &x2, &y2);
 
 
 

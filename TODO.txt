@@ -1,5 +1,4 @@
 - Implementation
-	* Text lines & geometries size precalculation (needed for alignment, auto-position)
 	* Render!
 	* Plugin interfaces (Unix port)
 		+ Avxsynth

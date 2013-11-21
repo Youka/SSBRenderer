@@ -151,11 +151,11 @@ namespace{
                             this->pos_y = pos->y;
                         }
                         change.position = true;
-                        this->off_x = this->off_y = 0;
                     }
                     break;
                 case SSBTag::Type::ALIGN:
                     this->align = dynamic_cast<SSBAlign*>(tag)->align;
+                    change.position = true;
                     break;
                 case SSBTag::Type::MARGIN:
                     {
@@ -165,10 +165,12 @@ namespace{
                             case SSBMargin::Type::VERTICAL: this->margin_v = margin->y; break;
                             case SSBMargin::Type::BOTH: this->margin_h = margin->x; this->margin_v = margin->y; break;
                         }
+                        change.position = true;
                     }
                     break;
                 case SSBTag::Type::DIRECTION:
                     this->direction = dynamic_cast<SSBDirection*>(tag)->mode;
+                    change.position = true;
                     break;
                 case SSBTag::Type::IDENTITY:
                     cairo_matrix_init_identity(&this->matrix);
@@ -461,12 +463,13 @@ namespace{
                                             this->pos_y += progress * (pos->y - this->pos_y);
                                         }
                                         change.position = true;
-                                        this->off_x = this->off_y = 0;
                                     }
                                     break;
                                 case SSBTag::Type::ALIGN:
-                                    if(progress >= threshold)
+                                    if(progress >= threshold){
                                         this->align = dynamic_cast<SSBAlign*>(animate_tag)->align;
+                                        change.position = true;
+                                    }
                                     break;
                                 case SSBTag::Type::MARGIN:
                                     {
@@ -476,11 +479,14 @@ namespace{
                                             case SSBMargin::Type::VERTICAL: this->margin_v += progress * (margin->y - this->margin_v); break;
                                             case SSBMargin::Type::BOTH: this->margin_h += progress * (margin->x - this->margin_h); this->margin_v += progress * (margin->y - this->margin_v); break;
                                         }
+                                        change.position = true;
                                     }
                                     break;
                                 case SSBTag::Type::DIRECTION:
-                                    if(progress >= threshold)
+                                    if(progress >= threshold){
                                         this->direction = dynamic_cast<SSBDirection*>(animate_tag)->mode;
+                                        change.position = true;
+                                    }
                                     break;
                                 case SSBTag::Type::IDENTITY:
                                     if(progress >= threshold)
@@ -734,6 +740,8 @@ namespace{
                     this->karaoke_color = dynamic_cast<SSBKaraokeColor*>(tag)->color;
                     break;
             }
+            if(change.position)
+                this->off_x = this->off_y = 0;
             return change;
         }
     };
