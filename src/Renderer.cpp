@@ -262,8 +262,8 @@ namespace{
                     case SSBAlign::Align::CENTER_MIDDLE:
                     case SSBAlign::Align::RIGHT_MIDDLE:
                         align_point.y = std::accumulate(line_dimensions.begin(), line_dimensions.end(), 0.0, [](double init, Point& p){
-                            return init - p.y / 2;
-                        });
+                            return init - p.y;
+                        }) / 2;
                         break;
                     case SSBAlign::Align::LEFT_TOP:
                     case SSBAlign::Align::CENTER_TOP:
@@ -290,12 +290,7 @@ namespace{
                     case SSBAlign::Align::RIGHT_BOTTOM:
                     case SSBAlign::Align::RIGHT_MIDDLE:
                     case SSBAlign::Align::RIGHT_TOP:
-                        {
-                            double max_line_width = std::accumulate(line_dimensions.begin(), line_dimensions.end(), 0.0, [](double init, Point& p){
-                                return std::max(init, p.x);
-                            });
-                            align_point.x = -max_line_width + (max_line_width - line_dimensions[line_i].x);
-                        }
+                        align_point.x = -line_dimensions[line_i].x;
                         break;
                 }
                 break;
@@ -304,12 +299,7 @@ namespace{
                     case SSBAlign::Align::LEFT_BOTTOM:
                     case SSBAlign::Align::CENTER_BOTTOM:
                     case SSBAlign::Align::RIGHT_BOTTOM:
-                        {
-                            double max_line_height = std::accumulate(line_dimensions.begin(), line_dimensions.end(), 0.0, [](double init, Point& p){
-                                return std::max(init, p.y);
-                            });
-                            align_point.y = -max_line_height + (max_line_height - line_dimensions[line_i].y);
-                        }
+                        align_point.y = -line_dimensions[line_i].y;
                         break;
                     case SSBAlign::Align::LEFT_MIDDLE:
                     case SSBAlign::Align::CENTER_MIDDLE:
@@ -337,8 +327,8 @@ namespace{
                     case SSBAlign::Align::CENTER_MIDDLE:
                     case SSBAlign::Align::CENTER_TOP:
                         align_point.x = std::accumulate(line_dimensions.begin(), line_dimensions.end(), 0.0, [](double init, Point& p){
-                            return init - p.x / 2;
-                        });
+                            return init - p.x;
+                        }) / 2;
                         break;
                     case SSBAlign::Align::RIGHT_BOTTOM:
                     case SSBAlign::Align::RIGHT_MIDDLE:
@@ -465,6 +455,7 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                     }
                 }else{  // obj->type == SSBObject::Type::GEOMETRY
                     // Create geometry
+                    Point align_point = calc_align_offset(rs.align, rs.direction, pos_line_dim[pos_i], pos_line_i);
                     SSBGeometry* geometry = dynamic_cast<SSBGeometry*>(obj.get());
                     switch(geometry->type){
                         case SSBGeometry::Type::POINTS:
@@ -475,19 +466,20 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                                     points_to_cairo(dynamic_cast<SSBPoints*>(geometry), rs.line_width, this->stencil_path_buffer);
                                 else
                                     path_to_cairo(dynamic_cast<SSBPath*>(geometry), this->stencil_path_buffer);
-                                // Get points / path dimensions
-                                double x1, y1, x2, y2; cairo_path_extents(this->stencil_path_buffer, &x1, &y1, &x2, &y2);
                                 // Align points / path
+                                double x1, y1, x2, y2; cairo_path_extents(this->stencil_path_buffer, &x1, &y1, &x2, &y2);
                                 cairo_path_t* path = cairo_copy_path(this->stencil_path_buffer);
-                                Point align_point = calc_align_offset(rs.align, rs.direction, pos_line_dim[pos_i], pos_line_i);
                                 cairo_translate(this->stencil_path_buffer, align_point.x + rs.off_x, align_point.y + rs.off_y);
-                                if(x2 > 0 && y2 > 0){
-                                    if(rs.direction == SSBDirection::Mode::RTL)
+                                if(rs.direction == SSBDirection::Mode::RTL){
+                                    if(x2 > 0 && y2 > 0)
                                         cairo_translate(this->stencil_path_buffer, pos_line_dim[pos_i][pos_line_i].x - x2, 0);
-                                    else if(rs.direction == SSBDirection::Mode::TTB)
-                                        cairo_translate(this->stencil_path_buffer, (std::accumulate(pos_line_dim[pos_i].begin(), pos_line_dim[pos_i].end(), 0.0, [](double init, Point& p){
-                                            return std::max(init, p.x);
-                                        }) - x2) / 2, 0);
+                                    else
+                                        cairo_translate(this->stencil_path_buffer, pos_line_dim[pos_i][pos_line_i].x, 0);
+                                }else if(rs.direction == SSBDirection::Mode::TTB){
+                                    if(x2 > 0 && y2 > 0)
+                                        cairo_translate(this->stencil_path_buffer, pos_line_dim[pos_i][pos_line_i].x - x2 - (pos_line_dim[pos_i][pos_line_i].x - x2) / 2, 0);
+                                    else
+                                        cairo_translate(this->stencil_path_buffer, pos_line_dim[pos_i][pos_line_i].x, 0);
                                 }
                                 cairo_new_path(this->stencil_path_buffer);
                                 cairo_append_path(this->stencil_path_buffer, path);
