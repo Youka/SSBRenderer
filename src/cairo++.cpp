@@ -361,3 +361,13 @@ void cairo_image_surface_blur(cairo_surface_t* surface, double blur_h, double bl
         cairo_surface_mark_dirty(surface);
     }
 }
+
+void cairo_apply_matrix(cairo_t* ctx, cairo_matrix_t* mat){
+    cairo_path_t* path = cairo_copy_path(ctx);
+    cairo_new_path(ctx);
+    cairo_save(ctx);
+    cairo_transform(ctx, mat);
+    cairo_append_path(ctx, path);
+    cairo_restore(ctx);
+    cairo_path_destroy(path);
+}

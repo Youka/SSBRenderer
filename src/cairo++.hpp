@@ -78,6 +78,8 @@ cairo_pattern_t* cairo_pattern_create_rect_color(cairo_rectangle_t rect,
 
 void cairo_image_surface_blur(cairo_surface_t* surface, double blur_h, double blur_v);
 
+void cairo_apply_matrix(cairo_t* ctx, cairo_matrix_t* mat);
+
 #ifdef _WIN32
 #include "textconv.hpp"
 #else
