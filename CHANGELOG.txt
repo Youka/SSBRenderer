@@ -1,0 +1,7 @@
+v0.0.2 (planned)
+----------------
+* improved RTL behaviour
+* added line wrapping
+* added texture scaling
+* added blur mode
+* added karaoke mode

@@ -495,11 +495,17 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                                 std::stringstream text(dynamic_cast<SSBText*>(geometry)->text);
                                 unsigned long int line_i = 0;
                                 std::string line;
+                                cairo_path_t* old_path;
                                 while(std::getline(text, line)){
+                                    // Save old path to avoid transformations
+                                    old_path = cairo_copy_path(this->stencil_path_buffer);
+                                    cairo_new_path(this->stencil_path_buffer);
+                                    // Recalculate data for new line
                                     if(++line_i > 1){
                                         ++pos_line_i;
                                         align_point = calc_align_offset(rs.align, rs.direction, pos_line_dim[pos_i], pos_line_i);
                                     }
+                                    // Draw line
                                     switch(rs.direction){
                                         case SSBDirection::Mode::LTR:
                                         case SSBDirection::Mode::RTL:
@@ -574,6 +580,9 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                                             }
                                             break;
                                     }
+                                    // Restore old path
+                                    cairo_append_path(this->stencil_path_buffer, old_path);
+                                    cairo_path_destroy(old_path);
                                 }
                             }
                             break;
