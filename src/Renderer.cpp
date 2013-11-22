@@ -374,12 +374,8 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                                     pos_line_dim.back().back().y = std::max(pos_line_dim.back().back().y, rs.off_y + y2);
                                     switch(rs.direction){
                                         case SSBDirection::Mode::LTR:
-                                        case SSBDirection::Mode::RTL:
-                                            rs.off_x += x2;
-                                            break;
-                                        case SSBDirection::Mode::TTB:
-                                            rs.off_y += y2;
-                                            break;
+                                        case SSBDirection::Mode::RTL: rs.off_x += x2; break;
+                                        case SSBDirection::Mode::TTB: rs.off_y += y2; break;
                                     }
                                 }
                             }
@@ -506,6 +502,7 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                                     }
                                     switch(rs.direction){
                                         case SSBDirection::Mode::LTR:
+                                        case SSBDirection::Mode::RTL:
                                             {
                                                 if(line_i > 1){
                                                     rs.off_x = 0;
@@ -517,36 +514,35 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                                                 if(rs.font_space_h != 0){
     #pragma GCC diagnostic pop
                                                     // Iterate through utf8 characters
+                                                    double text_width = 0;
                                                     std::vector<std::string> chars = utf8_chars(line);
                                                     for(size_t i = 0; i < chars.size(); ++i){
                                                         // Set horizontal space
-                                                        if(i > 0) rs.off_x += rs.font_space_h;
+                                                        if(i > 0) text_width += rs.font_space_h;
                                                         // Draw text
                                                         cairo_save(this->stencil_path_buffer);
-                                                        cairo_translate(this->stencil_path_buffer, align_point.x + rs.off_x, align_point.y + rs.off_y + baseline_off_y);
+                                                        cairo_translate(this->stencil_path_buffer, text_width, 0);
                                                         font.text_path_to_cairo(chars[i], this->stencil_path_buffer);
                                                         cairo_restore(this->stencil_path_buffer);
-                                                        // Update horizontal offset
-                                                        rs.off_x += font.get_text_width(chars[i]);
+                                                        // Update horizontal character offset
+                                                        text_width += font.get_text_width(chars[i]);
                                                     }
+                                                    // Align text
+                                                    cairo_matrix_t matrix = {1, 0, 0, 1, align_point.x + (rs.direction == SSBDirection::Mode::LTR ? rs.off_x : pos_line_dim[pos_i][pos_line_i].x - rs.off_x - text_width), align_point.y + rs.off_y + baseline_off_y};
+                                                    cairo_apply_matrix(this->stencil_path_buffer, &matrix);
+                                                    // Update horizontal offset
+                                                    rs.off_x += text_width;
                                                 }else{
                                                     // Draw text
+                                                    double text_width = font.get_text_width(line);
                                                     cairo_save(this->stencil_path_buffer);
-                                                    cairo_translate(this->stencil_path_buffer, align_point.x + rs.off_x, align_point.y + rs.off_y + baseline_off_y);
+                                                    cairo_translate(this->stencil_path_buffer, align_point.x + (rs.direction == SSBDirection::Mode::LTR ? rs.off_x : pos_line_dim[pos_i][pos_line_i].x - rs.off_x - text_width), align_point.y + rs.off_y + baseline_off_y);
                                                     font.text_path_to_cairo(line, this->stencil_path_buffer);
                                                     cairo_restore(this->stencil_path_buffer);
                                                     // Update horizontal offset
-                                                    rs.off_x += font.get_text_width(line);
+                                                    rs.off_x += text_width;
                                                 }
                                             }
-                                            break;
-                                        case SSBDirection::Mode::RTL:
-                                            if(line_i > 1){
-                                                rs.off_x = 0;
-                                                rs.off_y += metrics.height + metrics.external_lead + rs.font_space_v;
-                                            }
-
-
                                             break;
                                         case SSBDirection::Mode::TTB:
                                             if(line_i > 1){
@@ -654,7 +650,7 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                             case SSBAlign::Align::CENTER_TOP: cairo_matrix_translate(&matrix, this->width / 2, rs.margin_v); break;
                             case SSBAlign::Align::RIGHT_TOP: cairo_matrix_translate(&matrix, this->width - rs.margin_h, rs.margin_v); break;
                         }
-                    cairo_matrix_multiply(&rs.matrix, &matrix, &rs.matrix);
+                    cairo_matrix_multiply(&matrix, &rs.matrix, &matrix);
                     cairo_apply_matrix(this->stencil_path_buffer, &matrix);
 #pragma message "Implent SSB rendering"
                     // Test
