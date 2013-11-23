@@ -1,8 +1,0 @@
-- Implementation
-	* Render!
-	* Plugin interfaces (Unix port)
-		+ Avxsynth
-		+ GStreamer
-- Documentation
-	* README
-	* Examples

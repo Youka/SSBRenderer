@@ -21,4 +21,8 @@ Permission is granted to anyone to use this software for any purpose, including 
 #define FILTER_AUTHOR "Youka"
 #define FILTER_NAME "SSBRenderer"
 #define FILTER_COPYRIGHT FILTER_AUTHOR ",© 2013"  // Author + copyright year
-#define FILTER_FILENAME FILTER_NAME ".dll"    // Program title + dynamic library extension
+#ifdef _WIN32
+#define FILTER_FILENAME FILTER_NAME ".dll"
+#else
+#define FILTER_FILENAME FILTER_NAME ".so"
+#endif

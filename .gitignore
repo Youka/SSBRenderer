@@ -6,5 +6,5 @@
 *.depend
 *.layout
 
-# Backups for development
+# Tests & backups
 /TODO

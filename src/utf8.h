@@ -50,6 +50,7 @@ inline size_t utf8_slen(const char* s){
 
 inline std::vector<std::string> utf8_chars(std::string& s){
     std::vector<std::string> chars;
+    chars.reserve(utf8_slen(s.c_str()));
     for(size_t pos = 0, clen; pos < s.length(); pos += clen){
         clen = utf8_clen(s.c_str(), pos);
         if(pos + clen <= s.length())

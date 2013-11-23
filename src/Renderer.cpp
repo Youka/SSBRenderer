@@ -189,7 +189,7 @@ namespace{
         if(size == 1)
 #pragma GCC diagnostic pop
             for(const Point& point : points->points)
-                cairo_rectangle(ctx, point.x, point.y, size, size);   // Creates a move + lines + close = closed shape
+                cairo_rectangle(ctx, point.x - 0.5, point.y - 0.5, 1, 1);   // Creates a move + lines + close = closed shape
         else
             for(const Point& point : points->points){
                 cairo_new_sub_path(ctx);
