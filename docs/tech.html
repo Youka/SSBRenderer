@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+<title>SSBRenderer - Technical details</title>
+<base href="" target="_self" />
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta http-equiv="content-style-type" content="text/css">
+<meta http-equiv="content-script-type" content="text/javascript">
+<meta http-equiv="content-language" content="en-us">
+<meta name="application-name" content="SSBRenderer">
+<meta name="author" content="Youka">
+<meta name="description" content="Some technical details to SSBRenderer implementation.">
+<meta name="keywords" content="SSB,SSBRenderer,technical,details,renderer,implementation">
+<meta name="robots" content="index,nofollow">
+<style type="text/css">
+body{
+	background: black;
+	color: white;
+	font-size: 18px;
+}
+h1{
+	font-size: 40px;
+	line-height: 40px;
+	text-decoration: underline;
+	margin-top: 0px;
+	margin-bottom: 10px;
+}
+hr{
+	margin: 30px 0px 30px 0px;
+	border: double 3px gray;
+}
+table{
+	border-collapse: collapse;
+}
+tr{
+	background: silver;
+}
+tr:first-child{
+	color: red;
+	font-weight: bold;
+}
+tr:not(:first-child){
+	color: black;
+	font-size: 14px;
+}
+td{
+	border: ridge 4px gray;
+	padding: 2px;
+	white-space: pre;
+}
+td:not(.space){
+	vertical-align: text-top;
+}
+td.space{
+	border: 0px;
+	background: black;
+	color: white;
+	font-size: 20px;
+}
+span{
+	background: white;
+}
+</style>
+</head>
+
+<body>
+<h1>Font spacing</h1>
+Addition of space after characters (even the last one) or lines.
+<hr>
+<h1>RTL (direction)</h1>
+Geometries placed from right to left. Text rendering depends on internal font renderer RTL calculation. With font space, normal left-to-right text rendering will be performed.
+<hr>
+<h1>Deformation</h1>
+Deformation occurs on the already aligned geometry. Before deformation, the geometry path will be splitted to moves + tiny line segments.
+<hr>
+<h1>Blurring</h1>
+Box blur kernel, conducted to a general convolution filter (accelerated by MT+SSE2).
+<hr>
+<h1>3D rotation</h1>
+Transformations will be multiplied to a 2x3 matrix, no store for depth or perspective. Rotation on x and y axis works just once because of geometry points default depth is 0.
+<hr>
+<h1>Render progress</h1>
+<table><tr>
+<td>PRECALCULATION</td>
+<td class="space"></td>
+<td>GEOMETRY</td>
+<td class="space"></td>
+<td>MASK</td>
+<td class="space"></td>
+<td>COLORING</td>
+<td class="space"></td>
+<td>POST PROCESSING</td>
+<td class="space"></td>
+<td>TRANSFORMATIONS</td>
+<td class="space"></td>
+<td>DRAW ON TARGET</td>
+</tr><tr>
+<td><span>geometry
+fade
+animate
+k
+kset</span></td><td class="space">-  -  ></td><td><span>font-family
+font-style
+font-size
+font-space
+direction
+align
+deform</span></td><td class="space">--></td><td><span>mode
+line-width
+line-style
+line-dash</span></td><td class="space">--></td><td><span>color + alpha
+texfill + texture
+line-color + line-alpha
+line-texfill + line-texture</span></td><td class="space">--></td><td><span>kcolor
+blur</span></td><td class="space">--></td><td><span>identity
+translate
+scale
+rotate
+shear
+transform
+position + margin</span></td><td class="space">--></td><td><span>clip
+blend</span></td>
+</tr></table>
+
+</body>
+
+</html>

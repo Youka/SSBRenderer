@@ -583,6 +583,7 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                     // Deform geometry
                     if(!rs.deform_x.empty() || !rs.deform_y.empty())
                         path_deform(this->stencil_path_buffer, rs.deform_x, rs.deform_y, rs.deform_progress);
+#pragma message "Implent SSB rendering"
                     // Apply transformation & position(+margin) & frame scaling to geometry
                     cairo_matrix_t matrix = {1, 0, 0, 1, 0, 0};
                     if(this->ssb.frame.width > 0 && this->ssb.frame.height > 0)
@@ -606,7 +607,6 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                         }
                     cairo_matrix_multiply(&matrix, &rs.matrix, &matrix);
                     cairo_apply_matrix(this->stencil_path_buffer, &matrix);
-#pragma message "Implent SSB rendering"
                     // Test
                     CairoImage image(this->width, this->height, CAIRO_FORMAT_ARGB32);
                     cairo_path_t* path = cairo_copy_path(this->stencil_path_buffer);
