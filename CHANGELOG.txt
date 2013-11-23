@@ -2,6 +2,7 @@ v0.0.2 (planned)
 ----------------
 * improved RTL behaviour
 * added line wrapping
+* added karaoke mode(s)
 * improved blur algorithm
 * improved performance with caching (static render data, loaded images, prerender pipeline)
 
@@ -13,5 +14,3 @@ v0.0.1 (planned)
 * more examples
 * Unix port (Avxsynth, GStreamer)
 * finish Renderer
-* added karaoke mode
-* added blur mode

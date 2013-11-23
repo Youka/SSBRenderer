@@ -407,10 +407,8 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                                             if(rs.font_space_h != 0){
 #pragma GCC diagnostic pop
                                                 std::vector<std::string> chars = utf8_chars(line);
-                                                for(size_t i = 0; i < chars.size(); ++i){
-                                                    if(i > 0) rs.off_x += rs.font_space_h;
-                                                    rs.off_x += font.get_text_width(chars[i]);
-                                                }
+                                                for(size_t i = 0; i < chars.size(); ++i)
+                                                    rs.off_x += font.get_text_width(chars[i]) + rs.font_space_h;
                                             }else
                                                 rs.off_x += font.get_text_width(line);
                                             pos_line_dim.back().back().width = std::max(pos_line_dim.back().back().width, rs.off_x);
@@ -421,8 +419,7 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                                                 std::vector<std::string> chars = utf8_chars(line);
                                                 double max_width = 0;
                                                 for(size_t i = 0; i < chars.size(); ++i){
-                                                    if(i > 0) rs.off_y += rs.font_space_v;
-                                                    rs.off_y += metrics.height;
+                                                    rs.off_y += metrics.height + rs.font_space_v;
                                                     max_width = std::max(max_width, font.get_text_width(chars[i]));
                                                 }
                                                 pos_line_dim.back().back().width = std::max(pos_line_dim.back().back().width, rs.off_x + max_width);
@@ -523,15 +520,13 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                                                     double text_width = 0;
                                                     std::vector<std::string> chars = utf8_chars(line);
                                                     for(size_t i = 0; i < chars.size(); ++i){
-                                                        // Set horizontal space
-                                                        if(i > 0) text_width += rs.font_space_h;
                                                         // Draw text
                                                         cairo_save(this->stencil_path_buffer);
                                                         cairo_translate(this->stencil_path_buffer, text_width, 0);
                                                         font.text_path_to_cairo(chars[i], this->stencil_path_buffer);
                                                         cairo_restore(this->stencil_path_buffer);
                                                         // Update horizontal character offset
-                                                        text_width += font.get_text_width(chars[i]);
+                                                        text_width += font.get_text_width(chars[i]) + rs.font_space_h;
                                                     }
                                                     // Align text
                                                     cairo_matrix_t matrix = {1, 0, 0, 1, align_point.x + (rs.direction == SSBDirection::Mode::LTR ? rs.off_x : pos_line_dim[pos_i][pos_line_i].width - rs.off_x - text_width), align_point.y + rs.off_y + baseline_off_y};
@@ -560,15 +555,13 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                                                 double text_height = 0;
                                                 std::vector<std::string> chars = utf8_chars(line);
                                                 for(size_t i = 0; i < chars.size(); ++i){
-                                                    // Set vertical space
-                                                    if(i > 0) text_height += rs.font_space_v;
                                                     // Draw text
                                                     cairo_save(this->stencil_path_buffer);
                                                     cairo_translate(this->stencil_path_buffer, (pos_line_dim[pos_i][pos_line_i].width - font.get_text_width(chars[i])) / 2, text_height);
                                                     font.text_path_to_cairo(chars[i], this->stencil_path_buffer);
                                                     cairo_restore(this->stencil_path_buffer);
                                                     // Update vertical character offset
-                                                    text_height += metrics.height;
+                                                    text_height += metrics.height + rs.font_space_v;
                                                 }
                                                 // Align text
                                                 cairo_matrix_t matrix = {1, 0, 0, 1, align_point.x + std::accumulate(pos_line_dim[pos_i].begin(), pos_line_dim[pos_i].end(), 0.0, [](double init, LineSize& line){
