@@ -457,16 +457,9 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
             for(std::shared_ptr<SSBObject>& obj : event.objects)
                 if(obj->type == SSBObject::Type::TAG){
                     // Apply tag to render state
-                    RenderState::StateChange state_change = rs.eval_tag(dynamic_cast<SSBTag*>(obj.get()), start_ms - event.start_ms, event.end_ms - event.start_ms);
-                    if(state_change.position){
+                    if(rs.eval_tag(dynamic_cast<SSBTag*>(obj.get()), start_ms - event.start_ms, event.end_ms - event.start_ms).position){
                         ++pos_i;
                         pos_line_i = 0;
-                    }else if(state_change.stencil && rs.stencil_mode == SSBStencil::Mode::CLEAR){
-                        // Clear stencil
-                        cairo_set_operator(this->stencil_path_buffer, CAIRO_OPERATOR_SOURCE);
-                        cairo_set_source_rgba(this->stencil_path_buffer, 0, 0, 0, 0);
-                        cairo_paint(this->stencil_path_buffer);
-                        cairo_set_operator(this->stencil_path_buffer, CAIRO_OPERATOR_OVER);
                     }
                 }else{  // obj->type == SSBObject::Type::GEOMETRY
                     // Create geometry
@@ -714,12 +707,39 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                             cairo_set_source(timage, cairo_pattern_create_for_surface(image));
                             cairo_set_operator(timage, CAIRO_OPERATOR_SOURCE);
                             cairo_paint(timage);
-                            // Apply clipping
-#pragma message "Implent SSB rendering"
-                            // Blend image on frame
-                            this->blend(timage, min_x - border_h, min_y - border_v, frame, pitch, rs.blend_mode);
+                            // Apply stenciling
+                            switch(rs.stencil_mode){
+                                case SSBStencil::Mode::OFF:
+                                    this->blend(timage, min_x, min_y, frame, pitch, rs.blend_mode);
+                                    break;
+                                case SSBStencil::Mode::INSIDE:
+                                    cairo_set_operator(timage, CAIRO_OPERATOR_DEST_IN);
+                                    cairo_set_source_surface(timage, this->stencil_path_buffer, -min_x, -min_y);
+                                    cairo_paint(timage);
+                                    this->blend(timage, min_x, min_y, frame, pitch, rs.blend_mode);
+                                    break;
+                                case SSBStencil::Mode::OUTSIDE:
+                                    cairo_set_operator(timage, CAIRO_OPERATOR_DEST_OUT);
+                                    cairo_set_source_surface(timage, this->stencil_path_buffer, -min_x, -min_y);
+                                    cairo_paint(timage);
+                                    this->blend(timage, min_x, min_y, frame, pitch, rs.blend_mode);
+                                    break;
+                                case SSBStencil::Mode::SET:
+                                    cairo_set_operator(this->stencil_path_buffer, CAIRO_OPERATOR_ADD);
+                                    cairo_set_source_surface(this->stencil_path_buffer, timage, min_x, min_y);
+                                    cairo_paint(this->stencil_path_buffer);
+                                    break;
+                                case SSBStencil::Mode::UNSET:
+                                    cairo_set_operator(timage, CAIRO_OPERATOR_DIFFERENCE);
+                                    cairo_set_source_rgba(timage, 1, 1, 1, 1);
+                                    cairo_paint(timage);
+                                    cairo_set_operator(this->stencil_path_buffer, CAIRO_OPERATOR_MULTIPLY);
+                                    cairo_set_source_surface(this->stencil_path_buffer, timage, min_x, min_y);
+                                    cairo_paint(this->stencil_path_buffer);
+                                    break;
+                            }
                         }else{  // rs.line_width > 0
-
+#pragma message "Implent SSB rendering"
                         }
                     else{   // rs.mode == SSBMode::Mode::WIRE
 
@@ -731,6 +751,5 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                 cairo_set_operator(this->stencil_path_buffer, CAIRO_OPERATOR_SOURCE);
                 cairo_set_source_rgba(this->stencil_path_buffer, 0, 0, 0, 0);
                 cairo_paint(this->stencil_path_buffer);
-                cairo_set_operator(this->stencil_path_buffer, CAIRO_OPERATOR_OVER);
         }
 }

@@ -62,14 +62,13 @@ namespace{
         // Rastering
         SSBBlend::Mode blend_mode = SSBBlend::Mode::OVER;
         double blur_h = 0, blur_v = 0;
-        SSBStencil::Mode stencil_mode = SSBStencil::Mode::CLEAR;
+        SSBStencil::Mode stencil_mode = SSBStencil::Mode::OFF;
         // Karaoke
         long int karaoke_start = -1, karaoke_duration = 0;
         RGB karaoke_color = {1, 0, 0};
         // State modifier
         struct StateChange{
-            bool position = false,
-                stencil = false;
+            bool position = false;
         };
         StateChange eval_tag(SSBTag* tag, SSBTime inner_ms, SSBTime inner_duration){
             StateChange change;
@@ -338,7 +337,6 @@ namespace{
                     break;
                 case SSBTag::Type::STENCIL:
                     this->stencil_mode = dynamic_cast<SSBStencil*>(tag)->mode;
-                    change.stencil = true;
                     break;
                 case SSBTag::Type::FADE:
                     {
@@ -697,10 +695,8 @@ namespace{
                                     }
                                     break;
                                 case SSBTag::Type::STENCIL:
-                                    if(progress >= threshold){
+                                    if(progress >= threshold)
                                         this->stencil_mode = dynamic_cast<SSBStencil*>(animate_tag)->mode;
-                                        change.stencil = true;
-                                    }
                                     break;
                                 case SSBTag::Type::FADE:
                                     // Doesn't exist in an animation

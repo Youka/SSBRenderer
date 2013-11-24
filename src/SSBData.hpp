@@ -357,7 +357,7 @@ class SSBBlur : public SSBTag{
 // Stencil state
 class SSBStencil : public SSBTag{
     public:
-        enum class Mode{CLEAR, SET, UNSET, INSIDE, OUTSIDE} mode;
+        enum class Mode{OFF, SET, UNSET, INSIDE, OUTSIDE} mode;
         SSBStencil(Mode mode) : SSBTag(SSBTag::Type::STENCIL), mode(mode){}
 };
 

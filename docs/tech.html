@@ -83,6 +83,19 @@ Transformations will be multiplied to a 2x3 matrix, no store for depth or perspe
 <h1>Text spaces</h1>
 Tabulators will be converted to 4 spaces. An empty last line will be ignored.
 <hr>
+<h1>Add a new tag</h1>
+<i>SSBData.hpp</i>:<br>
+Add a new tag value store class (see others classes, inheriting from SSBTag). This class transports parsed data to renderer.
+<br><br>
+<i>SSBParser.cpp</i>:<br>
+Parse tag from text in function 'parse_tags' (see other tag parsing). Tag data are collected here.
+<br><br>
+<i>RenderState.hpp</i>:<br>
+Add tag value in native format for renderer to RenderState structure and implent his insertion to RenderState from store instance in function 'eval_tag' (note: normal insertion AND insertion with interpolated value on animation).
+<br><br>
+<i>Renderer.cpp</i>:<br>
+Whereever your tag belongs to, implent it here on the right place to influence rendering.
+<hr>
 <h1>Render progress</h1>
 <table><tr>
 <td>PRECALCULATION</td>

@@ -581,8 +581,8 @@ namespace{
                     throw_parse_error(line_i, "Invalid vertical blur");
             }else if(tags_token.compare(0, 8, "stencil=") == 0){
                 std::string tag_value = tags_token.substr(8);
-                if(tag_value == "clear")
-                    ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBStencil(SSBStencil::Mode::CLEAR)));
+                if(tag_value == "off")
+                    ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBStencil(SSBStencil::Mode::OFF)));
                 else if(tag_value == "set")
                     ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBStencil(SSBStencil::Mode::SET)));
                 else if(tag_value == "unset")
