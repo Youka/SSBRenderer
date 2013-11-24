@@ -609,9 +609,9 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                             int x, y, width, height;
                             {
                                 double x1, y1, x2, y2; cairo_fill_extents(this->stencil_path_buffer, &x1, &y1, &x2, &y2);
-                                x = floor(x1), y = floor(y1), width = ceil(x2 - x), height = ceil(y2 - y);
+                                x = floor(x1), y = floor(y1), width = ceil(x2) - x, height = ceil(y2) - y;
                             }
-                            CairoImage image(width + 2 * border_h, height + 2 * border_v, CAIRO_FORMAT_ARGB32);
+                            CairoImage image(width + (border_h << 1), height + (border_v << 1), CAIRO_FORMAT_ARGB32);
                             // Transfer shifted path from buffer to image
                             cairo_save(image);
                             cairo_translate(image, -x + border_h, -y + border_v);
@@ -647,6 +647,7 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                                                                                             rs.colors[0].r, rs.colors[0].g, rs.colors[0].b, rs.alphas[2],
                                                                                             rs.colors[0].r, rs.colors[0].g, rs.colors[0].b, rs.alphas[3]));
                             }
+                            cairo_set_operator(image, CAIRO_OPERATOR_SOURCE);
                             cairo_fill_preserve(image);
                             // Draw texture over image color
                             if(!rs.texture.empty()){
@@ -659,12 +660,12 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                                     cairo_set_source(image, pattern);
                                     cairo_set_operator(image, CAIRO_OPERATOR_MULTIPLY);
                                     cairo_fill_preserve(image);
-                                    cairo_set_operator(image, CAIRO_OPERATOR_OVER);
                                 }
                             }
                             // Draw karaoke over image
                             int elapsed_time = start_ms - event.start_ms;
                             if(rs.karaoke_start >= 0){
+                                cairo_set_operator(image, CAIRO_OPERATOR_SOURCE);
                                 cairo_set_source_rgb(image, rs.karaoke_color.r, rs.karaoke_color.g, rs.karaoke_color.b);
                                 if(elapsed_time >= rs.karaoke_start + rs.karaoke_duration)
                                     cairo_fill(image);
@@ -706,16 +707,17 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                                 max_x = ceil(std::max(std::max(x0, x1), std::max(x2, x3)));
                                 max_y = ceil(std::max(std::max(y0, y1), std::max(y2, y3)));
                             }
-                            CairoImage timage(max_x - min_x, max_y - min_y, CAIRO_FORMAT_ARGB32);
-                            cairo_translate(timage, -min_x, -min_y);
+                            CairoImage timage(max_x - min_x + (border_h << 1), max_y - min_y + (border_v << 1), CAIRO_FORMAT_ARGB32);
+                            cairo_translate(timage, -min_x + border_h, -min_y + border_v);
                             cairo_transform(timage, &matrix);
                             cairo_translate(timage, -border_h + x, -border_v + y);
                             cairo_set_source(timage, cairo_pattern_create_for_surface(image));
+                            cairo_set_operator(timage, CAIRO_OPERATOR_SOURCE);
                             cairo_paint(timage);
                             // Apply clipping
 #pragma message "Implent SSB rendering"
                             // Blend image on frame
-                            this->blend(timage, min_x, min_y, frame, pitch, rs.blend_mode);
+                            this->blend(timage, min_x - border_h, min_y - border_v, frame, pitch, rs.blend_mode);
                         }else{  // rs.line_width > 0
 
                         }

@@ -456,7 +456,7 @@ namespace{
                         rgb[0] <= 0xffffff)
                     ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBColor(target,
                                                 static_cast<decltype(RGB::r)>(rgb[0] >> 16) / 0xff,
-                                                static_cast<decltype(RGB::g)>(rgb[0] >> 8 && 0xff) / 0xff,
+                                                static_cast<decltype(RGB::g)>(rgb[0] >> 8 & 0xff) / 0xff,
                                                 static_cast<decltype(RGB::b)>(rgb[0] & 0xff) / 0xff
                                                                                        )));
                 else if(hex_string_to_number_quadruple(tag_value, rgb[0], rgb[1], rgb[2], rgb[3]) &&
@@ -705,7 +705,7 @@ namespace{
                 if(hex_string_to_number(tags_token.substr(7), rgb) && rgb <= 0xffffff)
                     ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBKaraokeColor(
                                                 static_cast<decltype(RGB::r)>(rgb >> 16) / 0xff,
-                                                static_cast<decltype(RGB::g)>(rgb >> 8 && 0xff) / 0xff,
+                                                static_cast<decltype(RGB::g)>(rgb >> 8 & 0xff) / 0xff,
                                                 static_cast<decltype(RGB::b)>(rgb & 0xff) / 0xff
                                                                                        )));
                 else if(warnings)
