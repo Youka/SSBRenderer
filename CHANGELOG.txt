@@ -14,4 +14,3 @@ v0.0.1 (planned)
 * Unix port (Avxsynth, GStreamer)
 * finish Renderer
 * fix texture-karaoke-color blending
-* fix image fragments on rotation

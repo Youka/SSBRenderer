@@ -43,10 +43,12 @@ void Renderer::blend(cairo_surface_t* src, int dst_x, int dst_y,
        dst_x + src_width > 0 && dst_y + src_height > 0 &&
        src_format == CAIRO_FORMAT_ARGB32){
         // Calculate source rectangle to overlay
-        int src_rect_x = dst_x < 0 ? -dst_x : 0;
-        int src_rect_y = dst_y < 0 ? -dst_y : 0;
-        int src_rect_width = dst_x + src_width > this->width ? this->width - dst_x : src_width;
-        int src_rect_height = dst_y + src_height > this->height ? this->height - dst_y : src_height;
+        int src_rect_x = dst_x < 0 ? -dst_x : 0,
+            src_rect_y = dst_y < 0 ? -dst_y : 0,
+            src_rect_x2 = dst_x + src_width > this->width ? this->width - dst_x : src_width,
+            src_rect_y2 = dst_y + src_height > this->height ? this->height - dst_y : src_height,
+            src_rect_width = src_rect_x2 - src_rect_x,
+            src_rect_height = src_rect_y2 - src_rect_y;
         // Calculate destination offsets for overlay
         int dst_offset_x = dst_x < 0 ? 0 : dst_x;
         int dst_offset_y = this->height - 1 - (dst_y < 0 ? 0 : dst_y);
@@ -610,153 +612,156 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                     if(!rs.deform_x.empty() || !rs.deform_y.empty())
                         path_deform(this->stencil_path_buffer, rs.deform_x, rs.deform_y, rs.deform_progress);
                     // Create mask
-                    if(rs.mode == SSBMode::Mode::FILL)
-                        if(rs.line_width <= 0){
-                            // Create image
-                            int border_h = ceil(rs.blur_h), border_v = ceil(rs.blur_v);
-                            int x, y, width, height;
-                            {
-                                double x1, y1, x2, y2; cairo_fill_extents(this->stencil_path_buffer, &x1, &y1, &x2, &y2);
-                                x = floor(x1), y = floor(y1), width = ceil(x2) - x, height = ceil(y2) - y;
-                            }
-                            CairoImage image(width + (border_h << 1), height + (border_v << 1), CAIRO_FORMAT_ARGB32);
-                            // Transfer shifted path from buffer to image
-                            cairo_save(image);
-                            cairo_translate(image, -x + border_h, -y + border_v);
-                            cairo_path_t* path = cairo_copy_path(this->stencil_path_buffer);
-                            cairo_append_path(image, path);
-                            cairo_path_destroy(path);
-                            cairo_restore(image);
-                            // Draw colored geometry on image
-                            if(rs.colors.size() == 1 && rs.alphas.size() == 1)
-                                cairo_set_source_rgba(image, rs.colors[0].r, rs.colors[0].g, rs.colors[0].b, rs.alphas[0]);
-                            else{
+                    enum class DrawType{FILL_BLURRED, FILL_WITHOUT_BLUR, BORDER, WIRE};
+                    auto draw_func = [&](DrawType draw_type){
+                        // Create image
+                        int border_h = ceil(rs.blur_h), border_v = ceil(rs.blur_v);
+                        int x, y, width, height;
+                        {
+                            double x1, y1, x2, y2; cairo_fill_extents(this->stencil_path_buffer, &x1, &y1, &x2, &y2);
+                            x = floor(x1), y = floor(y1), width = ceil(x2 - x), height = ceil(y2 - y);
+                        }
+                        CairoImage image(width + (border_h << 1), height + (border_v << 1), CAIRO_FORMAT_ARGB32);
+                        // Transfer shifted path from buffer to image
+                        cairo_save(image);
+                        cairo_translate(image, -x + border_h, -y + border_v);
+                        cairo_path_t* path = cairo_copy_path(this->stencil_path_buffer);
+                        cairo_append_path(image, path);
+                        cairo_path_destroy(path);
+                        cairo_restore(image);
+                        // Draw colored geometry on image
+                        if(rs.colors.size() == 1 && rs.alphas.size() == 1)
+                            cairo_set_source_rgba(image, rs.colors[0].r, rs.colors[0].g, rs.colors[0].b, rs.alphas[0]);
+                        else{
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wnarrowing"
-                                cairo_rectangle_t color_rect = {border_h, border_v, width, height};
+                            cairo_rectangle_t color_rect = {border_h, border_v, width, height};
 #pragma GCC diagnostic pop
-                                if(rs.colors.size() == 4 && rs.alphas.size() == 4)
-
-                                    cairo_set_source(image, cairo_pattern_create_rect_color(color_rect,
-                                                                                            rs.colors[0].r, rs.colors[0].g, rs.colors[0].b, rs.alphas[0],
-                                                                                            rs.colors[1].r, rs.colors[1].g, rs.colors[1].b, rs.alphas[1],
-                                                                                            rs.colors[2].r, rs.colors[2].g, rs.colors[2].b, rs.alphas[2],
-                                                                                            rs.colors[3].r, rs.colors[3].g, rs.colors[3].b, rs.alphas[3]));
-                                else if(rs.colors.size() == 4 && rs.alphas.size() == 1)
-                                    cairo_set_source(image, cairo_pattern_create_rect_color(color_rect,
-                                                                                            rs.colors[0].r, rs.colors[0].g, rs.colors[0].b, rs.alphas[0],
-                                                                                            rs.colors[1].r, rs.colors[1].g, rs.colors[1].b, rs.alphas[0],
-                                                                                            rs.colors[2].r, rs.colors[2].g, rs.colors[2].b, rs.alphas[0],
-                                                                                            rs.colors[3].r, rs.colors[3].g, rs.colors[3].b, rs.alphas[0]));
-                                else    // rs.colors.size() == 1 && rs.alphas.size() == 4
-                                    cairo_set_source(image, cairo_pattern_create_rect_color(color_rect,
-                                                                                            rs.colors[0].r, rs.colors[0].g, rs.colors[0].b, rs.alphas[0],
-                                                                                            rs.colors[0].r, rs.colors[0].g, rs.colors[0].b, rs.alphas[1],
-                                                                                            rs.colors[0].r, rs.colors[0].g, rs.colors[0].b, rs.alphas[2],
-                                                                                            rs.colors[0].r, rs.colors[0].g, rs.colors[0].b, rs.alphas[3]));
+                            if(rs.colors.size() == 4 && rs.alphas.size() == 4)
+                                cairo_set_source(image, cairo_pattern_create_rect_color(color_rect,
+                                                                                        rs.colors[0].r, rs.colors[0].g, rs.colors[0].b, rs.alphas[0],
+                                                                                        rs.colors[1].r, rs.colors[1].g, rs.colors[1].b, rs.alphas[1],
+                                                                                        rs.colors[2].r, rs.colors[2].g, rs.colors[2].b, rs.alphas[2],
+                                                                                        rs.colors[3].r, rs.colors[3].g, rs.colors[3].b, rs.alphas[3]));
+                            else if(rs.colors.size() == 4 && rs.alphas.size() == 1)
+                                cairo_set_source(image, cairo_pattern_create_rect_color(color_rect,
+                                                                                        rs.colors[0].r, rs.colors[0].g, rs.colors[0].b, rs.alphas[0],
+                                                                                        rs.colors[1].r, rs.colors[1].g, rs.colors[1].b, rs.alphas[0],
+                                                                                        rs.colors[2].r, rs.colors[2].g, rs.colors[2].b, rs.alphas[0],
+                                                                                        rs.colors[3].r, rs.colors[3].g, rs.colors[3].b, rs.alphas[0]));
+                            else    // rs.colors.size() == 1 && rs.alphas.size() == 4
+                                cairo_set_source(image, cairo_pattern_create_rect_color(color_rect,
+                                                                                        rs.colors[0].r, rs.colors[0].g, rs.colors[0].b, rs.alphas[0],
+                                                                                        rs.colors[0].r, rs.colors[0].g, rs.colors[0].b, rs.alphas[1],
+                                                                                        rs.colors[0].r, rs.colors[0].g, rs.colors[0].b, rs.alphas[2],
+                                                                                        rs.colors[0].r, rs.colors[0].g, rs.colors[0].b, rs.alphas[3]));
+                        }
+                        cairo_fill_preserve(image);
+                        // Draw texture over image color
+                        if(!rs.texture.empty()){
+                            CairoImage texture(rs.texture);
+                            if(cairo_surface_status(texture) == CAIRO_STATUS_SUCCESS){
+                                cairo_pattern_t* pattern = cairo_pattern_create_for_surface(texture);
+                                cairo_matrix_t pattern_matrix = {1, 0, 0, 1, border_h + rs.texture_x, border_v + rs.texture_y};
+                                cairo_pattern_set_matrix(pattern, &pattern_matrix);
+                                cairo_pattern_set_extend(pattern, rs.wrap_style);
+                                cairo_set_source(image, pattern);
+                                cairo_set_operator(image, CAIRO_OPERATOR_MULTIPLY);
+                                cairo_fill_preserve(image);
                             }
-                            cairo_fill_preserve(image);
-                            // Draw texture over image color
-                            if(!rs.texture.empty()){
-                                CairoImage texture(rs.texture);
-                                if(cairo_surface_status(texture) == CAIRO_STATUS_SUCCESS){
-                                    cairo_pattern_t* pattern = cairo_pattern_create_for_surface(texture);
-                                    cairo_matrix_t pattern_matrix = {1, 0, 0, 1, border_h + rs.texture_x, border_v + rs.texture_y};
-                                    cairo_pattern_set_matrix(pattern, &pattern_matrix);
-                                    cairo_pattern_set_extend(pattern, rs.wrap_style);
-                                    cairo_set_source(image, pattern);
-                                    cairo_set_operator(image, CAIRO_OPERATOR_MULTIPLY);
-                                    cairo_fill_preserve(image);
+                        }
+                        // Draw karaoke over image
+                        int elapsed_time = start_ms - event.start_ms;
+                        if(rs.karaoke_start >= 0){
+                            cairo_set_operator(image, CAIRO_OPERATOR_OVER);
+                            cairo_set_source_rgb(image, rs.karaoke_color.r, rs.karaoke_color.g, rs.karaoke_color.b);
+                            if(elapsed_time >= rs.karaoke_start + rs.karaoke_duration)
+                                cairo_fill(image);
+                            else if(elapsed_time >= rs.karaoke_start){
+                                double progress = static_cast<double>(elapsed_time - rs.karaoke_start) / rs.karaoke_duration;
+                                cairo_clip(image);
+                                switch(rs.direction){
+                                    case SSBDirection::Mode::LTR: cairo_rectangle(image, border_h, border_v, progress * width, height); break;
+                                    case SSBDirection::Mode::RTL: cairo_rectangle(image, border_h + width - progress * width, border_v, progress * width, height); break;
+                                    case SSBDirection::Mode::TTB: cairo_rectangle(image, border_h, border_v, width, progress * height); break;
                                 }
+                                cairo_fill(image);
                             }
-                            // Draw karaoke over image
-                            int elapsed_time = start_ms - event.start_ms;
-                            if(rs.karaoke_start >= 0){
-                                cairo_set_operator(image, CAIRO_OPERATOR_OVER);
-                                cairo_set_source_rgb(image, rs.karaoke_color.r, rs.karaoke_color.g, rs.karaoke_color.b);
-                                if(elapsed_time >= rs.karaoke_start + rs.karaoke_duration)
-                                    cairo_fill(image);
-                                else if(elapsed_time >= rs.karaoke_start){
-                                    double progress = static_cast<double>(elapsed_time - rs.karaoke_start) / rs.karaoke_duration;
-                                    cairo_clip(image);
-                                    switch(rs.direction){
-                                        case SSBDirection::Mode::LTR: cairo_rectangle(image, border_h, border_v, progress * width, height); break;
-                                        case SSBDirection::Mode::RTL: cairo_rectangle(image, border_h + width - progress * width, border_v, progress * width, height); break;
-                                        case SSBDirection::Mode::TTB: cairo_rectangle(image, border_h, border_v, width, progress * height); break;
-                                    }
-                                    cairo_fill(image);
-                                }
-                            }
-                            // Blur image
-                            cairo_image_surface_blur(image, rs.blur_h, rs.blur_v);
-                            // Create transformed image
-                            cairo_matrix_t matrix = {1, 0, 0, 1, 0, 0};
-                            if(this->ssb.frame.width > 0 && this->ssb.frame.height > 0)
-                                cairo_matrix_scale(&matrix, static_cast<double>(this->ssb.frame.width) / this->width, static_cast<double>(this->ssb.frame.height) / this->height);
+                        }
+                        // Blur image
+                        cairo_image_surface_blur(image, rs.blur_h, rs.blur_v);
+                        // Create transformed image
+                        cairo_matrix_t matrix = {1, 0, 0, 1, 0, 0};
+                        if(this->ssb.frame.width > 0 && this->ssb.frame.height > 0)
+                            cairo_matrix_scale(&matrix, static_cast<double>(this->ssb.frame.width) / this->width, static_cast<double>(this->ssb.frame.height) / this->height);
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-equal"
-                            if(rs.pos_x != std::numeric_limits<decltype(rs.pos_x)>::max() && rs.pos_y != std::numeric_limits<decltype(rs.pos_y)>::max())
+                        if(!(rs.pos_x == std::numeric_limits<decltype(rs.pos_x)>::max() && rs.pos_y == std::numeric_limits<decltype(rs.pos_y)>::max()))
 #pragma GCC diagnostic pop
-                                cairo_matrix_translate(&matrix, rs.pos_x, rs.pos_y);
-                            else{
-                                Point pos = get_auto_pos(this->width, this->width, rs);
-                                cairo_matrix_translate(&matrix, pos.x, pos.y);
-                            }
-                            cairo_matrix_multiply(&matrix, &rs.matrix, &matrix);
-                            double min_x, min_y, max_x, max_y;
-                            {
-                                double x0 = -border_h + x, y0 = -border_v + y; cairo_matrix_transform_point(&matrix, &x0, &y0);
-                                double x1 = x + width + border_h, y1 = -border_v + y; cairo_matrix_transform_point(&matrix, &x1, &y1);
-                                double x2 = x + width + border_h, y2 = y + height + border_v; cairo_matrix_transform_point(&matrix, &x2, &y2);
-                                double x3 = -border_h + x, y3 = y + height + border_v; cairo_matrix_transform_point(&matrix, &x3, &y3);
-                                min_x = floor(std::min(std::min(x0, x1), std::min(x2, x3)));
-                                min_y = floor(std::min(std::min(y0, y1), std::min(y2, y3)));
-                                max_x = ceil(std::max(std::max(x0, x1), std::max(x2, x3)));
-                                max_y = ceil(std::max(std::max(y0, y1), std::max(y2, y3)));
-                            }
-                            CairoImage timage(max_x - min_x, max_y - min_y, CAIRO_FORMAT_ARGB32);
-                            cairo_translate(timage, -min_x, -min_y);
-                            cairo_transform(timage, &matrix);
-                            cairo_translate(timage, -border_h + x, -border_v + y);
-                            cairo_set_source(timage, cairo_pattern_create_for_surface(image));
-                            cairo_paint(timage);
-                            // Apply stenciling
-                            switch(rs.stencil_mode){
-                                case SSBStencil::Mode::OFF:
-                                    this->blend(timage, min_x, min_y, frame, pitch, rs.blend_mode);
-                                    break;
-                                case SSBStencil::Mode::INSIDE:
-                                    cairo_set_operator(timage, CAIRO_OPERATOR_DEST_IN);
-                                    cairo_set_source_surface(timage, this->stencil_path_buffer, -min_x, -min_y);
-                                    cairo_paint(timage);
-                                    this->blend(timage, min_x, min_y, frame, pitch, rs.blend_mode);
-                                    break;
-                                case SSBStencil::Mode::OUTSIDE:
-                                    cairo_set_operator(timage, CAIRO_OPERATOR_DEST_OUT);
-                                    cairo_set_source_surface(timage, this->stencil_path_buffer, -min_x, -min_y);
-                                    cairo_paint(timage);
-                                    this->blend(timage, min_x, min_y, frame, pitch, rs.blend_mode);
-                                    break;
-                                case SSBStencil::Mode::SET:
-                                    cairo_set_operator(this->stencil_path_buffer, CAIRO_OPERATOR_ADD);
-                                    cairo_set_source_surface(this->stencil_path_buffer, timage, min_x, min_y);
-                                    cairo_paint(this->stencil_path_buffer);
-                                    break;
-                                case SSBStencil::Mode::UNSET:
-                                    cairo_set_operator(timage, CAIRO_OPERATOR_DIFFERENCE);
-                                    cairo_set_source_rgba(timage, 1, 1, 1, 1);
-                                    cairo_paint(timage);
-                                    cairo_set_operator(this->stencil_path_buffer, CAIRO_OPERATOR_MULTIPLY);
-                                    cairo_set_source_surface(this->stencil_path_buffer, timage, min_x, min_y);
-                                    cairo_paint(this->stencil_path_buffer);
-                                    break;
-                            }
-                        }else{  // rs.line_width > 0
-#pragma message "Implent SSB rendering"
+                            cairo_matrix_translate(&matrix, rs.pos_x, rs.pos_y);
+                        else{
+                            Point pos = get_auto_pos(this->width, this->width, rs);
+                            cairo_matrix_translate(&matrix, pos.x, pos.y);
                         }
-                    else{   // rs.mode == SSBMode::Mode::WIRE
-
-                    }
+                        cairo_matrix_multiply(&matrix, &rs.matrix, &matrix);
+                        double min_x, min_y, max_x, max_y;
+                        {
+                            double x0 = -border_h + x, y0 = -border_v + y; cairo_matrix_transform_point(&matrix, &x0, &y0);
+                            double x1 = x + width + border_h, y1 = -border_v + y; cairo_matrix_transform_point(&matrix, &x1, &y1);
+                            double x2 = x + width + border_h, y2 = y + height + border_v; cairo_matrix_transform_point(&matrix, &x2, &y2);
+                            double x3 = -border_h + x, y3 = y + height + border_v; cairo_matrix_transform_point(&matrix, &x3, &y3);
+                            min_x = floor(std::min(std::min(x0, x1), std::min(x2, x3)));
+                            min_y = floor(std::min(std::min(y0, y1), std::min(y2, y3)));
+                            max_x = ceil(std::max(std::max(x0, x1), std::max(x2, x3)));
+                            max_y = ceil(std::max(std::max(y0, y1), std::max(y2, y3)));
+                        }
+                        CairoImage timage(max_x - min_x, max_y - min_y, CAIRO_FORMAT_ARGB32);
+                        cairo_translate(timage, -min_x, -min_y);
+                        cairo_transform(timage, &matrix);
+                        cairo_translate(timage, -border_h + x, -border_v + y);
+                        cairo_set_source_surface(timage, image, 0, 0);
+                        cairo_paint(timage);
+                        // Apply stenciling
+                        switch(rs.stencil_mode){
+                            case SSBStencil::Mode::OFF:
+                                this->blend(timage, min_x, min_y, frame, pitch, rs.blend_mode);
+                                break;
+                            case SSBStencil::Mode::INSIDE:
+                                cairo_set_operator(timage, CAIRO_OPERATOR_DEST_IN);
+                                cairo_set_source_surface(timage, this->stencil_path_buffer, -min_x, -min_y);
+                                cairo_paint(timage);
+                                this->blend(timage, min_x, min_y, frame, pitch, rs.blend_mode);
+                                break;
+                            case SSBStencil::Mode::OUTSIDE:
+                                cairo_set_operator(timage, CAIRO_OPERATOR_DEST_OUT);
+                                cairo_set_source_surface(timage, this->stencil_path_buffer, -min_x, -min_y);
+                                cairo_paint(timage);
+                                this->blend(timage, min_x, min_y, frame, pitch, rs.blend_mode);
+                                break;
+                            case SSBStencil::Mode::SET:
+                                cairo_set_operator(this->stencil_path_buffer, CAIRO_OPERATOR_ADD);
+                                cairo_set_source_surface(this->stencil_path_buffer, timage, min_x, min_y);
+                                cairo_paint(this->stencil_path_buffer);
+                                break;
+                            case SSBStencil::Mode::UNSET:
+                                cairo_set_operator(timage, CAIRO_OPERATOR_DIFFERENCE);
+                                cairo_set_source_rgba(timage, 1, 1, 1, 1);
+                                cairo_paint(timage);
+                                cairo_set_operator(this->stencil_path_buffer, CAIRO_OPERATOR_MULTIPLY);
+                                cairo_set_source_surface(this->stencil_path_buffer, timage, min_x, min_y);
+                                cairo_paint(this->stencil_path_buffer);
+                                break;
+                        }
+                    };
+                    // Draw!
+                    if(rs.mode == SSBMode::Mode::FILL){
+                        if(rs.line_width > 0){
+                            draw_func(DrawType::BORDER);
+                            draw_func(DrawType::FILL_WITHOUT_BLUR);
+                        }else
+                            draw_func(DrawType::FILL_BLURRED);
+                    }else   // rs.mode == SSBMode::Mode::WIRE
+                        draw_func(DrawType::WIRE);
                     // Clear path
                     cairo_new_path(this->stencil_path_buffer);
                 }
