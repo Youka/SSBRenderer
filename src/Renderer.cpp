@@ -83,9 +83,24 @@ void Renderer::blend(cairo_surface_t* src, int dst_x, int dst_y,
                 for(int src_y = 0; src_y < src_rect_height; ++src_y){
                     for(int src_x = 0; src_x < src_rect_width; ++src_x){
                         if(src_row[3] > 0){
-                            dst_row[0] = dst_row[0] + src_row[0] > 255 ? 255 : dst_row[0] + src_row[0];
-                            dst_row[1] = dst_row[1] + src_row[1] > 255 ? 255 : dst_row[1] + src_row[1];
-                            dst_row[2] = dst_row[2] + src_row[2] > 255 ? 255 : dst_row[2] + src_row[2];
+                            dst_row[0] = std::min(255, dst_row[0] + src_row[0]);
+                            dst_row[1] = std::min(255, dst_row[1] + src_row[1]);
+                            dst_row[2] = std::min(255, dst_row[2] + src_row[2]);
+                        }
+                        dst_row += dst_pix_size;
+                        src_row += 4;
+                    }
+                    src_row += src_modulo;
+                    dst_row += -dst_stride + dst_modulo - dst_stride;
+                }
+                break;
+            case SSBBlend::Mode::SUBTRACT:
+                for(int src_y = 0; src_y < src_rect_height; ++src_y){
+                    for(int src_x = 0; src_x < src_rect_width; ++src_x){
+                        if(src_row[3] > 0){
+                            dst_row[0] = std::max(0, dst_row[0] - src_row[0]);
+                            dst_row[1] = std::max(0, dst_row[1] - src_row[1]);
+                            dst_row[2] = std::max(0, dst_row[2] - src_row[2]);
                         }
                         dst_row += dst_pix_size;
                         src_row += 4;
@@ -640,7 +655,6 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                                                                                             rs.colors[0].r, rs.colors[0].g, rs.colors[0].b, rs.alphas[2],
                                                                                             rs.colors[0].r, rs.colors[0].g, rs.colors[0].b, rs.alphas[3]));
                             }
-                            cairo_set_operator(image, CAIRO_OPERATOR_SOURCE);
                             cairo_fill_preserve(image);
                             // Draw texture over image color
                             if(!rs.texture.empty()){
@@ -658,7 +672,7 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                             // Draw karaoke over image
                             int elapsed_time = start_ms - event.start_ms;
                             if(rs.karaoke_start >= 0){
-                                cairo_set_operator(image, CAIRO_OPERATOR_SOURCE);
+                                cairo_set_operator(image, CAIRO_OPERATOR_OVER);
                                 cairo_set_source_rgb(image, rs.karaoke_color.r, rs.karaoke_color.g, rs.karaoke_color.b);
                                 if(elapsed_time >= rs.karaoke_start + rs.karaoke_duration)
                                     cairo_fill(image);
@@ -705,7 +719,6 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                             cairo_transform(timage, &matrix);
                             cairo_translate(timage, -border_h + x, -border_v + y);
                             cairo_set_source(timage, cairo_pattern_create_for_surface(image));
-                            cairo_set_operator(timage, CAIRO_OPERATOR_SOURCE);
                             cairo_paint(timage);
                             // Apply stenciling
                             switch(rs.stencil_mode){
