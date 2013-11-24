@@ -698,17 +698,17 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                             cairo_matrix_multiply(&matrix, &rs.matrix, &matrix);
                             double min_x, min_y, max_x, max_y;
                             {
-                                double x0 = x, y0 = y; cairo_matrix_transform_point(&matrix, &x0, &y0);
-                                double x1 = x + width, y1 = y; cairo_matrix_transform_point(&matrix, &x1, &y1);
-                                double x2 = x + width, y2 = y + height; cairo_matrix_transform_point(&matrix, &x2, &y2);
-                                double x3 = x, y3 = y + height; cairo_matrix_transform_point(&matrix, &x3, &y3);
+                                double x0 = -border_h + x, y0 = -border_v + y; cairo_matrix_transform_point(&matrix, &x0, &y0);
+                                double x1 = x + width + border_h, y1 = -border_v + y; cairo_matrix_transform_point(&matrix, &x1, &y1);
+                                double x2 = x + width + border_h, y2 = y + height + border_v; cairo_matrix_transform_point(&matrix, &x2, &y2);
+                                double x3 = -border_h + x, y3 = y + height + border_v; cairo_matrix_transform_point(&matrix, &x3, &y3);
                                 min_x = floor(std::min(std::min(x0, x1), std::min(x2, x3)));
                                 min_y = floor(std::min(std::min(y0, y1), std::min(y2, y3)));
                                 max_x = ceil(std::max(std::max(x0, x1), std::max(x2, x3)));
                                 max_y = ceil(std::max(std::max(y0, y1), std::max(y2, y3)));
                             }
-                            CairoImage timage(max_x - min_x + (border_h << 1), max_y - min_y + (border_v << 1), CAIRO_FORMAT_ARGB32);
-                            cairo_translate(timage, -min_x + border_h, -min_y + border_v);
+                            CairoImage timage(max_x - min_x, max_y - min_y, CAIRO_FORMAT_ARGB32);
+                            cairo_translate(timage, -min_x, -min_y);
                             cairo_transform(timage, &matrix);
                             cairo_translate(timage, -border_h + x, -border_v + y);
                             cairo_set_source(timage, cairo_pattern_create_for_surface(image));
