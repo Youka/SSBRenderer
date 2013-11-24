@@ -661,6 +661,10 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                         if(!rs.texture.empty()){
                             CairoImage texture(rs.texture);
                             if(cairo_surface_status(texture) == CAIRO_STATUS_SUCCESS){
+#pragma message "fix texture blending"
+
+
+
                                 cairo_pattern_t* pattern = cairo_pattern_create_for_surface(texture);
                                 cairo_matrix_t pattern_matrix = {1, 0, 0, 1, border_h + rs.texture_x, border_v + rs.texture_y};
                                 cairo_pattern_set_matrix(pattern, &pattern_matrix);
@@ -673,7 +677,7 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                         // Draw karaoke over image
                         int elapsed_time = start_ms - event.start_ms;
                         if(rs.karaoke_start >= 0){
-                            cairo_set_operator(image, CAIRO_OPERATOR_OVER);
+                            cairo_set_operator(image, CAIRO_OPERATOR_ATOP);
                             cairo_set_source_rgb(image, rs.karaoke_color.r, rs.karaoke_color.g, rs.karaoke_color.b);
                             if(elapsed_time >= rs.karaoke_start + rs.karaoke_duration)
                                 cairo_fill(image);
@@ -693,7 +697,7 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                         // Create transformed image
                         cairo_matrix_t matrix = {1, 0, 0, 1, 0, 0};
                         if(this->ssb.frame.width > 0 && this->ssb.frame.height > 0)
-                            cairo_matrix_scale(&matrix, static_cast<double>(this->ssb.frame.width) / this->width, static_cast<double>(this->ssb.frame.height) / this->height);
+                            cairo_matrix_scale(&matrix, static_cast<double>(this->width) / this->ssb.frame.width, static_cast<double>(this->height) / this->ssb.frame.height);
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-equal"
                         if(!(rs.pos_x == std::numeric_limits<decltype(rs.pos_x)>::max() && rs.pos_y == std::numeric_limits<decltype(rs.pos_y)>::max()))
@@ -744,10 +748,12 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                                 cairo_paint(this->stencil_path_buffer);
                                 break;
                             case SSBStencil::Mode::UNSET:
-                                cairo_set_operator(timage, CAIRO_OPERATOR_DIFFERENCE);
+                                // Invert alpha
+                                cairo_set_operator(timage, CAIRO_OPERATOR_XOR);
                                 cairo_set_source_rgba(timage, 1, 1, 1, 1);
                                 cairo_paint(timage);
-                                cairo_set_operator(this->stencil_path_buffer, CAIRO_OPERATOR_MULTIPLY);
+                                // Multiply alpha
+                                cairo_set_operator(this->stencil_path_buffer, CAIRO_OPERATOR_IN);
                                 cairo_set_source_surface(this->stencil_path_buffer, timage, min_x, min_y);
                                 cairo_paint(this->stencil_path_buffer);
                                 break;
