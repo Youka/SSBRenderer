@@ -381,6 +381,13 @@ namespace{
         }
 #pragma GCC diagnostic pop
     }
+    // Set context line properties by RenderState
+    inline void set_line_props(cairo_t* ctx, RenderState& rs){
+        cairo_set_line_width(ctx, rs.line_width);
+        cairo_set_line_cap(ctx, rs.line_cap);
+        cairo_set_line_join(ctx, rs.line_join);
+        cairo_set_dash(ctx, rs.dashes.data(), rs.dashes.size(), rs.dash_offset);
+    }
 }
 
 void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_ms) noexcept{
@@ -615,11 +622,27 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                     enum class DrawType{FILL_BLURRED, FILL_WITHOUT_BLUR, BORDER, WIRE};
                     auto draw_func = [&](DrawType draw_type){
                         // Create image
-                        int border_h = ceil(rs.blur_h), border_v = ceil(rs.blur_v);
                         int x, y, width, height;
+                        int border_h = 0, border_v = 0;
                         {
                             double x1, y1, x2, y2; cairo_fill_extents(this->stencil_path_buffer, &x1, &y1, &x2, &y2);
                             x = floor(x1), y = floor(y1), width = ceil(x2 - x), height = ceil(y2 - y);
+                            switch(draw_type){
+                                case DrawType::WIRE:
+                                case DrawType::BORDER:
+                                    {
+                                        set_line_props(this->stencil_path_buffer, rs);
+                                        double sx1, sy1, sx2, sy2; cairo_stroke_extents(this->stencil_path_buffer, &sx1, &sy1, &sx2, &sy2);
+                                        border_h = ceil(rs.blur_h + std::max(x1-sx1, sx2-x2)), border_v = ceil(rs.blur_v + std::max(y1-sy1, sy2-y2));
+                                    }
+                                    break;
+                                case DrawType::FILL_BLURRED:
+                                    border_h = ceil(rs.blur_h), border_v = ceil(rs.blur_v);
+                                    break;
+                                case DrawType::FILL_WITHOUT_BLUR:
+                                    // Border already with zero initialized
+                                    break;
+                            }
                         }
                         CairoImage image(width + (border_h << 1), height + (border_v << 1), CAIRO_FORMAT_ARGB32);
                         // Transfer shifted path from buffer to image
@@ -629,7 +652,11 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                         cairo_append_path(image, path);
                         cairo_path_destroy(path);
                         cairo_restore(image);
+                        // Set line properties
+                        if(draw_type == DrawType::BORDER || draw_type == DrawType::WIRE)
+                            set_line_props(image, rs);
                         // Draw colored geometry on image
+#pragma message "Implent outline rendering"
                         if(rs.colors.size() == 1 && rs.alphas.size() == 1)
                             cairo_set_source_rgba(image, rs.colors[0].r, rs.colors[0].g, rs.colors[0].b, rs.alphas[0]);
                         else{

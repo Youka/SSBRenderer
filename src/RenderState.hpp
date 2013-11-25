@@ -661,12 +661,14 @@ namespace{
                                     }
                                     break;
                                 case SSBTag::Type::TEXTURE:
-                                    if(progress >= threshold){
+                                    {
                                         SSBTexture* texture = dynamic_cast<SSBTexture*>(animate_tag);
+                                        std::stringstream s(texture->filename);
+                                        s << static_cast<int>(floor(progress));
                                         if(texture->target == SSBTexture::Target::FILL)
-                                            this->texture = texture->filename;
+                                            this->texture = s.str();
                                         else
-                                            this->line_texture = texture->filename;
+                                            this->line_texture = s.str();
                                     }
                                     break;
                                 case SSBTag::Type::TEXFILL:
