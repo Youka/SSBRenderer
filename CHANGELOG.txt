@@ -12,4 +12,3 @@ v0.0.1 (planned)
 * complete README
 * more examples
 * Unix port (Avxsynth, GStreamer)
-* finish Renderer

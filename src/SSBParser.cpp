@@ -274,7 +274,10 @@ namespace{
                             dashes.push_back(dash);
                         else if(warnings)
                             throw_parse_error(line_i, "Invalid line dash");
-                    ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBLineDash(offset, dashes)));
+                    if(static_cast<size_t>(std::count(dashes.begin(), dashes.end(), 0)) != dashes.size())
+                        ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBLineDash(offset, dashes)));
+                    else if(warnings)
+                        throw_parse_error(line_i, "Dashes must not be only 0");
                 }else if(warnings)
                     throw_parse_error(line_i, "Invalid line dashes");
             }else if(tags_token.compare(0, 9, "geometry=") == 0){
