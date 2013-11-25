@@ -704,7 +704,7 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
 #pragma GCC diagnostic pop
                             cairo_matrix_translate(&matrix, rs.pos_x, rs.pos_y);
                         else{
-                            Point pos = get_auto_pos(this->width, this->width, rs);
+                            Point pos = get_auto_pos(this->width, this->height, rs);
                             cairo_matrix_translate(&matrix, pos.x, pos.y);
                         }
                         cairo_matrix_multiply(&matrix, &rs.matrix, &matrix);

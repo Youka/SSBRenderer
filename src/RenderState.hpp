@@ -342,12 +342,27 @@ namespace{
                     {
                         SSBFade* fade = dynamic_cast<SSBFade*>(tag);
                         double progress = -1;
-                        if(inner_ms < fade->in)
-                            progress = static_cast<double>(inner_ms) / fade->in;
-                        else{
-                            decltype(inner_ms) inv_inner_ms = inner_duration - inner_ms;
-                            if(inv_inner_ms < fade->out)
-                                progress = static_cast<double>(inv_inner_ms) / fade->out;
+                        switch(fade->type){
+                            case SSBFade::Type::INFADE:
+                                if(inner_ms < fade->in)
+                                    progress = static_cast<double>(inner_ms) / fade->in;
+                                break;
+                            case SSBFade::Type::OUTFADE:
+                                {
+                                    decltype(inner_ms) inv_inner_ms = inner_duration - inner_ms;
+                                    if(inv_inner_ms < fade->out)
+                                        progress = static_cast<double>(inv_inner_ms) / fade->out;
+                                }
+                                break;
+                            case SSBFade::Type::BOTH:
+                                if(inner_ms < fade->in)
+                                    progress = static_cast<double>(inner_ms) / fade->in;
+                                else{
+                                    decltype(inner_ms) inv_inner_ms = inner_duration - inner_ms;
+                                    if(inv_inner_ms < fade->out)
+                                        progress = static_cast<double>(inv_inner_ms) / fade->out;
+                                }
+                                break;
                         }
                         if(progress >= 0){
                             std::for_each(this->alphas.begin(), this->alphas.end(), [&progress](double& a){a *= progress;});
