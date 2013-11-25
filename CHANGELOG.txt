@@ -13,4 +13,3 @@ v0.0.1 (planned)
 * more examples
 * Unix port (Avxsynth, GStreamer)
 * finish Renderer
-* fix texture blending

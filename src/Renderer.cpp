@@ -661,17 +661,34 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                         if(!rs.texture.empty()){
                             CairoImage texture(rs.texture);
                             if(cairo_surface_status(texture) == CAIRO_STATUS_SUCCESS){
-#pragma message "fix texture blending"
-
-
-
-                                cairo_pattern_t* pattern = cairo_pattern_create_for_surface(texture);
+                                // Create RGB version of image
+                                CairoImage rgb_image(cairo_image_surface_get_width(image), cairo_image_surface_get_height(image), CAIRO_FORMAT_RGB24);
+                                cairo_set_source_surface(rgb_image, image, 0, 0);
+                                cairo_set_operator(rgb_image, CAIRO_OPERATOR_SOURCE);
+                                cairo_paint(rgb_image);
+                                cairo_path_t* path = cairo_copy_path(image);
+                                cairo_append_path(rgb_image, path);
+                                cairo_path_destroy(path);
+                                // Create texture pattern for color
                                 cairo_matrix_t pattern_matrix = {1, 0, 0, 1, border_h + rs.texture_x, border_v + rs.texture_y};
+                                cairo_pattern_t* pattern = cairo_pattern_create_for_surface(texture);
                                 cairo_pattern_set_matrix(pattern, &pattern_matrix);
                                 cairo_pattern_set_extend(pattern, rs.wrap_style);
+                                // Multiply image & texture color
+                                cairo_set_source(rgb_image, pattern);
+                                cairo_set_operator(rgb_image, CAIRO_OPERATOR_MULTIPLY);
+                                cairo_fill_preserve(rgb_image);
+                                // Create texture pattern for alpha
+                                pattern = cairo_pattern_create_for_surface(texture);
+                                cairo_pattern_set_matrix(pattern, &pattern_matrix);
+                                cairo_pattern_set_extend(pattern, rs.wrap_style);
+                                // Multiply image & texture alpha
                                 cairo_set_source(image, pattern);
-                                cairo_set_operator(image, CAIRO_OPERATOR_MULTIPLY);
+                                cairo_set_operator(image, CAIRO_OPERATOR_IN);
                                 cairo_fill_preserve(image);
+                                // Merge color & alpha to image
+                                cairo_set_source_surface(image, rgb_image, 0, 0);
+                                cairo_paint(image);
                             }
                         }
                         // Draw karaoke over image
