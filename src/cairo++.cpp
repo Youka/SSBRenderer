@@ -117,7 +117,7 @@ namespace{
         float* kernel_data;
     };
 #ifdef _WIN32
-DWORD WINAPI
+unsigned int WINAPI
 #else
 void*
 #endif
@@ -340,7 +340,7 @@ void cairo_image_surface_blur(cairo_surface_t* surface, double blur_h, double bl
         // Run threads
         std::vector<HANDLE> threads(max_threads-1);
         for(int i = 0; i < max_threads-1; ++i)
-            threads[i] = CreateThread(NULL, 0, convolution_filter, &threads_data[i], 0x0, NULL);
+            threads[i] = reinterpret_cast<HANDLE>(_beginthreadex(NULL, 0, convolution_filter, &threads_data[i], 0x0, NULL));
         convolution_filter(&threads_data[max_threads-1]);
         // Wait for threads & close them
         for(HANDLE& thread : threads){

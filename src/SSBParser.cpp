@@ -79,6 +79,14 @@ namespace{
             s.replace(pos, find.length(), repl);
         return s;
     }
+    // Find character in string which isn't escaped by character '\'
+    inline std::string::size_type find_non_escaped_character(std::string& s, const char c, const std::string::size_type pos_start = 0){
+        std::string::size_type pos_end;
+        for(auto search_pos_start = pos_start;
+            (pos_end = s.find(c, search_pos_start)) != std::string::npos && pos_end > 0 && s[pos_end-1] == '\\';
+            search_pos_start = pos_end + 1);
+        return pos_end;
+    }
     // Parses SSB time and converts to milliseconds
     template<typename T>
     inline bool parse_time(std::string& s, T& t){
@@ -946,8 +954,19 @@ void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
                                     break;
                                 }
                                 std::string text = std::getline(event_stream, event_token) ? style_content + event_token : style_content;
-                                // Parse text
+                                // Add inline styles to text
+                                uint8_t macro_insert_count = 64;
                                 std::string::size_type pos_start = 0, pos_end;
+                                while(macro_insert_count && (pos_start = text.find("\\\\", pos_start)) != std::string::npos && (pos_end = text.find("\\\\", pos_start+2)) != std::string::npos){
+                                    std::string macro = text.substr(pos_start + 2, pos_end - (pos_start + 2));
+                                    if(this->ssb.styles.count(macro)){
+                                        text.replace(pos_start, macro.length() + 4, this->ssb.styles[macro]);
+                                        macro_insert_count--;  // Blocker to avoid infinite recursive macros
+                                    }else
+                                        pos_start = pos_end + 2;
+                                }
+                                // Parse text
+                                pos_start = 0;
                                 bool in_tags = false;
                                 SSBGeometry::Type geometry_type = SSBGeometry::Type::TEXT;
                                 do{
@@ -967,9 +986,7 @@ void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
                                     // Evaluate geometry
                                     }else{
                                         // Search geometry end at tags bracket (unescaped) or text end
-                                        for(auto search_pos_start = pos_start;
-                                            (pos_end = text.find('{', search_pos_start)) != std::string::npos && pos_end > 0 && text[pos_end-1] == '\\';
-                                            search_pos_start = pos_end + 1);
+                                        pos_end = find_non_escaped_character(text, '{', pos_start);
                                         if(pos_end == std::string::npos)
                                             pos_end = text.length();
                                         // Parse geometry by type

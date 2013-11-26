@@ -73,7 +73,7 @@ class aligned_memory{
         }
         // Copy
         aligned_memory(aligned_memory& other) : reference_counter(other.reference_counter), p(other.p), aligned_p(other.aligned_p), msize(other.msize){
-            *this->reference_counter += 1;
+            *this->reference_counter++;
         }
         aligned_memory& operator=(aligned_memory& other){
             if(--*this->reference_counter == 0){
@@ -81,7 +81,7 @@ class aligned_memory{
                 if(this->p) free(this->p);
             }
             this->reference_counter = other.reference_counter;
-            this->reference_counter += 1;
+            this->reference_counter++;
             this->p = other.p;
             this->aligned_p = other.aligned_p;
             this->msize = other.msize;
