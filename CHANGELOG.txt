@@ -3,7 +3,7 @@ v0.0.2 (planned)
 * improved blur algorithm
 * improved performance with caching (static render data, loaded images, prerender pipeline)
 * improved RTL behaviour
-* added line wrapping
+* added line wrapping (including other events)
 
 ##########################################################################
 
@@ -11,5 +11,5 @@ v0.0.1 (planned)
 ----------------
 * complete README
 * more examples
-* Unix port (Avxsynth, GStreamer)
-* fix missing threads in blur
+* Unix port (Avxsynth, GStreamer, Text processing)
+* fix 64bit threading (blur fails)

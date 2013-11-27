@@ -364,20 +364,35 @@ namespace{
         return align_point;
     }
     // Get auto position by frame dimension, alignment and margins
-    inline Point get_auto_pos(int frame_width, int frame_height, RenderState& rs){
+    inline Point get_auto_pos(int frame_width, int frame_height, RenderState& rs, double scale_x = 0, double scale_y = 0){
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wnarrowing"
-        switch(rs.align){
-            case SSBAlign::Align::LEFT_BOTTOM: return {rs.margin_h, frame_height - rs.margin_v};
-            case SSBAlign::Align::CENTER_BOTTOM: return {frame_width / 2, frame_height - rs.margin_v};
-            case SSBAlign::Align::RIGHT_BOTTOM: return {frame_width - rs.margin_h, frame_height - rs.margin_v};
-            case SSBAlign::Align::LEFT_MIDDLE: return {rs.margin_h, frame_height / 2};
-            case SSBAlign::Align::CENTER_MIDDLE: return {frame_width / 2, frame_height / 2};
-            case SSBAlign::Align::RIGHT_MIDDLE: return {frame_width - rs.margin_h, frame_height / 2};
-            case SSBAlign::Align::LEFT_TOP: return {rs.margin_h, rs.margin_v};
-            case SSBAlign::Align::CENTER_TOP: return {frame_width / 2, rs.margin_v};
-            case SSBAlign::Align::RIGHT_TOP: return {frame_width - rs.margin_h, rs.margin_v};
-            default: return {0, 0};
+        if(scale_x > 0 && scale_y > 0){
+            switch(rs.align){
+                case SSBAlign::Align::LEFT_BOTTOM: return {rs.margin_h * scale_x, frame_height - rs.margin_v * scale_y};
+                case SSBAlign::Align::CENTER_BOTTOM: return {frame_width / 2, frame_height - rs.margin_v * scale_y};
+                case SSBAlign::Align::RIGHT_BOTTOM: return {frame_width - rs.margin_h * scale_x, frame_height - rs.margin_v * scale_y};
+                case SSBAlign::Align::LEFT_MIDDLE: return {rs.margin_h * scale_x, frame_height / 2};
+                case SSBAlign::Align::CENTER_MIDDLE: return {frame_width / 2, frame_height / 2};
+                case SSBAlign::Align::RIGHT_MIDDLE: return {frame_width - rs.margin_h * scale_x, frame_height / 2};
+                case SSBAlign::Align::LEFT_TOP: return {rs.margin_h * scale_x, rs.margin_v * scale_y};
+                case SSBAlign::Align::CENTER_TOP: return {frame_width / 2, rs.margin_v * scale_y};
+                case SSBAlign::Align::RIGHT_TOP: return {frame_width - rs.margin_h * scale_x, rs.margin_v * scale_y};
+                default: return {0, 0};
+            }
+        }else{
+            switch(rs.align){
+                case SSBAlign::Align::LEFT_BOTTOM: return {rs.margin_h, frame_height - rs.margin_v};
+                case SSBAlign::Align::CENTER_BOTTOM: return {frame_width / 2, frame_height - rs.margin_v};
+                case SSBAlign::Align::RIGHT_BOTTOM: return {frame_width - rs.margin_h, frame_height - rs.margin_v};
+                case SSBAlign::Align::LEFT_MIDDLE: return {rs.margin_h, frame_height / 2};
+                case SSBAlign::Align::CENTER_MIDDLE: return {frame_width / 2, frame_height / 2};
+                case SSBAlign::Align::RIGHT_MIDDLE: return {frame_width - rs.margin_h, frame_height / 2};
+                case SSBAlign::Align::LEFT_TOP: return {rs.margin_h, rs.margin_v};
+                case SSBAlign::Align::CENTER_TOP: return {frame_width / 2, rs.margin_v};
+                case SSBAlign::Align::RIGHT_TOP: return {frame_width - rs.margin_h, rs.margin_v};
+                default: return {0, 0};
+            }
         }
 #pragma GCC diagnostic pop
     }
@@ -620,16 +635,24 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                         path_deform(this->stencil_path_buffer, rs.deform_x, rs.deform_y, rs.deform_progress);
                     // Prepare transformation matrix
                     cairo_matrix_t matrix = {1, 0, 0, 1, 0, 0};
-                    if(this->ssb.frame.width > 0 && this->ssb.frame.height > 0)
-                        cairo_matrix_scale(&matrix, static_cast<double>(this->width) / this->ssb.frame.width, static_cast<double>(this->height) / this->ssb.frame.height);
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-equal"
-                    if(!(rs.pos_x == std::numeric_limits<decltype(rs.pos_x)>::max() && rs.pos_y == std::numeric_limits<decltype(rs.pos_y)>::max()))
+                    if(!(rs.pos_x == std::numeric_limits<decltype(rs.pos_x)>::max() && rs.pos_y == std::numeric_limits<decltype(rs.pos_y)>::max())){
 #pragma GCC diagnostic pop
+                        if(this->ssb.frame.width > 0 && this->ssb.frame.height > 0)
+                            cairo_matrix_scale(&matrix, static_cast<double>(this->width) / this->ssb.frame.width, static_cast<double>(this->height) / this->ssb.frame.height);
                         cairo_matrix_translate(&matrix, rs.pos_x, rs.pos_y);
-                    else{
-                        Point pos = get_auto_pos(this->width, this->height, rs);
-                        cairo_matrix_translate(&matrix, pos.x, pos.y);
+                    }else{
+                        if(this->ssb.frame.width > 0 && this->ssb.frame.height > 0){
+                            double scale_x = static_cast<double>(this->width) / this->ssb.frame.width,
+                                    scale_y = static_cast<double>(this->height) / this->ssb.frame.height;
+                            Point pos = get_auto_pos(this->width, this->height, rs, scale_x, scale_y);
+                            cairo_matrix_translate(&matrix, pos.x, pos.y);
+                            cairo_matrix_scale(&matrix, scale_x, scale_y);
+                        }else{
+                            Point pos = get_auto_pos(this->width, this->height, rs);
+                            cairo_matrix_translate(&matrix, pos.x, pos.y);
+                        }
                     }
                     cairo_matrix_multiply(&matrix, &rs.matrix, &matrix);
                     // Draw by type

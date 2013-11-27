@@ -21,21 +21,13 @@ inline bool sse2_supported(){
     // Storage for cpu feature bits
     uint32_t cpu_features;
     asm(
-        // Save registers
-        "push %%eax\n"
-        "push %%ebx\n"
-        "push %%ecx\n"
-        "push %%edx\n"
         // Get cpu features
         "movl $1, %%eax\n"
         "cpuid\n"
         "movl %%edx, %0\n"
-        // Restore registers
-        "push %%edx\n"
-        "push %%ecx\n"
-        "push %%ebx\n"
-        "push %%eax"
         : "=r" (cpu_features)
+        : // No input
+        : "%eax", "%ebx", "%ecx", "%edx"
     );
     // 26th bit marks SSE2 support
     return cpu_features & 0x04000000;
