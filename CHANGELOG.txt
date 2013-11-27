@@ -3,6 +3,7 @@ v0.0.2 (planned)
 * improved blur algorithm
 * improved performance with caching (static render data, loaded images, prerender pipeline)
 * improved RTL behaviour
+* improved frame upscaling (save quality)
 * added line wrapping (including other events)
 
 ##########################################################################

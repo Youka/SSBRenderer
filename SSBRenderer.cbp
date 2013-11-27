@@ -121,6 +121,9 @@
 		<Unit filename="src/Renderer.hpp">
 			<Option virtualFolder="Filter/" />
 		</Unit>
+		<Unit filename="src/RendererUtils.hpp">
+			<Option virtualFolder="Filter/" />
+		</Unit>
 		<Unit filename="src/SSBData.hpp">
 			<Option virtualFolder="Filter/" />
 		</Unit>
