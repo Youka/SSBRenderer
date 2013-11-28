@@ -404,6 +404,7 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                     // Deform geometry
                     if(!rs.deform_x.empty() || !rs.deform_y.empty())
                         path_deform(this->stencil_path_buffer, rs.deform_x, rs.deform_y, rs.deform_progress);
+#pragma message "Rewrite rendering process"
                     // Prepare transformation matrix
                     cairo_matrix_t matrix = {1, 0, 0, 1, 0, 0};
 #pragma GCC diagnostic push
@@ -667,7 +668,7 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                     };
                     // Draw!
                     if(rs.mode == SSBMode::Mode::FILL){
-                        if(rs.line_width > 0){
+                        if(rs.line_width > 0 && geometry->type != SSBGeometry::Type::POINTS){
                             draw_func(DrawType::BORDER);
                             draw_func(DrawType::FILL_WITHOUT_BLUR);
                         }else
