@@ -12,5 +12,3 @@ v0.0.1 (planned)
 * complete README
 * more examples
 * added line wrapping (including other events)
-* improved frame upscaling (save quality)
-* blur and outline as postprocess [rewrite rendering process]

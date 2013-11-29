@@ -80,6 +80,8 @@ void cairo_image_surface_blur(cairo_surface_t* surface, double blur_h, double bl
 
 void cairo_apply_matrix(cairo_t* ctx, cairo_matrix_t* mat);
 
+void cairo_copy_matrix(cairo_t* src, cairo_t* dst);
+
 #ifdef _WIN32
 #include "textconv.hpp"
 #else

@@ -370,3 +370,9 @@ void cairo_apply_matrix(cairo_t* ctx, cairo_matrix_t* mat){
     cairo_restore(ctx);
     cairo_path_destroy(path);
 }
+
+void cairo_copy_matrix(cairo_t* src, cairo_t* dst){
+    cairo_matrix_t matrix;
+    cairo_get_matrix(src, &matrix);
+    cairo_set_matrix(dst, &matrix);
+}

@@ -207,43 +207,44 @@ namespace{
         return align_point;
     }
     // Get auto position by frame dimension, alignment and margins
-    inline Point get_auto_pos(int frame_width, int frame_height, RenderState& rs, double scale_x = 0, double scale_y = 0){
+    inline Point get_auto_pos(int frame_width, int frame_height,
+                              SSBAlign::Align align, double margin_h, double margin_v,
+                              double scale_x = 0, double scale_y = 0){
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wnarrowing"
-        if(scale_x > 0 && scale_y > 0){
-            switch(rs.align){
-                case SSBAlign::Align::LEFT_BOTTOM: return {rs.margin_h * scale_x, frame_height - rs.margin_v * scale_y};
-                case SSBAlign::Align::CENTER_BOTTOM: return {frame_width / 2, frame_height - rs.margin_v * scale_y};
-                case SSBAlign::Align::RIGHT_BOTTOM: return {frame_width - rs.margin_h * scale_x, frame_height - rs.margin_v * scale_y};
-                case SSBAlign::Align::LEFT_MIDDLE: return {rs.margin_h * scale_x, frame_height / 2};
+        if(scale_x > 0 && scale_y > 0)
+            switch(align){
+                case SSBAlign::Align::LEFT_BOTTOM: return {margin_h, frame_height - margin_v};
+                case SSBAlign::Align::CENTER_BOTTOM: return {frame_width / 2, frame_height - margin_v};
+                case SSBAlign::Align::RIGHT_BOTTOM: return {frame_width - margin_h, frame_height - margin_v};
+                case SSBAlign::Align::LEFT_MIDDLE: return {margin_h, frame_height / 2};
                 case SSBAlign::Align::CENTER_MIDDLE: return {frame_width / 2, frame_height / 2};
-                case SSBAlign::Align::RIGHT_MIDDLE: return {frame_width - rs.margin_h * scale_x, frame_height / 2};
-                case SSBAlign::Align::LEFT_TOP: return {rs.margin_h * scale_x, rs.margin_v * scale_y};
-                case SSBAlign::Align::CENTER_TOP: return {frame_width / 2, rs.margin_v * scale_y};
-                case SSBAlign::Align::RIGHT_TOP: return {frame_width - rs.margin_h * scale_x, rs.margin_v * scale_y};
+                case SSBAlign::Align::RIGHT_MIDDLE: return {frame_width - margin_h, frame_height / 2};
+                case SSBAlign::Align::LEFT_TOP: return {margin_h, margin_v};
+                case SSBAlign::Align::CENTER_TOP: return {frame_width / 2, margin_v};
+                case SSBAlign::Align::RIGHT_TOP: return {frame_width - margin_h, margin_v};
                 default: return {0, 0};
             }
-        }else{
-            switch(rs.align){
-                case SSBAlign::Align::LEFT_BOTTOM: return {rs.margin_h, frame_height - rs.margin_v};
-                case SSBAlign::Align::CENTER_BOTTOM: return {frame_width / 2, frame_height - rs.margin_v};
-                case SSBAlign::Align::RIGHT_BOTTOM: return {frame_width - rs.margin_h, frame_height - rs.margin_v};
-                case SSBAlign::Align::LEFT_MIDDLE: return {rs.margin_h, frame_height / 2};
+        else
+            switch(align){
+                case SSBAlign::Align::LEFT_BOTTOM: return {margin_h * scale_x, frame_height - margin_v * scale_y};
+                case SSBAlign::Align::CENTER_BOTTOM: return {frame_width / 2, frame_height - margin_v * scale_y};
+                case SSBAlign::Align::RIGHT_BOTTOM: return {frame_width - margin_h * scale_x, frame_height - margin_v * scale_y};
+                case SSBAlign::Align::LEFT_MIDDLE: return {margin_h * scale_x, frame_height / 2};
                 case SSBAlign::Align::CENTER_MIDDLE: return {frame_width / 2, frame_height / 2};
-                case SSBAlign::Align::RIGHT_MIDDLE: return {frame_width - rs.margin_h, frame_height / 2};
-                case SSBAlign::Align::LEFT_TOP: return {rs.margin_h, rs.margin_v};
-                case SSBAlign::Align::CENTER_TOP: return {frame_width / 2, rs.margin_v};
-                case SSBAlign::Align::RIGHT_TOP: return {frame_width - rs.margin_h, rs.margin_v};
+                case SSBAlign::Align::RIGHT_MIDDLE: return {frame_width - margin_h * scale_x, frame_height / 2};
+                case SSBAlign::Align::LEFT_TOP: return {margin_h * scale_x, margin_v * scale_y};
+                case SSBAlign::Align::CENTER_TOP: return {frame_width / 2, margin_v * scale_y};
+                case SSBAlign::Align::RIGHT_TOP: return {frame_width - margin_h * scale_x, margin_v * scale_y};
                 default: return {0, 0};
             }
-        }
 #pragma GCC diagnostic pop
     }
-    // Set context line properties by RenderState
+    // Set line properties
     inline void set_line_props(cairo_t* ctx, RenderState& rs){
-        cairo_set_line_width(ctx, rs.line_width);
         cairo_set_line_cap(ctx, rs.line_cap);
         cairo_set_line_join(ctx, rs.line_join);
+        cairo_set_line_width(ctx, rs.line_width);
         cairo_set_dash(ctx, rs.dashes.data(), rs.dashes.size(), rs.dash_offset);
     }
 }
