@@ -663,8 +663,8 @@ namespace{
                                 case SSBTag::Type::TEXTURE:
                                     {
                                         SSBTexture* texture = dynamic_cast<SSBTexture*>(animate_tag);
-                                        std::stringstream s(texture->filename);
-                                        s << static_cast<int>(floor(progress));
+                                        std::stringstream s;
+                                        s << texture->filename << static_cast<int>(floor(progress));
                                         if(texture->target == SSBTexture::Target::FILL)
                                             this->texture = s.str();
                                         else

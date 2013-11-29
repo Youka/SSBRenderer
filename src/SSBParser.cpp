@@ -513,19 +513,10 @@ namespace{
                 else if(warnings)
                     throw_parse_error(line_i, tags_token[0] == 'l' ? "Invalid line alpha" : "Invalid alpha");
             }else if(tags_token.compare(0, 8, "texture=") == 0 || tags_token.compare(0, 13, "line-texture=") == 0){
-                std::string tag_value;
-                SSBTexture::Target target;
-                if(tags_token[0] == 'l'){
-                    tag_value = tags_token.substr(13);
-                    target = SSBTexture::Target::LINE;
-                }else{
-                    tag_value = tags_token.substr(8);
-                    target = SSBTexture::Target::FILL;
-                }
-                if(FileReader(tag_value))
-                    ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBTexture(target, tag_value)));
-                else if(warnings)
-                    throw_parse_error(line_i, tags_token[0] == 'l' ? "Invalid line texture" : "Invalid texture");
+                if(tags_token[0] == 'l')
+                    ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBTexture(SSBTexture::Target::LINE, tags_token.substr(13))));
+                else
+                    ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBTexture(SSBTexture::Target::FILL, tags_token.substr(8))));
             }else if(tags_token.compare(0, 8, "texfill=") == 0 || tags_token.compare(0, 13, "line-texfill=") == 0){
                 std::string tag_value;
                 SSBTexFill::Target target;

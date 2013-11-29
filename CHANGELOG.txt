@@ -11,4 +11,6 @@ v0.0.1 (planned)
 ----------------
 * complete README
 * more examples
+* improved performance on stroking
 * added line wrapping (including other events)
+* file reading with default directory
