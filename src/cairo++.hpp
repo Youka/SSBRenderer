@@ -17,6 +17,7 @@ Permission is granted to anyone to use this software for any purpose, including 
 
 #include <cairo.h>
 #include "FileReader.hpp"
+#include <deque>
 #include <vector>
 
 class CairoImage{
@@ -24,18 +25,44 @@ class CairoImage{
         // Image + image context
         cairo_surface_t* surface;
         cairo_t* context;
+        // File image cache
+        static std::deque<std::pair<std::string,CairoImage>> cache;
     public:
         // Ctor & dtor
         CairoImage() : surface(cairo_image_surface_create(CAIRO_FORMAT_A1, 1, 1)), context(nullptr){}
         CairoImage(int width, int height, cairo_format_t format) : surface(cairo_image_surface_create(format, width, height)), context(nullptr){}
         CairoImage(std::string png_filename) : context(nullptr){
-            FileReader file(png_filename);
-            this->surface = file ? cairo_image_surface_create_from_png_stream([](void* closure, unsigned char* data, unsigned int length){
-                    if(reinterpret_cast<FileReader*>(closure)->read(length, data) == length)
-                        return CAIRO_STATUS_SUCCESS;
-                    else
-                        return CAIRO_STATUS_READ_ERROR;
-                }, &file) : cairo_image_surface_create(CAIRO_FORMAT_INVALID, 1, 1);
+            // File image in cache?
+            auto it = std::find_if(this->cache.begin(), this->cache.end(), [&png_filename](std::pair<std::string,CairoImage>& image){
+                return image.first == png_filename;
+            });
+            // Reuse file image
+            if(it != this->cache.end()){
+                this->surface = cairo_surface_reference(it->second);
+                // Refresh lifetime in cache
+                auto elem = *it;
+                this->cache.erase(it);
+                this->cache.push_front(elem);
+            // Create new file image
+            }else{
+                FileReader file(png_filename);
+                if(file){
+                    this->surface = cairo_image_surface_create_from_png_stream([](void* closure, unsigned char* data, unsigned int length){
+                            if(reinterpret_cast<FileReader*>(closure)->read(length, data) == length)
+                                return CAIRO_STATUS_SUCCESS;
+                            else
+                                return CAIRO_STATUS_READ_ERROR;
+                        }, &file);
+                    // Add valid file image to cache
+                    if(cairo_surface_status(this->surface) == CAIRO_STATUS_SUCCESS){
+                        this->cache.push_front({png_filename, *this});
+                        // Limit cache size to max. 32 elements
+                        if(this->cache.size() > 32)
+                            this->cache.pop_back();
+                    }
+                }else
+                    this->surface = cairo_image_surface_create(CAIRO_FORMAT_INVALID, 1, 1);
+            }
         }
         ~CairoImage(){
             if(this->context)
