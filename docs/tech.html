@@ -86,6 +86,9 @@ Tabulators will be converted to 4 spaces. An empty last line will be ignored.
 <h1>Style insertions</h1>
 Insertions are limited to 64/event.
 <hr>
+<h1>Texture caching</h1>
+Maximal 32 images will be cached. Using one "refreshes" it.
+<hr>
 <h1>Add a new tag</h1>
 <i>SSBData.hpp</i>:<br>
 Add a new tag value store class (see others classes, inheriting from SSBTag). This class transports parsed data to renderer.
@@ -105,7 +108,7 @@ Whereever your tag belongs to, implent it here on the right place to influence r
 <td class="space"></td>
 <td>GEOMETRY</td>
 <td class="space"></td>
-<td>LINE</td>
+<td>LINES</td>
 <td class="space"></td>
 <td>TRANSFORMATION</td>
 <td class="space"></td>

@@ -401,15 +401,15 @@ namespace{
                     ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBScale(SSBScale::Type::VERTICAL, y)));
                 else if(warnings)
                     throw_parse_error(line_i, "Invalid vertical scale");
-            }else if(tags_token.compare(0, 9, "rotate-xy=") == 0){
+            }else if(tags_token.compare(0, 10, "rotate-xy=") == 0){
                 decltype(SSBRotate::angle1) angle1, angle2;
-                if(string_to_number_pair(tags_token.substr(9), angle1, angle2))
+                if(string_to_number_pair(tags_token.substr(10), angle1, angle2))
                     ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBRotate(SSBRotate::Axis::XY, angle1, angle2)));
                 else if(warnings)
                     throw_parse_error(line_i, "Invalid rotation on x axis");
-            }else if(tags_token.compare(0, 9, "rotate-yx=") == 0){
+            }else if(tags_token.compare(0, 10, "rotate-yx=") == 0){
                 decltype(SSBRotate::angle1) angle1, angle2;
-                if(string_to_number_pair(tags_token.substr(9), angle1, angle2))
+                if(string_to_number_pair(tags_token.substr(10), angle1, angle2))
                     ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBRotate(SSBRotate::Axis::YX, angle1, angle2)));
                 else if(warnings)
                     throw_parse_error(line_i, "Invalid rotation on y axis");
