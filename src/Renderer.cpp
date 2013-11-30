@@ -465,15 +465,15 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                     }
                     cairo_matrix_multiply(&matrix, &rs.matrix, &matrix);
                     cairo_apply_matrix(this->stencil_path_buffer, &matrix);
+                    // Get transformed geometry dimensions (for overlay image)
+                    cairo_fill_extents(this->stencil_path_buffer, &x1, &y1, &x2, &y2);
+                    int x = floor(x1), y = floor(y1), width = ceil(x2 - x), height = ceil(y2 - y);
                     // Draw by type
                     enum class DrawType{FILL_BLURRED, FILL_WITHOUT_BLUR, BORDER, WIRE};
                     auto draw_func = [&](DrawType draw_type){
                         // Create image
-                        int x, y, width, height;
                         int stroke_border_h = 0, stroke_border_v = 0;
                         int border_h = 0, border_v = 0;
-                        cairo_fill_extents(this->stencil_path_buffer, &x1, &y1, &x2, &y2);
-                        x = floor(x1), y = floor(y1), width = ceil(x2 - x), height = ceil(y2 - y);
                         switch(draw_type){
                             case DrawType::WIRE:
                             case DrawType::BORDER:
@@ -572,7 +572,7 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                                 cairo_paint(rgb_image);
                                 cairo_copy_matrix(image, rgb_image);
                                 // Create texture pattern for color
-                                cairo_matrix_t pattern_matrix = {1, 0, 0, 1, fill_x + rs.texture_x, fill_y + rs.texture_y};
+                                cairo_matrix_t pattern_matrix = {1, 0, 0, 1, -fill_x - rs.texture_x, -fill_y - rs.texture_y};
                                 cairo_pattern_t* pattern = cairo_pattern_create_for_surface(texture);
                                 cairo_pattern_set_matrix(pattern, &pattern_matrix);
                                 cairo_pattern_set_extend(pattern, rs.wrap_style);
@@ -605,7 +605,7 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                                 cairo_paint(rgb_image);
                                 cairo_copy_matrix(image, rgb_image);
                                 // Create texture pattern for color
-                                cairo_matrix_t pattern_matrix = {1, 0, 0, 1, stroke_x + rs.line_texture_x, stroke_y + rs.line_texture_y};
+                                cairo_matrix_t pattern_matrix = {1, 0, 0, 1, -stroke_x - rs.line_texture_x, -stroke_y - rs.line_texture_y};
                                 cairo_pattern_t* pattern = cairo_pattern_create_for_surface(texture);
                                 cairo_pattern_set_matrix(pattern, &pattern_matrix);
                                 cairo_pattern_set_extend(pattern, rs.line_wrap_style);

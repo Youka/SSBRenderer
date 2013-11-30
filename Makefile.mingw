@@ -25,8 +25,8 @@ endif
 
 #Build binary
 all: Dirs SSBRenderer
-SSBRenderer: Renderer.o SSBParser.o avisynth.o user.o virtualdub.o cairo++.o module.o resources.res
-	$(CC) -Wl,--output-def=bin/SSBRenderer.def -Wl,--out-implib=bin/SSBRenderer.a src/obj/Renderer.o src/obj/SSBParser.o src/obj/avisynth.o src/obj/user.o src/obj/virtualdub.o src/obj/cairo++.o src/obj/module.o src/obj/resources.res $(LFLAGS) -o bin/SSBRenderer.dll
+SSBRenderer: Renderer.o SSBParser.o avisynth.o user.o virtualdub.o cairo++.o module.o FileReader.o resources.res
+	$(CC) -Wl,--output-def=bin/SSBRenderer.def -Wl,--out-implib=bin/SSBRenderer.a src/obj/Renderer.o src/obj/SSBParser.o src/obj/avisynth.o src/obj/user.o src/obj/virtualdub.o src/obj/cairo++.o src/obj/module.o src/obj/FileReader.o src/obj/resources.res $(LFLAGS) -o bin/SSBRenderer.dll
 
 #Build single objects
 Dirs:
@@ -45,6 +45,8 @@ cairo++.o:
 	$(CC) $(CFLAGS) -c src/cairo++.cpp -o src/obj/cairo++.o
 module.o:
 	$(CC) $(CFLAGS) -c src/module.c -o src/obj/module.o
+FileReader.o:
+	$(CC) $(CFLAGS) -c src/FileReader.cpp -o src/obj/FileReader.o
 resources.res:
 	$(RC) $(RFLAGS) -i src/resources.rc -o src/obj/resources.res
 
