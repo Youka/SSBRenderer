@@ -111,6 +111,9 @@
 				</Linker>
 			</Target>
 		</Build>
+		<Unit filename="src/FileReader.cpp">
+			<Option virtualFolder="Utils/" />
+		</Unit>
 		<Unit filename="src/FileReader.hpp">
 			<Option virtualFolder="Utils/" />
 		</Unit>

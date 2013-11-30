@@ -15,6 +15,7 @@ Permission is granted to anyone to use this software for any purpose, including 
 
 #pragma once
 
+#include <xmmintrin.h>
 #include <cstdlib>
 
 inline bool sse2_supported(){

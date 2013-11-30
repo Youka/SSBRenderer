@@ -17,6 +17,7 @@ Permission is granted to anyone to use this software for any purpose, including 
 
 #include <cairo.h>
 #include "FileReader.hpp"
+#include <algorithm>
 #include <deque>
 #include <vector>
 

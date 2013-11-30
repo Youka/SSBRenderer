@@ -15,8 +15,8 @@ Permission is granted to anyone to use this software for any purpose, including 
 
 #include "SSBParser.hpp"
 #include "FileReader.hpp"
+#include <algorithm>
 #include <sstream>
-#include <limits>
 
 SSBParser::SSBParser(SSBData& ssb) : ssb(ssb){}
 

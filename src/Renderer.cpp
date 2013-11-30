@@ -13,13 +13,37 @@ Permission is granted to anyone to use this software for any purpose, including 
     This notice may not be removed or altered from any source distribution.
 */
 
+// Needed for POSIX path functions
+#undef __STRICT_ANSI__
+#ifdef _WIN32
+#define __MSVCRT__ 1
+#endif
+#include <cstdlib>
 #include "Renderer.hpp"
 #include "SSBParser.hpp"
 #include "RendererUtils.hpp"
 #include "utf8.h"
 
 Renderer::Renderer(int width, int height, Colorspace format, std::string& script, bool warnings)
-: width(width), height(height), format(format), ssb(SSBParser(script, warnings).data()), stencil_path_buffer(width, height, CAIRO_FORMAT_A8){}
+: width(width), height(height), format(format), ssb(SSBParser(script, warnings).data()), stencil_path_buffer(width, height, CAIRO_FORMAT_A8){
+    // Save initialization directory for later file loading
+#ifdef _WIN32
+    wchar_t file_path[_MAX_PATH];
+    if(_wfullpath(file_path, utf8_to_utf16(script).c_str(), _MAX_PATH)){
+        wchar_t drive[_MAX_DRIVE], dir[_MAX_DIR];
+        _wsplitpath(file_path, drive, dir, NULL, NULL); // Path, drive, directory, name, extension
+        std::wstring full_dir(drive); full_dir += dir;
+        FileReader::set_additional_directory(utf16_to_utf8(full_dir));
+    }
+#else
+    char file_path[_MAX_PATH];
+    if(_fullpath(file_path, script.c_str(), _MAX_PATH)){
+        char drive[_MAX_DRIVE], dir[_MAX_DIR];
+        _splitpath(file_path, drive, dir, NULL, NULL); // Path, drive, directory, name, extension
+        FileReader::set_additional_directory(std::string(drive) + dir);
+    }
+#endif
+}
 
 void Renderer::set_target(int width, int height, Colorspace format){
     this->width = width;
