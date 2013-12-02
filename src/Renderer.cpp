@@ -654,8 +654,8 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                             cairo_image_surface_blur(image, rs.blur_h, rs.blur_v);
                         // Erase filling in stroke -> create border
                         if(draw_type == DrawType::BORDER){
-                            cairo_set_source_rgba(image, 0, 0, 0, 0);
-                            cairo_set_operator(image, CAIRO_OPERATOR_CLEAR);
+                            cairo_set_source_rgba(image, 0, 0, 0, 1);
+                            cairo_set_operator(image, CAIRO_OPERATOR_DEST_OUT);
                             cairo_fill(image);
                         }
                         // Apply stenciling
