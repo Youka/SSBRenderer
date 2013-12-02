@@ -31,7 +31,7 @@ namespace{
         unsigned short int font_size = 30;
         double font_space_h = 0, font_space_v = 0;
         // Line
-        double line_width = 4;
+        double line_width = 2;
         cairo_line_join_t line_join = CAIRO_LINE_JOIN_ROUND;
         cairo_line_cap_t line_cap = CAIRO_LINE_CAP_ROUND;
         double dash_offset = 0;

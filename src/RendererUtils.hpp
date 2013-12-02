@@ -244,7 +244,7 @@ namespace{
     inline void set_line_props(cairo_t* ctx, RenderState& rs){
         cairo_set_line_cap(ctx, rs.line_cap);
         cairo_set_line_join(ctx, rs.line_join);
-        cairo_set_line_width(ctx, rs.line_width);
+        cairo_set_line_width(ctx, rs.mode == SSBMode::Mode::FILL ? rs.line_width * 2 : rs.line_width);
         cairo_set_dash(ctx, rs.dashes.data(), rs.dashes.size(), rs.dash_offset);
     }
 }
