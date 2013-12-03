@@ -205,14 +205,20 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
     for(SSBEvent& event : this->ssb.events)
         // Process active SSB event
         if(start_ms >= event.start_ms && start_ms < event.end_ms){
+            // Calculate image-to-video scale
+            double frame_scale_x, frame_scale_y;
+            if(this->ssb.frame.width > 0 && this->ssb.frame.height > 0)
+                frame_scale_x = static_cast<double>(this->width) / this->ssb.frame.width, frame_scale_y = static_cast<double>(this->height) / this->ssb.frame.height;
+            else
+                frame_scale_x = frame_scale_y = 0;
             // Create render state for rendering behaviour
             RenderState rs;
-            // Collect geometry line dimensions (by position group -> by text line -> accumulated dimensions)
-            std::vector<std::vector<LineSize>> pos_line_dim = {{{}}};
+            // Collect render sizes (position groups -> lines -> geometry positions)
+            std::vector<PosSize> render_sizes = {{}};
             for(std::shared_ptr<SSBObject>& obj : event.objects)
                 if(obj->type == SSBObject::Type::TAG){
                     if(rs.eval_tag(dynamic_cast<SSBTag*>(obj.get()), start_ms - event.start_ms, event.end_ms - event.start_ms).position)
-                        pos_line_dim.push_back({{}});
+                        render_sizes.push_back({});
                 }else{  // obj->type == SSBObject::Type::GEOMETRY
                     SSBGeometry* geometry = dynamic_cast<SSBGeometry*>(obj.get());
                     switch(geometry->type){
@@ -224,14 +230,32 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                                 else
                                     path_to_cairo(dynamic_cast<SSBPath*>(geometry), this->stencil_path_buffer);
                                 double x1, y1, x2, y2; cairo_path_extents(this->stencil_path_buffer, &x1, &y1, &x2, &y2);
-                                x2 = std::max(x2, 0.0); y2 = std::max(y2, 0.0);
                                 cairo_new_path(this->stencil_path_buffer);
-                                pos_line_dim.back().back().width = std::max(pos_line_dim.back().back().width, rs.off_x + x2);
-                                pos_line_dim.back().back().height = std::max(pos_line_dim.back().back().height, rs.off_y + y2);
+                                x2 = std::max(x2, 0.0); y2 = std::max(y2, 0.0);
                                 switch(rs.direction){
                                     case SSBDirection::Mode::LTR:
-                                    case SSBDirection::Mode::RTL: rs.off_x += x2; break;
-                                    case SSBDirection::Mode::TTB: rs.off_y += y2; break;
+                                    case SSBDirection::Mode::RTL:
+                                        render_sizes.back().lines.back().geometries.push_back({render_sizes.back().lines.back().width, std::accumulate(render_sizes.back().lines.begin(), render_sizes.back().lines.end()-1, 0.0, [](double init, LineSize& lsize) -> double{
+                                            return init + lsize.height + lsize.space;
+                                        }), x2, y2});
+                                        render_sizes.back().lines.back().width += x2;
+                                        render_sizes.back().lines.back().height = std::max(render_sizes.back().lines.back().height, y2);
+                                        render_sizes.back().width = std::max(render_sizes.back().width, render_sizes.back().lines.back().width);
+                                        render_sizes.back().height = std::accumulate(render_sizes.back().lines.begin(), render_sizes.back().lines.end(), 0.0, [](double init, LineSize& lsize){
+                                            return init + lsize.height + lsize.space;
+                                        });
+                                        break;
+                                    case SSBDirection::Mode::TTB:
+                                        render_sizes.back().lines.back().geometries.push_back({std::accumulate(render_sizes.back().lines.begin(), render_sizes.back().lines.end()-1, 0.0, [](double init, LineSize& lsize){
+                                            return init + lsize.width + lsize.space;
+                                        }), render_sizes.back().lines.back().height, x2, y2});
+                                        render_sizes.back().lines.back().width = std::max(render_sizes.back().lines.back().width, x2);
+                                        render_sizes.back().lines.back().height += y2;
+                                        render_sizes.back().width = std::accumulate(render_sizes.back().lines.begin(), render_sizes.back().lines.end(), 0.0, [](double init, LineSize& lsize){
+                                            return init + lsize.width + lsize.space;
+                                        });
+                                        render_sizes.back().height = std::max(render_sizes.back().height, render_sizes.back().lines.back().height);
+                                        break;
                                 }
                             }
                             break;
@@ -246,36 +270,51 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                                 std::string line;
                                 while(std::getline(text, line)){
                                     if(++line_i > 1){
-                                        pos_line_dim.back().back().space = (rs.direction == SSBDirection::Mode::TTB) ? rs.font_space_h : metrics.external_lead + rs.font_space_v;
-                                        pos_line_dim.back().push_back({});
-                                        rs.off_x = 0;
-                                        rs.off_y = 0;
+                                        render_sizes.back().lines.back().space = (rs.direction == SSBDirection::Mode::TTB) ? rs.font_space_h : metrics.external_lead + rs.font_space_v;
+                                        render_sizes.back().lines.push_back({});
                                     }
                                     switch(rs.direction){
                                         case SSBDirection::Mode::LTR:
                                         case SSBDirection::Mode::RTL:
+                                            {
+                                                double width = 0;
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-equal"
-                                            if(rs.font_space_h != 0){
+                                                if(rs.font_space_h != 0){
 #pragma GCC diagnostic pop
-                                                std::vector<std::string> chars = utf8_chars(line);
-                                                for(size_t i = 0; i < chars.size(); ++i)
-                                                    rs.off_x += font.get_text_width(chars[i]) + rs.font_space_h;
-                                            }else
-                                                rs.off_x += font.get_text_width(line);
-                                            pos_line_dim.back().back().width = std::max(pos_line_dim.back().back().width, rs.off_x);
-                                            pos_line_dim.back().back().height = std::max(pos_line_dim.back().back().height, rs.off_y + metrics.height);
+                                                    std::vector<std::string> chars = utf8_chars(line);
+                                                    for(size_t i = 0; i < chars.size(); ++i)
+                                                        width += font.get_text_width(chars[i]) + rs.font_space_h;
+                                                }else
+                                                    width = font.get_text_width(line);
+                                                render_sizes.back().lines.back().geometries.push_back({render_sizes.back().lines.back().width, std::accumulate(render_sizes.back().lines.begin(), render_sizes.back().lines.end()-1, 0.0, [](double init, LineSize& lsize){
+                                                    return init + lsize.height + lsize.space;
+                                                }), width, metrics.height});
+                                                render_sizes.back().lines.back().width += width;
+                                                render_sizes.back().lines.back().height = std::max(render_sizes.back().lines.back().height, metrics.height);
+                                                render_sizes.back().width = std::max(render_sizes.back().width, render_sizes.back().lines.back().width);
+                                                render_sizes.back().height = std::accumulate(render_sizes.back().lines.begin(), render_sizes.back().lines.end(), 0.0, [](double init, LineSize& lsize){
+                                                    return init + lsize.height + lsize.space;
+                                                });
+                                            }
                                             break;
                                         case SSBDirection::Mode::TTB:
                                             {
+                                                double width = 0, height = 0;
                                                 std::vector<std::string> chars = utf8_chars(line);
-                                                double max_width = 0;
                                                 for(size_t i = 0; i < chars.size(); ++i){
-                                                    rs.off_y += metrics.height + rs.font_space_v;
-                                                    max_width = std::max(max_width, font.get_text_width(chars[i]));
+                                                    width = std::max(width, font.get_text_width(chars[i]));
+                                                    height += metrics.height + rs.font_space_v;
                                                 }
-                                                pos_line_dim.back().back().width = std::max(pos_line_dim.back().back().width, rs.off_x + max_width);
-                                                pos_line_dim.back().back().height = std::max(pos_line_dim.back().back().height, rs.off_y);
+                                                render_sizes.back().lines.back().geometries.push_back({std::accumulate(render_sizes.back().lines.begin(), render_sizes.back().lines.end()-1, 0.0, [](double init, LineSize& lsize){
+                                                    return init + lsize.width + lsize.space;
+                                                }), render_sizes.back().lines.back().height, width, height});
+                                                render_sizes.back().lines.back().width = std::max(render_sizes.back().lines.back().width, width);
+                                                render_sizes.back().lines.back().height += height;
+                                                render_sizes.back().width = std::accumulate(render_sizes.back().lines.begin(), render_sizes.back().lines.end(), 0.0, [](double init, LineSize& lsize){
+                                                    return init + lsize.width + lsize.space;
+                                                });
+                                                render_sizes.back().height = std::max(render_sizes.back().height, render_sizes.back().lines.back().height);
                                             }
                                             break;
                                     }
@@ -287,46 +326,55 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
             // Reset render state
             rs = {};
             // Define geometry path
-            size_t pos_i = 0, pos_line_i = 0;
+            struct{
+                size_t pos = 0, line = 0, geometry = 0;
+            }size_index;
             for(std::shared_ptr<SSBObject>& obj : event.objects)
                 if(obj->type == SSBObject::Type::TAG){
                     // Apply tag to render state
                     if(rs.eval_tag(dynamic_cast<SSBTag*>(obj.get()), start_ms - event.start_ms, event.end_ms - event.start_ms).position){
-                        ++pos_i;
-                        pos_line_i = 0;
+                        ++size_index.pos;
+                        size_index.line = size_index.geometry = 0;
                     }
                 }else{  // obj->type == SSBObject::Type::GEOMETRY
                     // Create geometry
-                    Point align_point = calc_align_offset(rs.align, rs.direction, pos_line_dim[pos_i], pos_line_i);
                     SSBGeometry* geometry = dynamic_cast<SSBGeometry*>(obj.get());
+                    Point align_point = calc_align_offset(rs.align, rs.direction, render_sizes[size_index.pos], size_index.line);
                     switch(geometry->type){
                         case SSBGeometry::Type::POINTS:
                         case SSBGeometry::Type::PATH:
-                            {
-                                // Draw points / path
-                                if(geometry->type == SSBGeometry::Type::POINTS)
-                                    points_to_cairo(dynamic_cast<SSBPoints*>(geometry), rs.line_width, this->stencil_path_buffer);
-                                else
-                                    path_to_cairo(dynamic_cast<SSBPath*>(geometry), this->stencil_path_buffer);
-                                // Align points / path
-                                double x1, y1, x2, y2; cairo_path_extents(this->stencil_path_buffer, &x1, &y1, &x2, &y2);
-                                x2 = std::max(x2, 0.0); y2 = std::max(y2, 0.0);
-                                cairo_matrix_t matrix = {1, 0, 0, 1, align_point.x, align_point.y + rs.off_y};
-                                switch(rs.direction){
-                                    case SSBDirection::Mode::LTR: matrix.x0 += rs.off_x; break;
-                                    case SSBDirection::Mode::RTL: matrix.x0 += pos_line_dim[pos_i][pos_line_i].width - rs.off_x - x2; break;
-                                    case SSBDirection::Mode::TTB: matrix.x0 += std::accumulate(pos_line_dim[pos_i].begin(), pos_line_dim[pos_i].end(), 0.0, [](double init, LineSize& line){
-                                            return init + line.width + line.space;
-                                        }) - rs.off_x - pos_line_dim[pos_i][pos_line_i].width + (pos_line_dim[pos_i][pos_line_i].width - x2) / 2; break;
-                                }
-                                cairo_apply_matrix(this->stencil_path_buffer, &matrix);
-                                // Update inner position offset
-                                switch(rs.direction){
-                                    case SSBDirection::Mode::LTR:
-                                    case SSBDirection::Mode::RTL: rs.off_x += x2; break;
-                                    case SSBDirection::Mode::TTB: rs.off_y += y2; break;
-                                }
+                            // Save geometries matrix
+                            cairo_save(this->stencil_path_buffer);
+                            // Set transformation for alignment
+                            cairo_translate(this->stencil_path_buffer, align_point.x, align_point.y);
+                            switch(rs.direction){
+                                case SSBDirection::Mode::LTR:
+                                    cairo_translate(this->stencil_path_buffer,
+                                                    render_sizes[size_index.pos].lines[size_index.line].geometries[size_index.geometry].off_x,
+                                                    0);
+                                    break;
+                                case SSBDirection::Mode::RTL:
+                                    cairo_translate(this->stencil_path_buffer,
+                                                    render_sizes[size_index.pos].lines[size_index.line].width -
+                                                    render_sizes[size_index.pos].lines[size_index.line].geometries[size_index.geometry].off_x -
+                                                    render_sizes[size_index.pos].lines[size_index.line].geometries[size_index.geometry].width,
+                                                    0);
+                                    break;
+                                case SSBDirection::Mode::TTB:
+                                    cairo_translate(this->stencil_path_buffer,
+                                                    render_sizes[size_index.pos].width -
+                                                    render_sizes[size_index.pos].lines[size_index.line].geometries[size_index.geometry].off_x -
+                                                    render_sizes[size_index.pos].lines[size_index.line].width + (render_sizes[size_index.pos].lines[size_index.line].width - render_sizes[size_index.pos].lines[size_index.line].geometries[size_index.geometry].width) / 2,
+                                                    0);
+                                    break;
                             }
+                            // Draw aligned points / path
+                            if(geometry->type == SSBGeometry::Type::POINTS)
+                                points_to_cairo(dynamic_cast<SSBPoints*>(geometry), rs.line_width, this->stencil_path_buffer);
+                            else
+                                path_to_cairo(dynamic_cast<SSBPath*>(geometry), this->stencil_path_buffer);
+                            // Restore geometries matrix
+                            cairo_restore(this->stencil_path_buffer);
                             break;
                         case SSBGeometry::Type::TEXT:
                             {
@@ -337,103 +385,62 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                                 std::stringstream text(dynamic_cast<SSBText*>(geometry)->text);
                                 unsigned long int line_i = 0;
                                 std::string line;
-                                cairo_path_t* old_path;
                                 while(std::getline(text, line)){
-                                    // Save old path to avoid transformations
-                                    old_path = cairo_copy_path(this->stencil_path_buffer);
-                                    cairo_new_path(this->stencil_path_buffer);
                                     // Recalculate data for new line
-                                    if(++line_i > 1){
-                                        ++pos_line_i;
-                                        align_point = calc_align_offset(rs.align, rs.direction, pos_line_dim[pos_i], pos_line_i);
-                                    }
+                                    if(++line_i > 1)
+                                        align_point = calc_align_offset(rs.align, rs.direction, render_sizes[size_index.pos], ++size_index.line);
+                                    // Save geometries matrix
+                                    cairo_save(this->stencil_path_buffer);
                                     // Draw line
                                     switch(rs.direction){
                                         case SSBDirection::Mode::LTR:
                                         case SSBDirection::Mode::RTL:
-                                            {
-                                                if(line_i > 1){
-                                                    rs.off_x = 0;
-                                                    rs.off_y += pos_line_dim[pos_i][pos_line_i-1].height + metrics.external_lead + rs.font_space_v;
-                                                }
-                                                double baseline_off_y = pos_line_dim[pos_i][pos_line_i].height - metrics.height;
+                                            cairo_translate(this->stencil_path_buffer,
+                                                            align_point.x +
+                                                            (rs.direction == SSBDirection::Mode::LTR ?
+                                                            render_sizes[size_index.pos].lines[size_index.line].geometries[size_index.geometry].off_x :
+                                                            render_sizes[size_index.pos].lines[size_index.line].width - render_sizes[size_index.pos].lines[size_index.line].geometries[size_index.geometry].off_x - render_sizes[size_index.pos].lines[size_index.line].geometries[size_index.geometry].width),
+                                                            align_point.y +
+                                                            render_sizes[size_index.pos].lines[size_index.line].geometries[size_index.geometry].off_y +
+                                                            (render_sizes[size_index.pos].lines[size_index.line].height - render_sizes[size_index.pos].lines[size_index.line].geometries[size_index.geometry].height));
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-equal"
-                                                if(rs.font_space_h != 0){
+                                            if(rs.font_space_h != 0){
 #pragma GCC diagnostic pop
-                                                    // Iterate through utf8 characters
-                                                    double text_width = 0;
-                                                    std::vector<std::string> chars = utf8_chars(line);
-                                                    for(size_t i = 0; i < chars.size(); ++i){
-                                                        // Draw text
-                                                        cairo_save(this->stencil_path_buffer);
-                                                        cairo_translate(this->stencil_path_buffer, text_width, 0);
-                                                        font.text_path_to_cairo(chars[i], this->stencil_path_buffer);
-                                                        cairo_restore(this->stencil_path_buffer);
-                                                        // Update horizontal character offset
-                                                        text_width += font.get_text_width(chars[i]) + rs.font_space_h;
-                                                    }
-                                                    // Align text
-                                                    cairo_matrix_t matrix = {1, 0, 0, 1, align_point.x + (rs.direction == SSBDirection::Mode::LTR ? rs.off_x : pos_line_dim[pos_i][pos_line_i].width - rs.off_x - text_width), align_point.y + rs.off_y + baseline_off_y};
-                                                    cairo_apply_matrix(this->stencil_path_buffer, &matrix);
-                                                    // Update horizontal offset
-                                                    rs.off_x += text_width;
-                                                }else{
-                                                    // Draw text
-                                                    double text_width = font.get_text_width(line);
-                                                    cairo_save(this->stencil_path_buffer);
-                                                    cairo_translate(this->stencil_path_buffer, align_point.x + (rs.direction == SSBDirection::Mode::LTR ? rs.off_x : pos_line_dim[pos_i][pos_line_i].width - rs.off_x - text_width), align_point.y + rs.off_y + baseline_off_y);
-                                                    font.text_path_to_cairo(line, this->stencil_path_buffer);
-                                                    cairo_restore(this->stencil_path_buffer);
-                                                    // Update horizontal offset
-                                                    rs.off_x += text_width;
+                                                std::vector<std::string> chars = utf8_chars(line);
+                                                for(size_t i = 0; i < chars.size(); ++i){
+                                                    font.text_path_to_cairo(chars[i], this->stencil_path_buffer);
+                                                    cairo_translate(this->stencil_path_buffer, font.get_text_width(chars[i]) + rs.font_space_h, 0);
                                                 }
-                                            }
+                                            }else
+                                                font.text_path_to_cairo(line, this->stencil_path_buffer);
                                             break;
                                         case SSBDirection::Mode::TTB:
                                             {
-                                                if(line_i > 1){
-                                                    rs.off_x += pos_line_dim[pos_i][pos_line_i-1].width + rs.font_space_h;
-                                                    rs.off_y = 0;
-                                                }
-                                                // Iterate through utf8 characters
-                                                double text_height = 0;
                                                 std::vector<std::string> chars = utf8_chars(line);
                                                 for(size_t i = 0; i < chars.size(); ++i){
-                                                    // Draw text
                                                     cairo_save(this->stencil_path_buffer);
-                                                    cairo_translate(this->stencil_path_buffer, (pos_line_dim[pos_i][pos_line_i].width - font.get_text_width(chars[i])) / 2, text_height);
+                                                    cairo_translate(this->stencil_path_buffer,
+                                                                    (render_sizes[size_index.pos].lines[size_index.line].width - font.get_text_width(chars[i])) / 2,
+                                                                    0);
                                                     font.text_path_to_cairo(chars[i], this->stencil_path_buffer);
                                                     cairo_restore(this->stencil_path_buffer);
-                                                    // Update vertical character offset
-                                                    text_height += metrics.height + rs.font_space_v;
+                                                    cairo_translate(this->stencil_path_buffer, 0, metrics.height + rs.font_space_v);
                                                 }
-                                                // Align text
-                                                cairo_matrix_t matrix = {1, 0, 0, 1, align_point.x + std::accumulate(pos_line_dim[pos_i].begin(), pos_line_dim[pos_i].end(), 0.0, [](double init, LineSize& line){
-                                                    return init + line.width + line.space;
-                                                }) - rs.off_x - pos_line_dim[pos_i][pos_line_i].width, align_point.y + rs.off_y};
-                                                cairo_apply_matrix(this->stencil_path_buffer, &matrix);
-                                                // Update vertical offset
-                                                rs.off_y += text_height;
                                             }
                                             break;
                                     }
-                                    // Restore old path
-                                    cairo_append_path(this->stencil_path_buffer, old_path);
-                                    cairo_path_destroy(old_path);
+                                    // Restore geometries matrix
+                                    cairo_restore(this->stencil_path_buffer);
                                 }
                             }
                             break;
                     }
+                    // Increase geometry index
+                    ++size_index.geometry;
                     // Deform geometry
                     if(!rs.deform_x.empty() || !rs.deform_y.empty())
                         path_deform(this->stencil_path_buffer, rs.deform_x, rs.deform_y, rs.deform_progress);
-                    // Calculate image-to-video scale
-                    double frame_scale_x, frame_scale_y;
-                    if(this->ssb.frame.width > 0 && this->ssb.frame.height > 0)
-                        frame_scale_x = static_cast<double>(this->width) / this->ssb.frame.width, frame_scale_y = static_cast<double>(this->height) / this->ssb.frame.height;
-                    else
-                        frame_scale_x = frame_scale_y = 0;
                     // Set line properties
                     set_line_props(this->stencil_path_buffer, rs);
                     // Get original geometry dimensions (for color shifting to geometry)

@@ -105,11 +105,19 @@ namespace{
                 }
     }
     // Structure for line sizes
+    struct GeometrySize{
+        double off_x, off_y, width, height;
+    };
     struct LineSize{
         double width = 0, height = 0, space = 0;
+        std::vector<GeometrySize> geometries;
+    };
+    struct PosSize{
+        double width = 0, height = 0;
+        std::vector<LineSize> lines = {{}};
     };
     // Calculates alignment offset
-    inline Point calc_align_offset(SSBAlign::Align align, SSBDirection::Mode direction, std::vector<LineSize>& line_dimensions, size_t line_i){
+    inline Point calc_align_offset(SSBAlign::Align align, SSBDirection::Mode direction, PosSize& pos_line_dim, size_t line_i){
         Point align_point;
         switch(direction){
             case SSBDirection::Mode::LTR:
@@ -118,16 +126,12 @@ namespace{
                     case SSBAlign::Align::LEFT_BOTTOM:
                     case SSBAlign::Align::CENTER_BOTTOM:
                     case SSBAlign::Align::RIGHT_BOTTOM:
-                        align_point.y = std::accumulate(line_dimensions.begin(), line_dimensions.end(), 0.0, [](double init, LineSize& line){
-                            return init - line.height - line.space;
-                        });
+                        align_point.y = -pos_line_dim.height;
                         break;
                     case SSBAlign::Align::LEFT_MIDDLE:
                     case SSBAlign::Align::CENTER_MIDDLE:
                     case SSBAlign::Align::RIGHT_MIDDLE:
-                        align_point.y = std::accumulate(line_dimensions.begin(), line_dimensions.end(), 0.0, [](double init, LineSize& line){
-                            return init - line.height - line.space;
-                        }) / 2;
+                        align_point.y = -pos_line_dim.height / 2;
                         break;
                     case SSBAlign::Align::LEFT_TOP:
                     case SSBAlign::Align::CENTER_TOP:
@@ -144,17 +148,12 @@ namespace{
                     case SSBAlign::Align::CENTER_BOTTOM:
                     case SSBAlign::Align::CENTER_MIDDLE:
                     case SSBAlign::Align::CENTER_TOP:
-                        {
-                            double max_line_width = std::accumulate(line_dimensions.begin(), line_dimensions.end(), 0.0, [](double init, LineSize& line){
-                                return std::max(init, line.width);
-                            });
-                            align_point.x = -max_line_width / 2 + (max_line_width - line_dimensions[line_i].width) / 2;
-                        }
+                        align_point.x = -pos_line_dim.width / 2 + (pos_line_dim.width - pos_line_dim.lines[line_i].width) / 2;
                         break;
                     case SSBAlign::Align::RIGHT_BOTTOM:
                     case SSBAlign::Align::RIGHT_MIDDLE:
                     case SSBAlign::Align::RIGHT_TOP:
-                        align_point.x = -line_dimensions[line_i].width;
+                        align_point.x = -pos_line_dim.lines[line_i].width;
                         break;
                 }
                 break;
@@ -163,17 +162,12 @@ namespace{
                     case SSBAlign::Align::LEFT_BOTTOM:
                     case SSBAlign::Align::CENTER_BOTTOM:
                     case SSBAlign::Align::RIGHT_BOTTOM:
-                        align_point.y = -line_dimensions[line_i].height;
+                        align_point.y = -pos_line_dim.lines[line_i].height;
                         break;
                     case SSBAlign::Align::LEFT_MIDDLE:
                     case SSBAlign::Align::CENTER_MIDDLE:
                     case SSBAlign::Align::RIGHT_MIDDLE:
-                        {
-                            double max_line_height = std::accumulate(line_dimensions.begin(), line_dimensions.end(), 0.0, [](double init, LineSize& line){
-                                    return std::max(init, line.height);
-                            });
-                            align_point.y = -max_line_height / 2 + (max_line_height - line_dimensions[line_i].height) / 2;
-                        }
+                        align_point.y = -pos_line_dim.height / 2 + (pos_line_dim.height - pos_line_dim.lines[line_i].height) / 2;
                         break;
                     case SSBAlign::Align::LEFT_TOP:
                     case SSBAlign::Align::CENTER_TOP:
@@ -190,16 +184,12 @@ namespace{
                     case SSBAlign::Align::CENTER_BOTTOM:
                     case SSBAlign::Align::CENTER_MIDDLE:
                     case SSBAlign::Align::CENTER_TOP:
-                        align_point.x = std::accumulate(line_dimensions.begin(), line_dimensions.end(), 0.0, [](double init, LineSize& line){
-                            return init - line.width - line.space;
-                        }) / 2;
+                        align_point.x = -pos_line_dim.width / 2;
                         break;
                     case SSBAlign::Align::RIGHT_BOTTOM:
                     case SSBAlign::Align::RIGHT_MIDDLE:
                     case SSBAlign::Align::RIGHT_TOP:
-                        align_point.x = std::accumulate(line_dimensions.begin(), line_dimensions.end(), 0.0, [](double init, LineSize& line){
-                            return init - line.width - line.space;
-                        });
+                        align_point.x = -pos_line_dim.width;
                         break;
                 }
                 break;
