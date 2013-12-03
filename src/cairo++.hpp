@@ -25,13 +25,13 @@ class CairoImage{
     private:
         // Image + image context
         cairo_surface_t* surface;
-        cairo_t* context;
+        cairo_t* context = nullptr;
         // File image cache
         static std::deque<std::pair<std::string,CairoImage>> cache;
     public:
         // Ctor & dtor
-        CairoImage() : surface(cairo_image_surface_create(CAIRO_FORMAT_A1, 1, 1)), context(nullptr){}
-        CairoImage(int width, int height, cairo_format_t format) : surface(cairo_image_surface_create(format, width, height)), context(nullptr){}
+        CairoImage() : surface(cairo_image_surface_create(CAIRO_FORMAT_A1, 1, 1)){}
+        CairoImage(int width, int height, cairo_format_t format) : surface(cairo_image_surface_create(format, width, height)){}
         CairoImage(std::string png_filename) : context(nullptr){
             // File image in cache?
             auto it = std::find_if(this->cache.begin(), this->cache.end(), [&png_filename](std::pair<std::string,CairoImage>& image){
@@ -96,19 +96,46 @@ class CairoImage{
         }
 };
 
-void cairo_path_filter(cairo_t* ctx, std::function<void(double&, double&)> filter);
-
-cairo_pattern_t* cairo_pattern_create_rect_color(cairo_rectangle_t rect,
-                                                        double r0, double g0, double b0, double a0,
-                                                        double r1, double g1, double b1, double a1,
-                                                        double r2, double g2, double b2, double a2,
-                                                        double r3, double g3, double b3, double a3);
-
-void cairo_image_surface_blur(cairo_surface_t* surface, double blur_h, double blur_v);
-
-void cairo_apply_matrix(cairo_t* ctx, cairo_matrix_t* mat);
-
-void cairo_copy_matrix(cairo_t* src, cairo_t* dst);
+class CairoPath{
+    private:
+        unsigned int* reference_counter;
+        cairo_path_t* path;
+    public:
+        // Ctor & dtor
+        CairoPath() : reference_counter(new unsigned int), path(nullptr){
+            *this->reference_counter = 1;
+        }
+        CairoPath(cairo_t* ctx) : reference_counter(new unsigned int){
+            *this->reference_counter = 1;
+            this->path = cairo_copy_path(ctx);
+            if(this->path->status != CAIRO_STATUS_SUCCESS)
+                this->path = nullptr;
+        }
+        ~CairoPath(){
+            if(--*this->reference_counter == 0){
+                delete this->reference_counter;
+                if(this->path) cairo_path_destroy(this->path);
+            }
+        }
+        // Copy
+        CairoPath(const CairoPath& other) : reference_counter(other.reference_counter), path(other.path){
+            *this->reference_counter += 1;
+        }
+        CairoPath& operator=(const CairoPath& other){
+            if(--*this->reference_counter == 0){
+                delete this->reference_counter;
+                if(this->path) cairo_path_destroy(this->path);
+            }
+            this->reference_counter = other.reference_counter;
+            *this->reference_counter += 1;
+            this->path = other.path;
+            return *this;
+        }
+        // Access
+        operator cairo_path_t*() const {
+            return this->path;
+        }
+};
 
 #ifdef _WIN32
 #include "textconv.hpp"
@@ -244,3 +271,17 @@ class NativeFont{
 #error "Not implented"
 #endif
 };
+
+void cairo_path_filter(cairo_t* ctx, std::function<void(double&, double&)> filter);
+
+cairo_pattern_t* cairo_pattern_create_rect_color(cairo_rectangle_t rect,
+                                                        double r0, double g0, double b0, double a0,
+                                                        double r1, double g1, double b1, double a1,
+                                                        double r2, double g2, double b2, double a2,
+                                                        double r3, double g3, double b3, double a3);
+
+void cairo_image_surface_blur(cairo_surface_t* surface, double blur_h, double blur_v);
+
+void cairo_apply_matrix(cairo_t* ctx, cairo_matrix_t* mat);
+
+void cairo_copy_matrix(cairo_t* src, cairo_t* dst);
