@@ -387,8 +387,10 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                                 std::string line;
                                 while(std::getline(text, line)){
                                     // Recalculate data for new line
-                                    if(++line_i > 1)
+                                    if(++line_i > 1){
                                         align_point = calc_align_offset(rs.align, rs.direction, render_sizes[size_index.pos], ++size_index.line);
+                                        size_index.geometry = 0;
+                                    }
                                     // Save geometries matrix
                                     cairo_save(this->stencil_path_buffer);
                                     // Draw line
