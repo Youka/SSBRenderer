@@ -231,10 +231,20 @@ namespace{
 #pragma GCC diagnostic pop
     }
     // Set line properties
-    inline void set_line_props(cairo_t* ctx, RenderState& rs){
+    inline void set_line_props(cairo_t* ctx, RenderState& rs, double scale = 1){
         cairo_set_line_cap(ctx, rs.line_cap);
         cairo_set_line_join(ctx, rs.line_join);
-        cairo_set_line_width(ctx, rs.mode == SSBMode::Mode::FILL ? rs.line_width * 2 : rs.line_width);
-        cairo_set_dash(ctx, rs.dashes.data(), rs.dashes.size(), rs.dash_offset);
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wfloat-equal"
+        if(scale != 1){
+#pragma GCC diagnostic pop
+            cairo_set_line_width(ctx, rs.mode == SSBMode::Mode::FILL ? rs.line_width * 2 * scale : rs.line_width * scale);
+            std::vector<double> dashes(rs.dashes);
+            std::for_each(dashes.begin(), dashes.end(), [&scale](double& dash){dash *= scale;});
+            cairo_set_dash(ctx, dashes.data(), dashes.size(), rs.dash_offset * scale);
+        }else{
+            cairo_set_line_width(ctx, rs.mode == SSBMode::Mode::FILL ? rs.line_width * 2 : rs.line_width);
+            cairo_set_dash(ctx, rs.dashes.data(), rs.dashes.size(), rs.dash_offset);
+        }
     }
 }

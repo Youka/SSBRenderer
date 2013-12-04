@@ -104,14 +104,12 @@ namespace{
                     {
                         SSBLineStyle* line_style = dynamic_cast<SSBLineStyle*>(tag);
                         switch(line_style->join){
-                            case SSBLineStyle::Join::MITER: this->line_join = CAIRO_LINE_JOIN_MITER; break;
                             case SSBLineStyle::Join::BEVEL: this->line_join = CAIRO_LINE_JOIN_BEVEL; break;
                             case SSBLineStyle::Join::ROUND: this->line_join = CAIRO_LINE_JOIN_ROUND; break;
                         }
                         switch(line_style->cap){
-                            case SSBLineStyle::Cap::FLAT: this->line_cap = CAIRO_LINE_CAP_BUTT; break;
-                            case SSBLineStyle::Cap::SQUARE: this->line_cap = CAIRO_LINE_CAP_SQUARE; break;
                             case SSBLineStyle::Cap::ROUND: this->line_cap = CAIRO_LINE_CAP_ROUND; break;
+                            case SSBLineStyle::Cap::FLAT: this->line_cap = CAIRO_LINE_CAP_BUTT; break;
                         }
                     }
                     break;
@@ -431,13 +429,11 @@ namespace{
                                     if(progress >= threshold){
                                         SSBLineStyle* line_style = dynamic_cast<SSBLineStyle*>(animate_tag);
                                         switch(line_style->join){
-                                            case SSBLineStyle::Join::MITER: this->line_join = CAIRO_LINE_JOIN_MITER; break;
                                             case SSBLineStyle::Join::BEVEL: this->line_join = CAIRO_LINE_JOIN_BEVEL; break;
                                             case SSBLineStyle::Join::ROUND: this->line_join = CAIRO_LINE_JOIN_ROUND; break;
                                         }
                                         switch(line_style->cap){
                                             case SSBLineStyle::Cap::FLAT: this->line_cap = CAIRO_LINE_CAP_BUTT; break;
-                                            case SSBLineStyle::Cap::SQUARE: this->line_cap = CAIRO_LINE_CAP_SQUARE; break;
                                             case SSBLineStyle::Cap::ROUND: this->line_cap = CAIRO_LINE_CAP_ROUND; break;
                                         }
                                     }

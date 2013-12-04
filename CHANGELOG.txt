@@ -9,7 +9,6 @@ v0.0.2 (planned)
 
 v0.0.1 (planned)
 ----------------
-* more examples
+* added line wrapping
 * complete README
-* improved performance on stroking
-* added line wrapping (including other events)
+* more examples

@@ -140,8 +140,8 @@ class SSBLineWidth : public SSBTag{
 // Line style state
 class SSBLineStyle : public SSBTag{
     public:
-        enum class Join{MITER, ROUND, BEVEL} join;
-        enum class Cap{FLAT, ROUND, SQUARE} cap;
+        enum class Join{ROUND, BEVEL} join;
+        enum class Cap{ROUND, FLAT} cap;
         SSBLineStyle(Join join, Cap cap) : SSBTag(SSBTag::Type::LINE_STYLE), join(join), cap(cap){}
 };
 

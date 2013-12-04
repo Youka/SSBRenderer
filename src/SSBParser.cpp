@@ -250,21 +250,17 @@ namespace{
                 if((pos = tag_value.find(',')) != std::string::npos){
                     std::string join_string = tag_value.substr(0, pos), cap_string = tag_value.substr(pos+1);
                     SSBLineStyle::Join join = SSBLineStyle::Join::ROUND;
-                    if(join_string == "miter")
-                        join = SSBLineStyle::Join::MITER;
-                    else if(join_string == "round")
+                    if(join_string == "round")
                         join = SSBLineStyle::Join::ROUND;
                     else if(join_string == "bevel")
                         join = SSBLineStyle::Join::BEVEL;
                     else if(warnings)
                         throw_parse_error(line_i, "Invalid line style join");
                     SSBLineStyle::Cap cap = SSBLineStyle::Cap::ROUND;
-                    if(cap_string == "flat")
-                        cap = SSBLineStyle::Cap::FLAT;
-                    else if(cap_string == "round")
+                    if(cap_string == "round")
                         cap = SSBLineStyle::Cap::ROUND;
-                    else if(cap_string == "square")
-                        cap = SSBLineStyle::Cap::SQUARE;
+                    else if(cap_string == "flat")
+                        cap = SSBLineStyle::Cap::FLAT;
                     else if(warnings)
                         throw_parse_error(line_i, "Invalid line style cap");
                     ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBLineStyle(join, cap)));

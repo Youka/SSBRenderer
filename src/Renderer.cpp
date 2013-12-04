@@ -442,15 +442,19 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                     if(!rs.deform_x.empty() || !rs.deform_y.empty())
                         path_deform(this->stencil_path_buffer, rs.deform_x, rs.deform_y, rs.deform_progress);
                     // Set line properties
-                    set_line_props(this->stencil_path_buffer, rs);
+                    if(frame_scale_x > 0)
+                        set_line_props(this->stencil_path_buffer, rs, (frame_scale_x + frame_scale_y) / 2);
+                    else
+                        set_line_props(this->stencil_path_buffer, rs);
                     // Get original geometry dimensions (for color shifting to geometry)
                     double x1, y1, x2, y2; cairo_fill_extents(this->stencil_path_buffer, &x1, &y1, &x2, &y2);
-                    int fill_x = floor(x1), fill_y = floor(y1), fill_width = ceil(x2 - fill_x), fill_height = ceil(y2 - fill_y);
+                    int fill_x = floor(x1), fill_y = floor(y1), fill_width = ceil(x2) - fill_x, fill_height = ceil(y2) - fill_y;
                     int stroke_x = 0, stroke_y = 0, stroke_width = 0, stroke_height = 0;
-                    if(rs.line_width > 0){
-                        cairo_stroke_extents(this->stencil_path_buffer, &x1, &y1, &x2, &y2);
-                        stroke_x = floor(x1), stroke_y = floor(y1), stroke_width = ceil(x2 - stroke_x), stroke_height = ceil(y2 - stroke_y);
-                    }
+                    if(rs.line_width > 0)
+                        stroke_x = floor(x1 - cairo_get_line_width(this->stencil_path_buffer)),
+                        stroke_y = floor(y1 - cairo_get_line_width(this->stencil_path_buffer)),
+                        stroke_width = ceil(x2 + cairo_get_line_width(this->stencil_path_buffer)) - stroke_x,
+                        stroke_height = ceil(y2 + cairo_get_line_width(this->stencil_path_buffer)) - stroke_y;
                     // Transform matrix
                     cairo_matrix_t matrix = {1, 0, 0, 1, 0, 0};
 #pragma GCC diagnostic push
@@ -478,23 +482,29 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                     // Draw by type
                     enum class DrawType{FILL_BLURRED, FILL_WITHOUT_BLUR, BORDER, WIRE};
                     auto draw_func = [&](DrawType draw_type){
+                        /*
+                            CODE FOR PERFORMANCE TESTING ON WINDOWS
+
+                            LARGE_INTEGER freq, t1, t2;
+                            QueryPerformanceFrequency(&freq);
+                            QueryPerformanceCounter(&t1);
+                            // INSERT CODE
+                            QueryPerformanceCounter(&t2);
+                            std::ostringstream s;
+                            s << "Duration: " << (static_cast<double>(t2.QuadPart - t1.QuadPart) / freq.QuadPart * 1000) << "ms";
+                            MessageBoxA(NULL, s.str().c_str(), "Draw duration", MB_OK);
+                        */
                         // Create image
-                        int stroke_border_h = 0, stroke_border_v = 0;
                         int border_h = 0, border_v = 0;
                         switch(draw_type){
                             case DrawType::WIRE:
                             case DrawType::BORDER:
-                                {
-                                    cairo_save(this->stencil_path_buffer);
-                                    cairo_set_matrix(this->stencil_path_buffer, &matrix);
-                                    double sx1, sy1, sx2, sy2; cairo_stroke_extents(this->stencil_path_buffer, &sx1, &sy1, &sx2, &sy2);
-                                    cairo_restore(this->stencil_path_buffer);
-                                    stroke_border_h = ceil(std::max(x1-sx1, sx2-x2)), stroke_border_v = ceil(std::max(y1-sy1, sy2-y2));
-                                    border_h = ceil(rs.blur_h) + stroke_border_h, border_v = ceil(rs.blur_v) + stroke_border_v;
-                                }
+                                border_h = ceil(rs.blur_h) + ceil(cairo_get_line_width(this->stencil_path_buffer)),
+                                border_v = ceil(rs.blur_v) + ceil(cairo_get_line_width(this->stencil_path_buffer));
                                 break;
                             case DrawType::FILL_BLURRED:
-                                border_h = ceil(rs.blur_h), border_v = ceil(rs.blur_v);
+                                border_h = ceil(rs.blur_h),
+                                border_v = ceil(rs.blur_v);
                                 break;
                             case DrawType::FILL_WITHOUT_BLUR:
                                 // Border already with zero initialized
@@ -508,8 +518,12 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                         cairo_path_destroy(path);
                         cairo_transform(image, &matrix);
                         // Set line properties
-                        if(draw_type == DrawType::BORDER || draw_type == DrawType::WIRE)
-                            set_line_props(image, rs);
+                        if(draw_type == DrawType::BORDER || draw_type == DrawType::WIRE){
+                            if(frame_scale_x > 0)
+                                set_line_props(image, rs, (frame_scale_x + frame_scale_y) / 2);
+                            else
+                                set_line_props(image, rs);
+                        }
                         // Draw colored geometry on image
                         if(draw_type == DrawType::FILL_BLURRED || draw_type == DrawType::FILL_WITHOUT_BLUR){
                             if(rs.colors.size() == 1 && rs.alphas.size() == 1)
@@ -566,7 +580,10 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                                                                                             rs.line_colors[0].r, rs.line_colors[0].g, rs.line_colors[0].b, rs.line_alphas[2],
                                                                                             rs.line_colors[0].r, rs.line_colors[0].g, rs.line_colors[0].b, rs.line_alphas[3]));
                             }
+                            cairo_save(image);
+                            cairo_identity_matrix(image);
                             cairo_stroke_preserve(image);
+                            cairo_restore(image);
                         }
                         // Draw texture over image color
                         if((draw_type == DrawType::FILL_BLURRED || draw_type == DrawType::FILL_WITHOUT_BLUR) && !rs.texture.empty()){
