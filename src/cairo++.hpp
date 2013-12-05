@@ -17,8 +17,7 @@ Permission is granted to anyone to use this software for any purpose, including 
 
 #include <cairo.h>
 #include "FileReader.hpp"
-#include <algorithm>
-#include <deque>
+#include "Cache.hpp"
 #include <vector>
 
 class CairoImage{
@@ -27,25 +26,17 @@ class CairoImage{
         cairo_surface_t* surface;
         cairo_t* context = nullptr;
         // File image cache
-        static std::deque<std::pair<std::string,CairoImage>> cache;
+        static Cache<std::string,CairoImage> cache;
     public:
         // Ctor & dtor
         CairoImage() : surface(cairo_image_surface_create(CAIRO_FORMAT_A1, 1, 1)){}
         CairoImage(int width, int height, cairo_format_t format) : surface(cairo_image_surface_create(format, width, height)){}
         CairoImage(std::string png_filename) : context(nullptr){
-            // File image in cache?
-            auto it = std::find_if(this->cache.begin(), this->cache.end(), [&png_filename](std::pair<std::string,CairoImage>& image){
-                return image.first == png_filename;
-            });
             // Reuse file image
-            if(it != this->cache.end()){
-                this->surface = cairo_surface_reference(it->second);
-                // Refresh lifetime in cache
-                auto elem = *it;
-                this->cache.erase(it);
-                this->cache.push_front(elem);
+            if(this->cache.contains(png_filename))
+                this->surface = cairo_surface_reference(this->cache.get(png_filename));
             // Create new file image
-            }else{
+            else{
                 FileReader file(png_filename);
                 if(file){
                     this->surface = cairo_image_surface_create_from_png_stream([](void* closure, unsigned char* data, unsigned int length){
@@ -55,12 +46,8 @@ class CairoImage{
                                 return CAIRO_STATUS_READ_ERROR;
                         }, &file);
                     // Add valid file image to cache
-                    if(cairo_surface_status(this->surface) == CAIRO_STATUS_SUCCESS){
-                        this->cache.push_front({png_filename, *this});
-                        // Limit cache size to max. 32 elements
-                        if(this->cache.size() > 32)
-                            this->cache.pop_back();
-                    }
+                    if(cairo_surface_status(this->surface) == CAIRO_STATUS_SUCCESS)
+                        this->cache.add(png_filename, *this);
                 }else
                     this->surface = cairo_image_surface_create(CAIRO_FORMAT_INVALID, 1, 1);
             }

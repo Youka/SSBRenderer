@@ -53,7 +53,7 @@
 					<Add library="z" />
 					<Add library="libmuparser.a" />
 					<Add library="gdi32" />
-					<Add directory="src/libs" />
+					<Add directory="src/libs/win32" />
 				</Linker>
 			</Target>
 			<Target title="Debug - Windows">
@@ -107,10 +107,13 @@
 					<Add library="z" />
 					<Add library="libmuparser.a" />
 					<Add library="gdi32" />
-					<Add directory="src/libs" />
+					<Add directory="src/libs/win32" />
 				</Linker>
 			</Target>
 		</Build>
+		<Unit filename="src/Cache.hpp">
+			<Option virtualFolder="Utils/" />
+		</Unit>
 		<Unit filename="src/FileReader.cpp">
 			<Option virtualFolder="Utils/" />
 		</Unit>

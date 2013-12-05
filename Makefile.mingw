@@ -2,7 +2,7 @@
 CC = g++
 RC = windres
 IDIR = -Isrc/include -Isrc/include/cairo -Isrc/include/muparser
-LDIR = -Lsrc/libs
+LDIR = -Lsrc/libs/win32
 RDIR = -Isrc/res
 LIBS = -lcomdlg32 -lgdi32 -lavisynth -lcairo -lpixman-1 -lpng -lz -lmuparser
 WARNINGS = -Winit-self -Wredundant-decls -Wundef -Wfloat-equal -Wunreachable-code -Wmissing-include-dirs -Wswitch-enum -pedantic -std=c++11 -Wextra -Wall

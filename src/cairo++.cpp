@@ -23,7 +23,7 @@ Permission is granted to anyone to use this software for any purpose, including 
 #include <pthread.h>    // POSIX threads
 #endif
 
-std::deque<std::pair<std::string,CairoImage>> CairoImage::cache;
+Cache<std::string,CairoImage> CairoImage::cache;
 
 void cairo_path_filter(cairo_t* ctx, std::function<void(double&, double&)> filter){
     // Get flatten path
