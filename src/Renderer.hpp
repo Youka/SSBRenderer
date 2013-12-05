@@ -30,6 +30,13 @@ class Renderer{
         SSBData ssb;
         // Path buffer
         CairoImage stencil_path_buffer;
+        // Event images cache
+        struct ImageData{
+            CairoImage image;
+            int x, y;
+            SSBBlend::Mode blend_mode;
+        };
+        Cache<SSBEvent*,std::vector<ImageData>> cache;
         // Blend image on frame
         void blend(cairo_surface_t* src, int dst_x, int dst_y,
                    unsigned char* dst_data, int dst_stride,

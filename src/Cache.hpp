@@ -48,4 +48,7 @@ class Cache{
             if(this->data.size() > this->max_size)
                 this->data.pop_back();
         }
+        void clear(){
+            this->data.clear();
+        }
 };

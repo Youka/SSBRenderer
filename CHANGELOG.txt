@@ -1,6 +1,7 @@
 v0.0.2 (planned)
 ----------------
 * ported to Unix (Avxsynth, GStreamer, Text processing)
+* added support for other video colorspaces
 * improved blur algorithm
 * improved RTL behaviour
 
@@ -8,7 +9,6 @@ v0.0.2 (planned)
 
 v0.0.1 (planned)
 ----------------
-* improved performance with caching (static render data)
 * added line wrapping
 * complete README
 * more examples
