@@ -10,5 +10,5 @@ v0.0.2 (planned)
 v0.0.1 (planned)
 ----------------
 * added line wrapping
-* complete README
-* more examples
+* completed README
+* added examples

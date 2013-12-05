@@ -1,0 +1,19 @@
+Avisynth
+---------
+SSBRenderer.dll is as C Plugin loadable.
+Function "SSBRenderer" will be registered.
+	clip = SSBRenderer(clip, string, bool)
+The string is a SSB script filename. The bool enables warnings on parsing errors (on by default).
+
+########################################################
+
+VirtualDub
+----------
+Just load SSBRenderer.dll as new filter and add it to your filter list.
+A dialog appears to configure the filter.
+
+########################################################
+
+DLL
+---
+See "src/user.h".
