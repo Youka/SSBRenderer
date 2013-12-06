@@ -470,7 +470,7 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                         else
                             set_line_props(this->stencil_path_buffer, rs);
                         // Get original geometry dimensions (for color shifting to geometry)
-                        double x1, y1, x2, y2; cairo_fill_extents(this->stencil_path_buffer, &x1, &y1, &x2, &y2);
+                        double x1, y1, x2, y2; cairo_path_extents(this->stencil_path_buffer, &x1, &y1, &x2, &y2);
                         int fill_x = floor(x1), fill_y = floor(y1), fill_width = ceil(x2) - fill_x, fill_height = ceil(y2) - fill_y;
                         int stroke_x = 0, stroke_y = 0, stroke_width = 0, stroke_height = 0;
                         if(rs.line_width > 0)
@@ -500,7 +500,7 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                         cairo_matrix_multiply(&matrix, &rs.matrix, &matrix);
                         cairo_apply_matrix(this->stencil_path_buffer, &matrix);
                         // Get transformed geometry dimensions (for overlay image)
-                        cairo_fill_extents(this->stencil_path_buffer, &x1, &y1, &x2, &y2);
+                        cairo_path_extents(this->stencil_path_buffer, &x1, &y1, &x2, &y2);
                         int x = floor(x1), y = floor(y1), width = ceil(x2 - x), height = ceil(y2 - y);
                         // Draw by type
                         enum class DrawType{FILL_BLURRED, FILL_WITHOUT_BLUR, BORDER, WIRE};
@@ -683,10 +683,10 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                                     cairo_set_operator(image, CAIRO_OPERATOR_ATOP);
                                     cairo_set_source_rgb(image, rs.karaoke_color.r, rs.karaoke_color.g, rs.karaoke_color.b);
                                     if(elapsed_time >= rs.karaoke_start + rs.karaoke_duration)
-                                        cairo_fill(image);
+                                        cairo_paint(image);
                                     else if(elapsed_time >= rs.karaoke_start){
                                         double progress = static_cast<double>(elapsed_time - rs.karaoke_start) / rs.karaoke_duration;
-                                        cairo_clip(image);
+                                        cairo_new_path(image);
                                         switch(rs.direction){
                                             case SSBDirection::Mode::LTR: cairo_rectangle(image, fill_x, fill_y, progress * fill_width, fill_height); break;
                                             case SSBDirection::Mode::RTL: cairo_rectangle(image, fill_x + (1 - progress) * fill_width, fill_y, progress * fill_width, fill_height); break;
