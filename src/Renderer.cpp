@@ -474,10 +474,10 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                         int fill_x = floor(x1), fill_y = floor(y1), fill_width = ceil(x2) - fill_x, fill_height = ceil(y2) - fill_y;
                         int stroke_x = 0, stroke_y = 0, stroke_width = 0, stroke_height = 0;
                         if(rs.line_width > 0)
-                            stroke_x = floor(x1 - cairo_get_line_width(this->stencil_path_buffer)),
-                            stroke_y = floor(y1 - cairo_get_line_width(this->stencil_path_buffer)),
-                            stroke_width = ceil(x2 + cairo_get_line_width(this->stencil_path_buffer)) - stroke_x,
-                            stroke_height = ceil(y2 + cairo_get_line_width(this->stencil_path_buffer)) - stroke_y;
+                            stroke_x = floor(x1 - cairo_get_line_width(this->stencil_path_buffer) / 2),
+                            stroke_y = floor(y1 - cairo_get_line_width(this->stencil_path_buffer) / 2),
+                            stroke_width = ceil(x2 + cairo_get_line_width(this->stencil_path_buffer) / 2) - stroke_x,
+                            stroke_height = ceil(y2 + cairo_get_line_width(this->stencil_path_buffer) / 2) - stroke_y;
                         // Transform matrix
                         cairo_matrix_t matrix = {1, 0, 0, 1, 0, 0};
     #pragma GCC diagnostic push
@@ -522,8 +522,8 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                             switch(draw_type){
                                 case DrawType::WIRE:
                                 case DrawType::BORDER:
-                                    border_h = ceil(rs.blur_h) + ceil(cairo_get_line_width(this->stencil_path_buffer)),
-                                    border_v = ceil(rs.blur_v) + ceil(cairo_get_line_width(this->stencil_path_buffer));
+                                    border_h = ceil(rs.blur_h + cairo_get_line_width(this->stencil_path_buffer) / 2),
+                                    border_v = ceil(rs.blur_v + cairo_get_line_width(this->stencil_path_buffer) / 2);
                                     break;
                                 case DrawType::FILL_BLURRED:
                                     border_h = ceil(rs.blur_h),

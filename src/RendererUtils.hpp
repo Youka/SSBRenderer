@@ -204,19 +204,6 @@ namespace{
 #pragma GCC diagnostic ignored "-Wnarrowing"
         if(scale_x > 0 && scale_y > 0)
             switch(align){
-                case SSBAlign::Align::LEFT_BOTTOM: return {margin_h, frame_height - margin_v};
-                case SSBAlign::Align::CENTER_BOTTOM: return {frame_width / 2, frame_height - margin_v};
-                case SSBAlign::Align::RIGHT_BOTTOM: return {frame_width - margin_h, frame_height - margin_v};
-                case SSBAlign::Align::LEFT_MIDDLE: return {margin_h, frame_height / 2};
-                case SSBAlign::Align::CENTER_MIDDLE: return {frame_width / 2, frame_height / 2};
-                case SSBAlign::Align::RIGHT_MIDDLE: return {frame_width - margin_h, frame_height / 2};
-                case SSBAlign::Align::LEFT_TOP: return {margin_h, margin_v};
-                case SSBAlign::Align::CENTER_TOP: return {frame_width / 2, margin_v};
-                case SSBAlign::Align::RIGHT_TOP: return {frame_width - margin_h, margin_v};
-                default: return {0, 0};
-            }
-        else
-            switch(align){
                 case SSBAlign::Align::LEFT_BOTTOM: return {margin_h * scale_x, frame_height - margin_v * scale_y};
                 case SSBAlign::Align::CENTER_BOTTOM: return {frame_width / 2, frame_height - margin_v * scale_y};
                 case SSBAlign::Align::RIGHT_BOTTOM: return {frame_width - margin_h * scale_x, frame_height - margin_v * scale_y};
@@ -226,6 +213,19 @@ namespace{
                 case SSBAlign::Align::LEFT_TOP: return {margin_h * scale_x, margin_v * scale_y};
                 case SSBAlign::Align::CENTER_TOP: return {frame_width / 2, margin_v * scale_y};
                 case SSBAlign::Align::RIGHT_TOP: return {frame_width - margin_h * scale_x, margin_v * scale_y};
+                default: return {0, 0};
+            }
+        else
+            switch(align){
+                case SSBAlign::Align::LEFT_BOTTOM: return {margin_h, frame_height - margin_v};
+                case SSBAlign::Align::CENTER_BOTTOM: return {frame_width / 2, frame_height - margin_v};
+                case SSBAlign::Align::RIGHT_BOTTOM: return {frame_width - margin_h, frame_height - margin_v};
+                case SSBAlign::Align::LEFT_MIDDLE: return {margin_h, frame_height / 2};
+                case SSBAlign::Align::CENTER_MIDDLE: return {frame_width / 2, frame_height / 2};
+                case SSBAlign::Align::RIGHT_MIDDLE: return {frame_width - margin_h, frame_height / 2};
+                case SSBAlign::Align::LEFT_TOP: return {margin_h, margin_v};
+                case SSBAlign::Align::CENTER_TOP: return {frame_width / 2, margin_v};
+                case SSBAlign::Align::RIGHT_TOP: return {frame_width - margin_h, margin_v};
                 default: return {0, 0};
             }
 #pragma GCC diagnostic pop
