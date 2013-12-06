@@ -234,6 +234,7 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                             case SSBGeometry::Type::POINTS:
                             case SSBGeometry::Type::PATH:
                                 {
+                                    // Get points / path dimensions
                                     if(geometry->type == SSBGeometry::Type::POINTS)
                                         points_to_cairo(dynamic_cast<SSBPoints*>(geometry), rs.line_width, this->stencil_path_buffer);
                                     else
@@ -241,9 +242,16 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                                     double x1, y1, x2, y2; cairo_path_extents(this->stencil_path_buffer, &x1, &y1, &x2, &y2);
                                     cairo_new_path(this->stencil_path_buffer);
                                     x2 = std::max(x2, 0.0); y2 = std::max(y2, 0.0);
+                                    // Save render information
                                     switch(rs.direction){
                                         case SSBDirection::Mode::LTR:
                                         case SSBDirection::Mode::RTL:
+                                            // Line wrap?
+                                            /*if(render_sizes.back().lines.back().width + x2 > (this->width - 2 * rs.margin_h) * (frame_scale_x > 0 ? frame_scale_x : 1)){
+                                                render_sizes.back().lines.back().space = rs.font_space_v;
+                                                render_sizes.back().lines.push_back({});
+                                            }*/
+                                            // Save
                                             render_sizes.back().lines.back().geometries.push_back({render_sizes.back().lines.back().width, std::accumulate(render_sizes.back().lines.begin(), render_sizes.back().lines.end()-1, 0.0, [](double init, LineSize& lsize) -> double{
                                                 return init + lsize.height + lsize.space;
                                             }), x2, y2});
@@ -255,6 +263,12 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                                             });
                                             break;
                                         case SSBDirection::Mode::TTB:
+                                            // Line wrap?
+                                            /*if(render_sizes.back().lines.back().height + y2 > (this->height - 2 * rs.margin_v) * (frame_scale_y > 0 ? frame_scale_y : 1)){
+                                                render_sizes.back().lines.back().space = rs.font_space_h;
+                                                render_sizes.back().lines.push_back({});
+                                            }*/
+                                            // Save
                                             render_sizes.back().lines.back().geometries.push_back({std::accumulate(render_sizes.back().lines.begin(), render_sizes.back().lines.end()-1, 0.0, [](double init, LineSize& lsize){
                                                 return init + lsize.width + lsize.space;
                                             }), render_sizes.back().lines.back().height, x2, y2});
@@ -355,7 +369,7 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                                 // Save geometries matrix
                                 cairo_save(this->stencil_path_buffer);
                                 // Set transformation for alignment
-                                cairo_translate(this->stencil_path_buffer, align_point.x, align_point.y);
+                                cairo_translate(this->stencil_path_buffer, align_point.x, align_point.y + render_sizes[size_index.pos].lines[size_index.line].geometries[size_index.geometry].off_y);
                                 switch(rs.direction){
                                     case SSBDirection::Mode::LTR:
                                         cairo_translate(this->stencil_path_buffer,
@@ -402,17 +416,15 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                                         }
                                         // Save geometries matrix
                                         cairo_save(this->stencil_path_buffer);
+                                        cairo_translate(this->stencil_path_buffer, align_point.x, align_point.y + render_sizes[size_index.pos].lines[size_index.line].geometries[size_index.geometry].off_y);
                                         // Draw line
                                         switch(rs.direction){
                                             case SSBDirection::Mode::LTR:
                                             case SSBDirection::Mode::RTL:
                                                 cairo_translate(this->stencil_path_buffer,
-                                                                align_point.x +
                                                                 (rs.direction == SSBDirection::Mode::LTR ?
                                                                 render_sizes[size_index.pos].lines[size_index.line].geometries[size_index.geometry].off_x :
                                                                 render_sizes[size_index.pos].lines[size_index.line].width - render_sizes[size_index.pos].lines[size_index.line].geometries[size_index.geometry].off_x - render_sizes[size_index.pos].lines[size_index.line].geometries[size_index.geometry].width),
-                                                                align_point.y +
-                                                                render_sizes[size_index.pos].lines[size_index.line].geometries[size_index.geometry].off_y +
                                                                 (render_sizes[size_index.pos].lines[size_index.line].height - render_sizes[size_index.pos].lines[size_index.line].geometries[size_index.geometry].height));
     #pragma GCC diagnostic push
     #pragma GCC diagnostic ignored "-Wfloat-equal"
