@@ -247,10 +247,10 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                                         case SSBDirection::Mode::LTR:
                                         case SSBDirection::Mode::RTL:
                                             // Line wrap?
-                                            /*if(render_sizes.back().lines.back().width + x2 > (this->width - 2 * rs.margin_h) * (frame_scale_x > 0 ? frame_scale_x : 1)){
+                                            if(render_sizes.back().lines.back().width + x2 > (this->width - 2 * rs.margin_h) * (frame_scale_x > 0 ? frame_scale_x : 1)){
                                                 render_sizes.back().lines.back().space = rs.font_space_v;
                                                 render_sizes.back().lines.push_back({});
-                                            }*/
+                                            }
                                             // Save
                                             render_sizes.back().lines.back().geometries.push_back({render_sizes.back().lines.back().width, std::accumulate(render_sizes.back().lines.begin(), render_sizes.back().lines.end()-1, 0.0, [](double init, LineSize& lsize) -> double{
                                                 return init + lsize.height + lsize.space;
@@ -264,10 +264,10 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                                             break;
                                         case SSBDirection::Mode::TTB:
                                             // Line wrap?
-                                            /*if(render_sizes.back().lines.back().height + y2 > (this->height - 2 * rs.margin_v) * (frame_scale_y > 0 ? frame_scale_y : 1)){
+                                            if(render_sizes.back().lines.back().height + y2 > (this->height - 2 * rs.margin_v) * (frame_scale_y > 0 ? frame_scale_y : 1)){
                                                 render_sizes.back().lines.back().space = rs.font_space_h;
                                                 render_sizes.back().lines.push_back({});
-                                            }*/
+                                            }
                                             // Save
                                             render_sizes.back().lines.back().geometries.push_back({std::accumulate(render_sizes.back().lines.begin(), render_sizes.back().lines.end()-1, 0.0, [](double init, LineSize& lsize){
                                                 return init + lsize.width + lsize.space;
@@ -366,6 +366,11 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                         switch(geometry->type){
                             case SSBGeometry::Type::POINTS:
                             case SSBGeometry::Type::PATH:
+                                // Update geometry index by newline
+                                if(size_index.geometry >= render_sizes[size_index.pos].lines[size_index.line].geometries.size()){
+                                    align_point = calc_align_offset(rs.align, rs.direction, render_sizes[size_index.pos], ++size_index.line);
+                                    size_index.geometry = 0;
+                                }
                                 // Save geometries matrix
                                 cairo_save(this->stencil_path_buffer);
                                 // Set transformation for alignment
