@@ -447,6 +447,7 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                                                 break;
                                             case SSBDirection::Mode::TTB:
                                                 {
+                                                    cairo_translate(this->stencil_path_buffer, render_sizes[size_index.pos].width - render_sizes[size_index.pos].lines[size_index.line].geometries[size_index.geometry].off_x - render_sizes[size_index.pos].lines[size_index.line].width, 0);
                                                     std::vector<std::string> chars = utf8_chars(line);
                                                     for(size_t i = 0; i < chars.size(); ++i){
                                                         cairo_save(this->stencil_path_buffer);
