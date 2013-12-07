@@ -247,7 +247,8 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                                         case SSBDirection::Mode::LTR:
                                         case SSBDirection::Mode::RTL:
                                             // Line wrap?
-                                            if(render_sizes.back().lines.back().width + x2 > (this->width - 2 * rs.margin_h) * (frame_scale_x > 0 ? frame_scale_x : 1)){
+                                            if(render_sizes.back().lines.back().geometries.size() > 0 &&
+                                               render_sizes.back().lines.back().width + x2 > (this->width - 2 * rs.margin_h) * (frame_scale_x > 0 ? frame_scale_x : 1)){
                                                 render_sizes.back().lines.back().space = rs.font_space_v;
                                                 render_sizes.back().lines.push_back({});
                                             }
@@ -264,7 +265,8 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                                             break;
                                         case SSBDirection::Mode::TTB:
                                             // Line wrap?
-                                            if(render_sizes.back().lines.back().height + y2 > (this->height - 2 * rs.margin_v) * (frame_scale_y > 0 ? frame_scale_y : 1)){
+                                            if(render_sizes.back().lines.back().geometries.size() > 0 &&
+                                               render_sizes.back().lines.back().height + y2 > (this->height - 2 * rs.margin_v) * (frame_scale_y > 0 ? frame_scale_y : 1)){
                                                 render_sizes.back().lines.back().space = rs.font_space_h;
                                                 render_sizes.back().lines.push_back({});
                                             }
@@ -301,10 +303,10 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                                             case SSBDirection::Mode::RTL:
                                                 {
                                                     double width = 0;
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wfloat-equal"
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wfloat-equal"
                                                     if(rs.font_space_h != 0){
-    #pragma GCC diagnostic pop
+#pragma GCC diagnostic pop
                                                         std::vector<std::string> chars = utf8_chars(line);
                                                         for(size_t i = 0; i < chars.size(); ++i)
                                                             width += font.get_text_width(chars[i]) + rs.font_space_h;
@@ -431,10 +433,10 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                                                                 render_sizes[size_index.pos].lines[size_index.line].geometries[size_index.geometry].off_x :
                                                                 render_sizes[size_index.pos].lines[size_index.line].width - render_sizes[size_index.pos].lines[size_index.line].geometries[size_index.geometry].off_x - render_sizes[size_index.pos].lines[size_index.line].geometries[size_index.geometry].width),
                                                                 (render_sizes[size_index.pos].lines[size_index.line].height - render_sizes[size_index.pos].lines[size_index.line].geometries[size_index.geometry].height));
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wfloat-equal"
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wfloat-equal"
                                                 if(rs.font_space_h != 0){
-    #pragma GCC diagnostic pop
+#pragma GCC diagnostic pop
                                                     std::vector<std::string> chars = utf8_chars(line);
                                                     for(size_t i = 0; i < chars.size(); ++i){
                                                         font.text_path_to_cairo(chars[i], this->stencil_path_buffer);
@@ -470,7 +472,7 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                         if(!rs.deform_x.empty() || !rs.deform_y.empty())
                             path_deform(this->stencil_path_buffer, rs.deform_x, rs.deform_y, rs.deform_progress);
                         // Set line properties
-                        if(frame_scale_x > 0)
+                        if(frame_scale_x > 0 && frame_scale_y > 0)
                             set_line_props(this->stencil_path_buffer, rs, (frame_scale_x + frame_scale_y) / 2);
                         else
                             set_line_props(this->stencil_path_buffer, rs);
@@ -485,15 +487,15 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                             stroke_height = ceil(y2 + cairo_get_line_width(this->stencil_path_buffer) / 2) - stroke_y;
                         // Transform matrix
                         cairo_matrix_t matrix = {1, 0, 0, 1, 0, 0};
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wfloat-equal"
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wfloat-equal"
                         if(!(rs.pos_x == std::numeric_limits<decltype(rs.pos_x)>::max() && rs.pos_y == std::numeric_limits<decltype(rs.pos_y)>::max())){
-    #pragma GCC diagnostic pop
-                            if(frame_scale_x > 0 || frame_scale_y > 0)
+#pragma GCC diagnostic pop
+                            if(frame_scale_x > 0 && frame_scale_y > 0)
                                 cairo_matrix_scale(&matrix, frame_scale_x, frame_scale_y);
                             cairo_matrix_translate(&matrix, rs.pos_x, rs.pos_y);
                         }else{
-                            if(frame_scale_x > 0 || frame_scale_y > 0){
+                            if(frame_scale_x > 0 && frame_scale_y > 0){
                                 Point pos = get_auto_pos(this->width, this->height, rs.align, rs.margin_h, rs.margin_v, frame_scale_x, frame_scale_y);
                                 cairo_matrix_translate(&matrix, pos.x, pos.y);
                                 cairo_matrix_scale(&matrix, frame_scale_x, frame_scale_y);
@@ -557,10 +559,10 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                                 if(rs.colors.size() == 1 && rs.alphas.size() == 1)
                                     cairo_set_source_rgba(image, rs.colors[0].r, rs.colors[0].g, rs.colors[0].b, rs.alphas[0]);
                                 else{
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wnarrowing"
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnarrowing"
                                     cairo_rectangle_t color_rect = {fill_x, fill_y, fill_width, fill_height};
-    #pragma GCC diagnostic pop
+#pragma GCC diagnostic pop
                                     if(rs.colors.size() == 4 && rs.alphas.size() == 4)
                                         cairo_set_source(image, cairo_pattern_create_rect_color(color_rect,
                                                                                                 rs.colors[0].r, rs.colors[0].g, rs.colors[0].b, rs.alphas[0],
@@ -585,10 +587,10 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                                 if(rs.line_colors.size() == 1 && rs.line_alphas.size() == 1)
                                     cairo_set_source_rgba(image, rs.line_colors[0].r, rs.line_colors[0].g, rs.line_colors[0].b, rs.line_alphas[0]);
                                 else{
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wnarrowing"
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnarrowing"
                                     cairo_rectangle_t color_rect = {stroke_x, stroke_y, stroke_width, stroke_height};
-    #pragma GCC diagnostic pop
+#pragma GCC diagnostic pop
                                     if(rs.line_colors.size() == 4 && rs.line_alphas.size() == 4)
                                         cairo_set_source(image, cairo_pattern_create_rect_color(color_rect,
                                                                                                 rs.line_colors[0].r, rs.line_colors[0].g, rs.line_colors[0].b, rs.line_alphas[0],
