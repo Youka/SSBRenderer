@@ -293,7 +293,7 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                                     std::stringstream text(dynamic_cast<SSBText*>(geometry)->text);
                                     unsigned long int line_i = 0;
                                     std::string line;
-                                    while(std::getline(text, line)){
+                                    while(getlineex(text, line)){
                                         if(++line_i > 1){
                                             render_sizes.back().lines.back().space = (rs.direction == SSBDirection::Mode::TTB) ? rs.font_space_h : metrics.external_lead + rs.font_space_v;
                                             render_sizes.back().lines.push_back({});
@@ -415,7 +415,7 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                                     std::stringstream text(dynamic_cast<SSBText*>(geometry)->text);
                                     unsigned long int line_i = 0;
                                     std::string line;
-                                    while(std::getline(text, line)){
+                                    while(getlineex(text, line)){
                                         // Recalculate data for new line
                                         if(++line_i > 1){
                                             align_point = calc_align_offset(rs.align, rs.direction, render_sizes[size_index.pos], ++size_index.line);

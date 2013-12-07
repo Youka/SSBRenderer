@@ -20,6 +20,20 @@ Permission is granted to anyone to use this software for any purpose, including 
 #include "SSBData.hpp"
 
 namespace{
+    // Get line from stream, including last empty one
+    bool getlineex(std::basic_istream<char>& stream, std::string& line, char delimiter = '\n'){
+        if(std::getline(stream, line, delimiter))
+            return true;
+        else if(stream.eof()){
+            stream.clear();
+            if(stream.unget() && stream.get() == delimiter){
+                stream.setstate(std::ios_base::failbit);
+                line = "";
+                return true;
+            }
+        }
+        return false;
+    }
     // Applies deform filter on cairo path
     void path_deform(cairo_t* ctx, std::string& deform_x, std::string& deform_y, double progress){
         mu::Parser parser_x, parser_y;
