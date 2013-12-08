@@ -34,6 +34,30 @@ namespace{
         }
         return false;
     }
+    // Structure for word text + prespace
+    struct Word{
+        std::string word, prespace;
+    };
+    // Split text in words + pre-spaces
+    inline std::vector<Word> getwords(std::string text){
+        std::vector<Word> words;
+        if(!text.empty()){
+            bool is_space = true;
+            std::string::size_type pos_start = 0, pos_end;
+            do{
+                if(is_space){
+                    pos_end = text.find_first_not_of(' ', pos_start);
+                    words.push_back({"", text.substr(pos_start, pos_end)});
+                }else{
+                    pos_end = text.find_first_of(' ', pos_start);
+                    words.back().word = text.substr(pos_start, pos_end);
+                }
+                is_space = !is_space;
+                pos_start = pos_end;
+            }while(pos_end != std::string::npos);
+        }
+        return words;
+    }
     // Applies deform filter on cairo path
     void path_deform(cairo_t* ctx, std::string& deform_x, std::string& deform_y, double progress){
         mu::Parser parser_x, parser_y;

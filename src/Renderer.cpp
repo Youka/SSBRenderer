@@ -229,6 +229,13 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                         if(rs.eval_tag(dynamic_cast<SSBTag*>(obj.get()), start_ms - event.start_ms, event.end_ms - event.start_ms).position)
                             render_sizes.push_back({});
                     }else{  // obj->type == SSBObject::Type::GEOMETRY
+                        // Calculate wrap limits
+                        double wrap_width, wrap_height;
+                        if(frame_scale_x > 0 && frame_scale_y > 0)
+                            wrap_width = (this->width - 2 * rs.margin_h) * frame_scale_x, wrap_height = (this->height - 2 * rs.margin_v) * frame_scale_y;
+                        else
+                            wrap_width = this->width - 2 * rs.margin_h, wrap_height = this->height - 2 * rs.margin_v;
+                        // Work with geometry
                         SSBGeometry* geometry = dynamic_cast<SSBGeometry*>(obj.get());
                         switch(geometry->type){
                             case SSBGeometry::Type::POINTS:
@@ -247,8 +254,7 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                                         case SSBDirection::Mode::LTR:
                                         case SSBDirection::Mode::RTL:
                                             // Line wrap?
-                                            if(render_sizes.back().lines.back().geometries.size() > 0 &&
-                                               render_sizes.back().lines.back().width + x2 > (this->width - 2 * rs.margin_h) * (frame_scale_x > 0 ? frame_scale_x : 1)){
+                                            if(render_sizes.back().lines.back().geometries.size() > 0 && render_sizes.back().lines.back().width + x2 > wrap_width){
                                                 render_sizes.back().lines.back().space = rs.font_space_v;
                                                 render_sizes.back().lines.push_back({});
                                             }
@@ -265,8 +271,7 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                                             break;
                                         case SSBDirection::Mode::TTB:
                                             // Line wrap?
-                                            if(render_sizes.back().lines.back().geometries.size() > 0 &&
-                                               render_sizes.back().lines.back().height + y2 > (this->height - 2 * rs.margin_v) * (frame_scale_y > 0 ? frame_scale_y : 1)){
+                                            if(render_sizes.back().lines.back().geometries.size() > 0 && render_sizes.back().lines.back().height + y2 > wrap_height){
                                                 render_sizes.back().lines.back().space = rs.font_space_h;
                                                 render_sizes.back().lines.push_back({});
                                             }
@@ -310,8 +315,18 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                                                         std::vector<std::string> chars = utf8_chars(line);
                                                         for(size_t i = 0; i < chars.size(); ++i)
                                                             width += font.get_text_width(chars[i]) + rs.font_space_h;
-                                                    }else
+                                                    }else{
                                                         width = font.get_text_width(line);
+                                                        // Line wrap?
+                                                        /*if(!line.empty() && render_sizes.back().lines.back().width + width > wrap_width){
+                                                            // Split text
+                                                            std::vector<Word> words = getwords(line);
+                                                            for(Word& word : words){
+
+
+                                                            }
+                                                        }*/
+                                                    }
                                                     render_sizes.back().lines.back().geometries.push_back({render_sizes.back().lines.back().width, std::accumulate(render_sizes.back().lines.begin(), render_sizes.back().lines.end()-1, 0.0, [](double init, LineSize& lsize){
                                                         return init + lsize.height + lsize.space;
                                                     }), width, metrics.height});
