@@ -448,27 +448,19 @@ namespace{
                     ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBTransform(xx, yx, xy, yy, x0, y0)));
                 else if(warnings)
                     throw_parse_error(line_i, "Invalid transform");
-            }else if(tags_token.compare(0, 6, "color=") == 0 || tags_token.compare(0, 11, "line-color=") == 0){
-                std::string tag_value;
-                SSBColor::Target target;
-                if(tags_token[0] == 'l'){
-                    tag_value = tags_token.substr(11);
-                    target = SSBColor::Target::LINE;
-                }else{
-                    tag_value = tags_token.substr(6);
-                    target = SSBColor::Target::FILL;
-                }
+            }else if(tags_token.compare(0, 6, "color=") == 0){
+                std::string tag_value = tags_token.substr(6);
                 unsigned long int rgb[4];
                 if(hex_string_to_number(tag_value, rgb[0]) &&
                         rgb[0] <= 0xffffff)
-                    ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBColor(target,
+                    ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBColor(
                                                 static_cast<decltype(RGB::r)>(rgb[0] >> 16) / 0xff,
                                                 static_cast<decltype(RGB::g)>(rgb[0] >> 8 & 0xff) / 0xff,
                                                 static_cast<decltype(RGB::b)>(rgb[0] & 0xff) / 0xff
                                                                                        )));
                 else if(hex_string_to_number_quadruple(tag_value, rgb[0], rgb[1], rgb[2], rgb[3]) &&
                         rgb[0] <= 0xffffff && rgb[1] <= 0xffffff && rgb[2] <= 0xffffff && rgb[3] <= 0xffffff)
-                    ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBColor(target,
+                    ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBColor(
                                                 static_cast<decltype(RGB::r)>(rgb[0] >> 16) / 0xff,
                                                 static_cast<decltype(RGB::g)>(rgb[0] >> 8 & 0xff) / 0xff,
                                                 static_cast<decltype(RGB::b)>(rgb[0] & 0xff) / 0xff,
@@ -483,46 +475,45 @@ namespace{
                                                 static_cast<decltype(RGB::b)>(rgb[3] & 0xff) / 0xff
                                                                                        )));
                 else if(warnings)
-                    throw_parse_error(line_i, tags_token[0] == 'l' ? "Invalid line color" : "Invalid color");
-            }else if(tags_token.compare(0, 6, "alpha=") == 0 || tags_token.compare(0, 11, "line-alpha=") == 0){
-                std::string tag_value;
-                SSBAlpha::Target target;
-                if(tags_token[0] == 'l'){
-                    tag_value = tags_token.substr(11);
-                    target = SSBAlpha::Target::LINE;
-                }else{
-                    tag_value = tags_token.substr(6);
-                    target = SSBAlpha::Target::FILL;
-                }
+                    throw_parse_error(line_i, "Invalid color");
+            }else if(tags_token.compare(0, 11, "line-color=") == 0){
+                unsigned long int rgb;
+                if(hex_string_to_number(tags_token.substr(11), rgb) &&
+                        rgb <= 0xffffff)
+                    ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBLineColor(
+                                                static_cast<decltype(RGB::r)>(rgb >> 16) / 0xff,
+                                                static_cast<decltype(RGB::g)>(rgb >> 8 & 0xff) / 0xff,
+                                                static_cast<decltype(RGB::b)>(rgb & 0xff) / 0xff
+                                                                                       )));
+                else if(warnings)
+                    throw_parse_error(line_i, "Invalid line color");
+            }else if(tags_token.compare(0, 6, "alpha=") == 0){
+                std::string tag_value = tags_token.substr(6);
                 unsigned short int a[4];
                 if(hex_string_to_number(tag_value, a[0]) &&
                         a[0] <= 0xff)
-                    ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBAlpha(target, static_cast<decltype(RGB::r)>(a[0]) / 0xff)));
+                    ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBAlpha(static_cast<decltype(RGB::r)>(a[0]) / 0xff)));
                 else if(hex_string_to_number_quadruple(tag_value, a[0], a[1], a[2], a[3]) &&
                         a[0] <= 0xff && a[1] <= 0xff && a[2] <= 0xff && a[3] <= 0xff)
-                    ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBAlpha(target,
+                    ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBAlpha(
                                                 static_cast<decltype(RGB::r)>(a[0]) / 0xff,
                                                 static_cast<decltype(RGB::r)>(a[1]) / 0xff,
                                                 static_cast<decltype(RGB::r)>(a[2]) / 0xff,
                                                 static_cast<decltype(RGB::r)>(a[3]) / 0xff
                                                                                        )));
                 else if(warnings)
-                    throw_parse_error(line_i, tags_token[0] == 'l' ? "Invalid line alpha" : "Invalid alpha");
-            }else if(tags_token.compare(0, 8, "texture=") == 0 || tags_token.compare(0, 13, "line-texture=") == 0){
-                if(tags_token[0] == 'l')
-                    ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBTexture(SSBTexture::Target::LINE, tags_token.substr(13))));
-                else
-                    ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBTexture(SSBTexture::Target::FILL, tags_token.substr(8))));
-            }else if(tags_token.compare(0, 8, "texfill=") == 0 || tags_token.compare(0, 13, "line-texfill=") == 0){
-                std::string tag_value;
-                SSBTexFill::Target target;
-                if(tags_token[0] == 'l'){
-                    tag_value = tags_token.substr(13);
-                    target = SSBTexFill::Target::LINE;
-                }else{
-                    tag_value = tags_token.substr(8);
-                    target = SSBTexFill::Target::FILL;
-                }
+                    throw_parse_error(line_i, "Invalid alpha");
+            }else if(tags_token.compare(0, 11, "line-alpha=") == 0){
+                unsigned short int a;
+                if(hex_string_to_number(tags_token.substr(11), a) &&
+                        a <= 0xff)
+                    ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBLineAlpha(static_cast<decltype(RGB::r)>(a) / 0xff)));
+                else if(warnings)
+                    throw_parse_error(line_i, "Invalid line alpha");
+            }else if(tags_token.compare(0, 8, "texture=") == 0){
+                ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBTexture(tags_token.substr(8))));
+            }else if(tags_token.compare(0, 8, "texfill=") == 0){
+                std::string tag_value = tags_token.substr(8);
                 decltype(SSBTexFill::x) x, y;
                 std::string::size_type pos1, pos2;
                 if((pos1 = tag_value.find(',')) != std::string::npos &&
@@ -531,17 +522,17 @@ namespace{
                         string_to_number(tag_value.substr(pos1+1, pos2-(pos1+1)), y)){
                     std::string wrap = tag_value.substr(pos2+1);
                     if(wrap == "clamp")
-                        ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBTexFill(target, x, y, SSBTexFill::WrapStyle::CLAMP)));
+                        ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBTexFill(x, y, SSBTexFill::WrapStyle::CLAMP)));
                     else if(wrap == "repeat")
-                        ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBTexFill(target, x, y, SSBTexFill::WrapStyle::REPEAT)));
+                        ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBTexFill(x, y, SSBTexFill::WrapStyle::REPEAT)));
                     else if(wrap == "mirror")
-                        ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBTexFill(target, x, y, SSBTexFill::WrapStyle::MIRROR)));
+                        ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBTexFill(x, y, SSBTexFill::WrapStyle::MIRROR)));
                     else if(wrap == "flow")
-                        ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBTexFill(target, x, y, SSBTexFill::WrapStyle::FLOW)));
+                        ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBTexFill(x, y, SSBTexFill::WrapStyle::FLOW)));
                     else if(warnings)
                         throw_parse_error(line_i, "Invalid texture filling wrap style");
                 }else if(warnings)
-                    throw_parse_error(line_i, tags_token[0] == 'l' ? "Invalid line texture filling" : "Invalid texture filling");
+                    throw_parse_error(line_i, "Invalid texture filling");
             }else if(tags_token.compare(0, 6, "blend=") == 0){
                 std::string tag_value = tags_token.substr(6);
                 if(tag_value == "over")

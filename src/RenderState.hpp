@@ -53,11 +53,8 @@ namespace{
         std::string texture;
         double texture_x = 0, texture_y = 0;
         cairo_extend_t wrap_style = CAIRO_EXTEND_NONE;
-        std::vector<RGB> line_colors = {{0,0,0}};
-        std::vector<double> line_alphas = {1};
-        std::string line_texture;
-        double line_texture_x = 0, line_texture_y = 0;
-        cairo_extend_t line_wrap_style = CAIRO_EXTEND_NONE;
+        RGB line_color = {0,0,0};
+        double line_alpha = 1;
         // Rastering
         SSBBlend::Mode blend_mode = SSBBlend::Mode::OVER;
         double blur_h = 0, blur_v = 0;
@@ -235,87 +232,52 @@ namespace{
                 case SSBTag::Type::COLOR:
                     {
                         SSBColor* color = dynamic_cast<SSBColor*>(tag);
-                        if(color->target == SSBColor::Target::FILL)
-                            if(color->colors[1].r < 0){
-                                this->colors.resize(1);
-                                this->colors[0] = color->colors[0];
-                            }else{
-                                this->colors.resize(4);
-                                this->colors[0] = color->colors[0];
-                                this->colors[1] = color->colors[1];
-                                this->colors[2] = color->colors[2];
-                                this->colors[3] = color->colors[3];
-                            }
-                        else
-                            if(color->colors[1].r < 0){
-                                this->line_colors.resize(1);
-                                this->line_colors[0] = color->colors[0];
-                            }else{
-                                this->line_colors.resize(4);
-                                this->line_colors[0] = color->colors[0];
-                                this->line_colors[1] = color->colors[1];
-                                this->line_colors[2] = color->colors[2];
-                                this->line_colors[3] = color->colors[3];
-                            }
+                        if(color->colors[1].r < 0){
+                            this->colors.resize(1);
+                            this->colors[0] = color->colors[0];
+                        }else{
+                            this->colors.resize(4);
+                            this->colors[0] = color->colors[0];
+                            this->colors[1] = color->colors[1];
+                            this->colors[2] = color->colors[2];
+                            this->colors[3] = color->colors[3];
+                        }
                     }
+                    break;
+                case SSBTag::Type::LINE_COLOR:
+                    this->line_color = dynamic_cast<SSBLineColor*>(tag)->color;
                     break;
                 case SSBTag::Type::ALPHA:
                     {
                         SSBAlpha* alpha = dynamic_cast<SSBAlpha*>(tag);
-                        if(alpha->target == SSBAlpha::Target::FILL)
-                            if(alpha->alphas[1] < 0){
-                                this->alphas.resize(1);
-                                this->alphas[0] = alpha->alphas[0];
-                            }else{
-                                this->alphas.resize(4);
-                                this->alphas[0] = alpha->alphas[0];
-                                this->alphas[1] = alpha->alphas[1];
-                                this->alphas[2] = alpha->alphas[2];
-                                this->alphas[3] = alpha->alphas[3];
-                            }
-                        else
-                            if(alpha->alphas[1] < 0){
-                                this->line_alphas.resize(1);
-                                this->line_alphas[0] = alpha->alphas[0];
-                            }else{
-                                this->line_alphas.resize(4);
-                                this->line_alphas[0] = alpha->alphas[0];
-                                this->line_alphas[1] = alpha->alphas[1];
-                                this->line_alphas[2] = alpha->alphas[2];
-                                this->line_alphas[3] = alpha->alphas[3];
-                            }
+                        if(alpha->alphas[1] < 0){
+                            this->alphas.resize(1);
+                            this->alphas[0] = alpha->alphas[0];
+                        }else{
+                            this->alphas.resize(4);
+                            this->alphas[0] = alpha->alphas[0];
+                            this->alphas[1] = alpha->alphas[1];
+                            this->alphas[2] = alpha->alphas[2];
+                            this->alphas[3] = alpha->alphas[3];
+                        }
                     }
                     break;
+                case SSBTag::Type::LINE_ALPHA:
+                    this->line_alpha = dynamic_cast<SSBLineAlpha*>(tag)->alpha;
+                    break;
                 case SSBTag::Type::TEXTURE:
-                    {
-                        SSBTexture* texture = dynamic_cast<SSBTexture*>(tag);
-                        if(texture->target == SSBTexture::Target::FILL)
-                            this->texture = texture->filename;
-                        else
-                            this->line_texture = texture->filename;
-                    }
+                    this->texture = dynamic_cast<SSBTexture*>(tag)->filename;
                     break;
                 case SSBTag::Type::TEXFILL:
                     {
                         SSBTexFill* texfill = dynamic_cast<SSBTexFill*>(tag);
-                        if(texfill->target == SSBTexFill::Target::FILL){
-                            this->texture_x = texfill->x;
-                            this->texture_y = texfill->y;
-                            switch(texfill->wrap){
-                                case SSBTexFill::WrapStyle::CLAMP: this->wrap_style = CAIRO_EXTEND_NONE; break;
-                                case SSBTexFill::WrapStyle::REPEAT: this->wrap_style = CAIRO_EXTEND_REPEAT; break;
-                                case SSBTexFill::WrapStyle::MIRROR: this->wrap_style = CAIRO_EXTEND_REFLECT; break;
-                                case SSBTexFill::WrapStyle::FLOW: this->wrap_style = CAIRO_EXTEND_PAD; break;
-                            }
-                        }else{
-                            this->line_texture_x = texfill->x;
-                            this->line_texture_y = texfill->y;
-                            switch(texfill->wrap){
-                                case SSBTexFill::WrapStyle::CLAMP: this->line_wrap_style = CAIRO_EXTEND_NONE; break;
-                                case SSBTexFill::WrapStyle::REPEAT: this->line_wrap_style = CAIRO_EXTEND_REPEAT; break;
-                                case SSBTexFill::WrapStyle::MIRROR: this->line_wrap_style = CAIRO_EXTEND_REFLECT; break;
-                                case SSBTexFill::WrapStyle::FLOW: this->line_wrap_style = CAIRO_EXTEND_PAD; break;
-                            }
+                        this->texture_x = texfill->x;
+                        this->texture_y = texfill->y;
+                        switch(texfill->wrap){
+                            case SSBTexFill::WrapStyle::CLAMP: this->wrap_style = CAIRO_EXTEND_NONE; break;
+                            case SSBTexFill::WrapStyle::REPEAT: this->wrap_style = CAIRO_EXTEND_REPEAT; break;
+                            case SSBTexFill::WrapStyle::MIRROR: this->wrap_style = CAIRO_EXTEND_REFLECT; break;
+                            case SSBTexFill::WrapStyle::FLOW: this->wrap_style = CAIRO_EXTEND_PAD; break;
                         }
                     }
                     break;
@@ -363,7 +325,7 @@ namespace{
                         }
                         if(progress >= 0){
                             std::for_each(this->alphas.begin(), this->alphas.end(), [&progress](double& a){a *= progress;});
-                            std::for_each(this->line_alphas.begin(), this->line_alphas.end(), [&progress](double& a){a *= progress;});
+                            this->line_alpha *= progress;
                         }
                     }
                     break;
@@ -564,132 +526,78 @@ namespace{
                                 case SSBTag::Type::COLOR:
                                     {
                                         SSBColor* color = dynamic_cast<SSBColor*>(animate_tag);
-                                        if(color->target == SSBColor::Target::FILL)
-                                            if(this->colors.size() == 1 && color->colors[1].r < 0)
-                                                this->colors[0] += (color->colors[0] - this->colors[0]) * progress;
-                                            else if(this->colors.size() == 4 && color->colors[1].r >= 0){
-                                                this->colors[0] += (color->colors[0] - this->colors[0]) * progress;
-                                                this->colors[1] += (color->colors[1] - this->colors[1]) * progress;
-                                                this->colors[2] += (color->colors[2] - this->colors[2]) * progress;
-                                                this->colors[3] += (color->colors[3] - this->colors[3]) * progress;
-                                            }else if(this->colors.size() == 1 && color->colors[1].r >= 0){
-                                                this->colors.resize(4);
-                                                std::fill(this->colors.begin(), this->colors.end(), this->colors[0]);
-                                                this->colors[0] += (color->colors[0] - this->colors[0]) * progress;
-                                                this->colors[1] += (color->colors[1] - this->colors[1]) * progress;
-                                                this->colors[2] += (color->colors[2] - this->colors[2]) * progress;
-                                                this->colors[3] += (color->colors[3] - this->colors[3]) * progress;
-                                            }else{
-                                                this->colors[0] += (color->colors[0] - this->colors[0]) * progress;
-                                                this->colors[1] += (color->colors[0] - this->colors[1]) * progress;
-                                                this->colors[2] += (color->colors[0] - this->colors[2]) * progress;
-                                                this->colors[3] += (color->colors[0] - this->colors[3]) * progress;
-                                            }
-                                        else
-                                            if(this->line_colors.size() == 1 && color->colors[1].r < 0)
-                                                this->line_colors[0] += (color->colors[0] - this->line_colors[0]) * progress;
-                                            else if(this->line_colors.size() == 4 && color->colors[1].r >= 0){
-                                                this->line_colors[0] += (color->colors[0] - this->line_colors[0]) * progress;
-                                                this->line_colors[1] += (color->colors[1] - this->line_colors[1]) * progress;
-                                                this->line_colors[2] += (color->colors[2] - this->line_colors[2]) * progress;
-                                                this->line_colors[3] += (color->colors[3] - this->line_colors[3]) * progress;
-                                            }else if(this->line_colors.size() == 1 && color->colors[1].r >= 0){
-                                                this->line_colors.resize(4);
-                                                std::fill(this->line_colors.begin(), this->line_colors.end(), this->line_colors[0]);
-                                                this->line_colors[0] += (color->colors[0] - this->line_colors[0]) * progress;
-                                                this->line_colors[1] += (color->colors[1] - this->line_colors[1]) * progress;
-                                                this->line_colors[2] += (color->colors[2] - this->line_colors[2]) * progress;
-                                                this->line_colors[3] += (color->colors[3] - this->line_colors[3]) * progress;
-                                            }else{
-                                                this->line_colors[0] += (color->colors[0] - this->line_colors[0]) * progress;
-                                                this->line_colors[1] += (color->colors[0] - this->line_colors[1]) * progress;
-                                                this->line_colors[2] += (color->colors[0] - this->line_colors[2]) * progress;
-                                                this->line_colors[3] += (color->colors[0] - this->line_colors[3]) * progress;
-                                            }
+                                        if(this->colors.size() == 1 && color->colors[1].r < 0)
+                                            this->colors[0] += (color->colors[0] - this->colors[0]) * progress;
+                                        else if(this->colors.size() == 4 && color->colors[1].r >= 0){
+                                            this->colors[0] += (color->colors[0] - this->colors[0]) * progress;
+                                            this->colors[1] += (color->colors[1] - this->colors[1]) * progress;
+                                            this->colors[2] += (color->colors[2] - this->colors[2]) * progress;
+                                            this->colors[3] += (color->colors[3] - this->colors[3]) * progress;
+                                        }else if(this->colors.size() == 1 && color->colors[1].r >= 0){
+                                            this->colors.resize(4);
+                                            std::fill(this->colors.begin(), this->colors.end(), this->colors[0]);
+                                            this->colors[0] += (color->colors[0] - this->colors[0]) * progress;
+                                            this->colors[1] += (color->colors[1] - this->colors[1]) * progress;
+                                            this->colors[2] += (color->colors[2] - this->colors[2]) * progress;
+                                            this->colors[3] += (color->colors[3] - this->colors[3]) * progress;
+                                        }else{
+                                            this->colors[0] += (color->colors[0] - this->colors[0]) * progress;
+                                            this->colors[1] += (color->colors[0] - this->colors[1]) * progress;
+                                            this->colors[2] += (color->colors[0] - this->colors[2]) * progress;
+                                            this->colors[3] += (color->colors[0] - this->colors[3]) * progress;
+                                        }
                                     }
+                                    break;
+                                case SSBTag::Type::LINE_COLOR:
+                                    this->line_color += (dynamic_cast<SSBLineColor*>(tag)->color - this->line_color) * progress;
                                     break;
                                 case SSBTag::Type::ALPHA:
                                     {
                                         SSBAlpha* alpha = dynamic_cast<SSBAlpha*>(animate_tag);
-                                        if(alpha->target == SSBAlpha::Target::FILL)
-                                            if(this->alphas.size() == 1 && alpha->alphas[1] < 0)
-                                                this->alphas[0] += progress * (alpha->alphas[0] - this->alphas[0]);
-                                            else if(this->alphas.size() == 4 && alpha->alphas[1] >= 0){
-                                                this->alphas[0] += progress * (alpha->alphas[0] - this->alphas[0]);
-                                                this->alphas[1] += progress * (alpha->alphas[1] - this->alphas[1]);
-                                                this->alphas[2] += progress * (alpha->alphas[2] - this->alphas[2]);
-                                                this->alphas[3] += progress * (alpha->alphas[3] - this->alphas[3]);
-                                            }else if(this->alphas.size() == 1 && alpha->alphas[1] >= 0){
-                                                this->alphas.resize(4);
-                                                std::fill(this->alphas.begin(), this->alphas.end(), this->alphas[0]);
-                                                this->alphas[0] += progress * (alpha->alphas[0] - this->alphas[0]);
-                                                this->alphas[1] += progress * (alpha->alphas[1] - this->alphas[1]);
-                                                this->alphas[2] += progress * (alpha->alphas[2] - this->alphas[2]);
-                                                this->alphas[3] += progress * (alpha->alphas[3] - this->alphas[3]);
-                                            }else{
-                                                this->alphas[0] += progress * (alpha->alphas[0] - this->alphas[0]);
-                                                this->alphas[1] += progress * (alpha->alphas[0] - this->alphas[1]);
-                                                this->alphas[2] += progress * (alpha->alphas[0] - this->alphas[2]);
-                                                this->alphas[3] += progress * (alpha->alphas[0] - this->alphas[3]);
-                                            }
-                                        else
-                                            if(this->line_alphas.size() == 1 && alpha->alphas[1] < 0)
-                                                this->line_alphas[0] += progress * (alpha->alphas[0] - this->line_alphas[0]);
-                                            else if(this->line_alphas.size() == 4 && alpha->alphas[1] >= 0){
-                                                this->line_alphas[0] += progress * (alpha->alphas[0] - this->line_alphas[0]);
-                                                this->line_alphas[1] += progress * (alpha->alphas[1] - this->line_alphas[1]);
-                                                this->line_alphas[2] += progress * (alpha->alphas[2] - this->line_alphas[2]);
-                                                this->line_alphas[3] += progress * (alpha->alphas[3] - this->line_alphas[3]);
-                                            }else if(this->line_alphas.size() == 1 && alpha->alphas[1] >= 0){
-                                                this->line_alphas.resize(4);
-                                                std::fill(this->line_alphas.begin(), this->line_alphas.end(), this->line_alphas[0]);
-                                                this->line_alphas[0] += progress * (alpha->alphas[0] - this->line_alphas[0]);
-                                                this->line_alphas[1] += progress * (alpha->alphas[1] - this->line_alphas[1]);
-                                                this->line_alphas[2] += progress * (alpha->alphas[2] - this->line_alphas[2]);
-                                                this->line_alphas[3] += progress * (alpha->alphas[3] - this->line_alphas[3]);
-                                            }else{
-                                                this->line_alphas[0] += progress * (alpha->alphas[0] - this->line_alphas[0]);
-                                                this->line_alphas[1] += progress * (alpha->alphas[0] - this->line_alphas[1]);
-                                                this->line_alphas[2] += progress * (alpha->alphas[0] - this->line_alphas[2]);
-                                                this->line_alphas[3] += progress * (alpha->alphas[0] - this->line_alphas[3]);
-                                            }
+                                        if(this->alphas.size() == 1 && alpha->alphas[1] < 0)
+                                            this->alphas[0] += progress * (alpha->alphas[0] - this->alphas[0]);
+                                        else if(this->alphas.size() == 4 && alpha->alphas[1] >= 0){
+                                            this->alphas[0] += progress * (alpha->alphas[0] - this->alphas[0]);
+                                            this->alphas[1] += progress * (alpha->alphas[1] - this->alphas[1]);
+                                            this->alphas[2] += progress * (alpha->alphas[2] - this->alphas[2]);
+                                            this->alphas[3] += progress * (alpha->alphas[3] - this->alphas[3]);
+                                        }else if(this->alphas.size() == 1 && alpha->alphas[1] >= 0){
+                                            this->alphas.resize(4);
+                                            std::fill(this->alphas.begin(), this->alphas.end(), this->alphas[0]);
+                                            this->alphas[0] += progress * (alpha->alphas[0] - this->alphas[0]);
+                                            this->alphas[1] += progress * (alpha->alphas[1] - this->alphas[1]);
+                                            this->alphas[2] += progress * (alpha->alphas[2] - this->alphas[2]);
+                                            this->alphas[3] += progress * (alpha->alphas[3] - this->alphas[3]);
+                                        }else{
+                                            this->alphas[0] += progress * (alpha->alphas[0] - this->alphas[0]);
+                                            this->alphas[1] += progress * (alpha->alphas[0] - this->alphas[1]);
+                                            this->alphas[2] += progress * (alpha->alphas[0] - this->alphas[2]);
+                                            this->alphas[3] += progress * (alpha->alphas[0] - this->alphas[3]);
+                                        }
                                     }
+                                    break;
+                                case SSBTag::Type::LINE_ALPHA:
+                                    this->line_alpha += (dynamic_cast<SSBLineAlpha*>(tag)->alpha - this->line_alpha) * progress;
                                     break;
                                 case SSBTag::Type::TEXTURE:
                                     {
-                                        SSBTexture* texture = dynamic_cast<SSBTexture*>(animate_tag);
                                         std::stringstream s;
-                                        s << texture->filename << static_cast<int>(floor(progress));
-                                        if(texture->target == SSBTexture::Target::FILL)
-                                            this->texture = s.str();
-                                        else
-                                            this->line_texture = s.str();
+                                        s << dynamic_cast<SSBTexture*>(animate_tag)->filename << static_cast<int>(floor(progress));
+                                        this->texture = s.str();
                                     }
                                     break;
                                 case SSBTag::Type::TEXFILL:
                                     {
                                         SSBTexFill* texfill = dynamic_cast<SSBTexFill*>(animate_tag);
-                                        if(texfill->target == SSBTexFill::Target::FILL){
-                                            this->texture_x += progress * (texfill->x - this->texture_x);
-                                            this->texture_y += progress * (texfill->y - this->texture_x);
-                                            if(progress >= threshold)
-                                                switch(texfill->wrap){
-                                                    case SSBTexFill::WrapStyle::CLAMP: this->wrap_style = CAIRO_EXTEND_NONE; break;
-                                                    case SSBTexFill::WrapStyle::REPEAT: this->wrap_style = CAIRO_EXTEND_REPEAT; break;
-                                                    case SSBTexFill::WrapStyle::MIRROR: this->wrap_style = CAIRO_EXTEND_REFLECT; break;
-                                                    case SSBTexFill::WrapStyle::FLOW: this->wrap_style = CAIRO_EXTEND_PAD; break;
-                                                }
-                                        }else{
-                                            this->line_texture_x += progress * (texfill->x - this->line_texture_x);
-                                            this->line_texture_y += progress * (texfill->y - this->line_texture_x);
-                                            if(progress >= threshold)
-                                                switch(texfill->wrap){
-                                                    case SSBTexFill::WrapStyle::CLAMP: this->line_wrap_style = CAIRO_EXTEND_NONE; break;
-                                                    case SSBTexFill::WrapStyle::REPEAT: this->line_wrap_style = CAIRO_EXTEND_REPEAT; break;
-                                                    case SSBTexFill::WrapStyle::MIRROR: this->line_wrap_style = CAIRO_EXTEND_REFLECT; break;
-                                                    case SSBTexFill::WrapStyle::FLOW: this->line_wrap_style = CAIRO_EXTEND_PAD; break;
-                                                }
-                                        }
+                                        this->texture_x += progress * (texfill->x - this->texture_x);
+                                        this->texture_y += progress * (texfill->y - this->texture_x);
+                                        if(progress >= threshold)
+                                            switch(texfill->wrap){
+                                                case SSBTexFill::WrapStyle::CLAMP: this->wrap_style = CAIRO_EXTEND_NONE; break;
+                                                case SSBTexFill::WrapStyle::REPEAT: this->wrap_style = CAIRO_EXTEND_REPEAT; break;
+                                                case SSBTexFill::WrapStyle::MIRROR: this->wrap_style = CAIRO_EXTEND_REFLECT; break;
+                                                case SSBTexFill::WrapStyle::FLOW: this->wrap_style = CAIRO_EXTEND_PAD; break;
+                                            }
                                     }
                                     break;
                                 case SSBTag::Type::BLEND:

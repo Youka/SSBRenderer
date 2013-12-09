@@ -61,7 +61,9 @@ class SSBTag : public SSBObject{
             SHEAR,
             TRANSFORM,
             COLOR,
+            LINE_COLOR,
             ALPHA,
+            LINE_ALPHA,
             TEXTURE,
             TEXFILL,
             BLEND,
@@ -300,36 +302,42 @@ struct RGB{
 // Color state
 class SSBColor : public SSBTag{
     public:
-        enum class Target{FILL, LINE} target;
         RGB colors[4];
-        SSBColor(Target target, double r, double g, double b) : SSBTag(SSBTag::Type::COLOR), target(target), colors({{r, g, b}, {-1, -1, -1}, {-1, -1, -1}, {-1, -1, -1}}){}
-        SSBColor(Target target, double r0, double g0, double b0, double r1, double g1, double b1, double r2, double g2, double b2, double r3, double g3, double b3) : SSBTag(SSBTag::Type::COLOR), target(target), colors({{r0, g0, b0}, {r1, g1, b1}, {r2, g2, b2}, {r3, g3, b3}}){}
+        SSBColor(double r, double g, double b) : SSBTag(SSBTag::Type::COLOR), colors({{r, g, b}, {-1, -1, -1}, {-1, -1, -1}, {-1, -1, -1}}){}
+        SSBColor(double r0, double g0, double b0, double r1, double g1, double b1, double r2, double g2, double b2, double r3, double g3, double b3) : SSBTag(SSBTag::Type::COLOR), colors({{r0, g0, b0}, {r1, g1, b1}, {r2, g2, b2}, {r3, g3, b3}}){}
+};
+class SSBLineColor : public SSBTag{
+    public:
+        RGB color;
+        SSBLineColor(double r, double g, double b) : SSBTag(SSBTag::Type::LINE_COLOR), color({r, g, b}){}
 };
 
 // Alpha state
 class SSBAlpha : public SSBTag{
     public:
-        enum class Target{FILL, LINE} target;
         double alphas[4];
-        SSBAlpha(Target target, double a) : SSBTag(SSBTag::Type::ALPHA), target(target), alphas{a, -1, -1, -1}{}
-        SSBAlpha(Target target, double a0, double a1, double a2, double a3) : SSBTag(SSBTag::Type::ALPHA), target(target), alphas{a0, a1, a2, a3}{}
+        SSBAlpha(double a) : SSBTag(SSBTag::Type::ALPHA), alphas{a, -1, -1, -1}{}
+        SSBAlpha(double a0, double a1, double a2, double a3) : SSBTag(SSBTag::Type::ALPHA), alphas{a0, a1, a2, a3}{}
+};
+class SSBLineAlpha : public SSBTag{
+    public:
+        double alpha;
+        SSBLineAlpha(double a) : SSBTag(SSBTag::Type::LINE_ALPHA), alpha(a){}
 };
 
 // Texture state
 class SSBTexture : public SSBTag{
     public:
-        enum class Target{FILL, LINE} target;
         std::string filename;
-        SSBTexture(Target target, std::string filename) : SSBTag(SSBTag::Type::TEXTURE), target(target), filename(filename){}
+        SSBTexture(std::string filename) : SSBTag(SSBTag::Type::TEXTURE), filename(filename){}
 };
 
 // Texture fill state
 class SSBTexFill : public SSBTag{
     public:
-        enum class Target{FILL, LINE} target;
         SSBCoord x, y;
         enum class WrapStyle{CLAMP, REPEAT, MIRROR, FLOW} wrap;
-        SSBTexFill(Target target, SSBCoord x, SSBCoord y, WrapStyle wrap) : SSBTag(SSBTag::Type::TEXFILL), target(target), x(x), y(y), wrap(wrap){}
+        SSBTexFill(SSBCoord x, SSBCoord y, WrapStyle wrap) : SSBTag(SSBTag::Type::TEXFILL), x(x), y(y), wrap(wrap){}
 };
 
 // Blend state
