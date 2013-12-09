@@ -702,7 +702,7 @@ namespace{
                 else if(warnings)
                     throw_parse_error(line_i, "Invalid karaoke color");
             }else if(warnings)
-                throw_parse_error(line_i, "Invalid tag");
+                throw_parse_error(line_i, "Invalid tag \"" + tags_token + '\"');
 	}
     // Parse geometry and adds to SSB event object
     void parse_geometry(std::string& geometry, SSBGeometry::Type geometry_type, SSBEvent& ssb_event, unsigned long int line_i, bool warnings) throw(std::string){

@@ -487,11 +487,6 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                         // Deform geometry
                         if(!rs.deform_x.empty() || !rs.deform_y.empty())
                             path_deform(this->stencil_path_buffer, rs.deform_x, rs.deform_y, rs.deform_progress);
-                        // Set line properties
-                        if(frame_scale_x > 0 && frame_scale_y > 0)
-                            set_line_props(this->stencil_path_buffer, rs, (frame_scale_x + frame_scale_y) / 2);
-                        else
-                            set_line_props(this->stencil_path_buffer, rs);
                         // Get original geometry dimensions (for color shifting to geometry)
                         double x1, y1, x2, y2; cairo_path_extents(this->stencil_path_buffer, &x1, &y1, &x2, &y2);
                         int fill_x = floor(x1), fill_y = floor(y1), fill_width = ceil(x2) - fill_x, fill_height = ceil(y2) - fill_y;
@@ -519,6 +514,11 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                         // Get transformed geometry dimensions (for overlay image)
                         cairo_path_extents(this->stencil_path_buffer, &x1, &y1, &x2, &y2);
                         int x = floor(x1), y = floor(y1), width = ceil(x2 - x), height = ceil(y2 - y);
+                        // Set line properties
+                        if(frame_scale_x > 0 && frame_scale_y > 0)
+                            set_line_props(this->stencil_path_buffer, rs, (frame_scale_x + frame_scale_y) / 2);
+                        else
+                            set_line_props(this->stencil_path_buffer, rs);
                         // Draw by type
                         enum class DrawType{FILL_BLURRED, FILL_WITHOUT_BLUR, BORDER, WIRE};
                         auto draw_func = [&](DrawType draw_type){
@@ -636,23 +636,21 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                                 }
                             }
                             // Draw karaoke over image
-                            if(draw_type == DrawType::FILL_BLURRED || draw_type == DrawType::FILL_WITHOUT_BLUR){
-                                if(rs.karaoke_start >= 0){
-                                    int elapsed_time = start_ms - event.start_ms;
-                                    cairo_set_operator(image, CAIRO_OPERATOR_ATOP);
-                                    cairo_set_source_rgb(image, rs.karaoke_color.r, rs.karaoke_color.g, rs.karaoke_color.b);
-                                    if(elapsed_time >= rs.karaoke_start + rs.karaoke_duration)
-                                        cairo_paint(image);
-                                    else if(elapsed_time >= rs.karaoke_start){
-                                        double progress = static_cast<double>(elapsed_time - rs.karaoke_start) / rs.karaoke_duration;
-                                        cairo_new_path(image);
-                                        switch(rs.direction){
-                                            case SSBDirection::Mode::LTR: cairo_rectangle(image, fill_x, fill_y, progress * fill_width, fill_height); break;
-                                            case SSBDirection::Mode::RTL: cairo_rectangle(image, fill_x + (1 - progress) * fill_width, fill_y, progress * fill_width, fill_height); break;
-                                            case SSBDirection::Mode::TTB: cairo_rectangle(image, fill_x, fill_y, fill_width, progress * fill_height); break;
-                                        }
-                                        cairo_fill(image);
+                            if((draw_type == DrawType::FILL_BLURRED || draw_type == DrawType::FILL_WITHOUT_BLUR) && rs.karaoke_start >= 0){
+                                int elapsed_time = start_ms - event.start_ms;
+                                cairo_set_operator(image, CAIRO_OPERATOR_ATOP);
+                                cairo_set_source_rgb(image, rs.karaoke_color.r, rs.karaoke_color.g, rs.karaoke_color.b);
+                                if(elapsed_time >= rs.karaoke_start + rs.karaoke_duration)
+                                    cairo_paint(image);
+                                else if(elapsed_time >= rs.karaoke_start){
+                                    double progress = static_cast<double>(elapsed_time - rs.karaoke_start) / rs.karaoke_duration;
+                                    cairo_new_path(image);
+                                    switch(rs.direction){
+                                        case SSBDirection::Mode::LTR: cairo_rectangle(image, fill_x, fill_y, progress * fill_width, fill_height); break;
+                                        case SSBDirection::Mode::RTL: cairo_rectangle(image, fill_x + (1 - progress) * fill_width, fill_y, progress * fill_width, fill_height); break;
+                                        case SSBDirection::Mode::TTB: cairo_rectangle(image, fill_x, fill_y, fill_width, progress * fill_height); break;
                                     }
+                                    cairo_fill(image);
                                 }
                             }
                             // Blur image
@@ -664,7 +662,7 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                                 cairo_set_operator(image, CAIRO_OPERATOR_DEST_OUT);
                                 cairo_fill(image);
                             }
-                            // Apply stenciling
+                            // Apply stenciling and/or blending on frame
                             switch(rs.stencil_mode){
                                 case SSBStencil::Mode::OFF:
                                     this->blend(image, -border_h + x, -border_v + y, frame, pitch, rs.blend_mode);
