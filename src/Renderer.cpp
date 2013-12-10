@@ -519,9 +519,9 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                             set_line_props(this->stencil_path_buffer, rs, (frame_scale_x + frame_scale_y) / 2);
                         else
                             set_line_props(this->stencil_path_buffer, rs);
-                        // Draw by type
+                        // Create overlay by type
                         enum class DrawType{FILL_BLURRED, FILL_WITHOUT_BLUR, BORDER, WIRE};
-                        auto draw_func = [&](DrawType draw_type){
+                        auto create_overlay = [&](DrawType draw_type) -> ImageData{
                             /*
                                 CODE FOR PERFORMANCE TESTING ON WINDOWS
 
@@ -662,57 +662,64 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                                 cairo_set_operator(image, CAIRO_OPERATOR_DEST_OUT);
                                 cairo_fill(image);
                             }
-                            // Apply stenciling and/or blending on frame
-                            switch(rs.stencil_mode){
-                                case SSBStencil::Mode::OFF:
-                                    this->blend(image, -border_h + x, -border_v + y, frame, pitch, rs.blend_mode);
-                                    if(event.static_tags)
-                                        event_images.push_back({image, -border_h + x, -border_v + y, rs.blend_mode});
-                                    break;
-                                case SSBStencil::Mode::INSIDE:
-                                    cairo_set_operator(image, CAIRO_OPERATOR_DEST_IN);
-                                    cairo_identity_matrix(image);
-                                    cairo_set_source_surface(image, this->stencil_path_buffer, -x + border_h, -y + border_v);
-                                    cairo_paint(image);
-                                    this->blend(image, -border_h + x, -border_v + y, frame, pitch, rs.blend_mode);
-                                    if(event.static_tags)
-                                        event_images.push_back({image, -border_h + x, -border_v + y, rs.blend_mode});
-                                    break;
-                                case SSBStencil::Mode::OUTSIDE:
-                                    cairo_set_operator(image, CAIRO_OPERATOR_DEST_OUT);
-                                    cairo_identity_matrix(image);
-                                    cairo_set_source_surface(image, this->stencil_path_buffer, -x + border_h, -y + border_v);
-                                    cairo_paint(image);
-                                    this->blend(image, -border_h + x, -border_v + y, frame, pitch, rs.blend_mode);
-                                    if(event.static_tags)
-                                        event_images.push_back({image, -border_h + x, -border_v + y, rs.blend_mode});
-                                    break;
-                                case SSBStencil::Mode::SET:
-                                    cairo_set_operator(this->stencil_path_buffer, CAIRO_OPERATOR_ADD);
-                                    cairo_set_source_surface(this->stencil_path_buffer, image, -border_h + x, -border_v + y);
-                                    cairo_paint(this->stencil_path_buffer);
-                                    break;
-                                case SSBStencil::Mode::UNSET:
-                                    // Invert alpha
-                                    cairo_set_operator(image, CAIRO_OPERATOR_XOR);
-                                    cairo_set_source_rgba(image, 1, 1, 1, 1);
-                                    cairo_paint(image);
-                                    // Multiply alpha
-                                    cairo_set_operator(this->stencil_path_buffer, CAIRO_OPERATOR_IN);
-                                    cairo_set_source_surface(this->stencil_path_buffer, image, -border_h + x, -border_v + y);
-                                    cairo_paint(this->stencil_path_buffer);
-                                    break;
-                            }
+                            // Return complete overlay data
+                            return {image, -border_h + x, -border_v + y, rs.blend_mode};
                         };
-                        // Draw!
+                        // Create overlay
+                        ImageData overlay;
                         if(rs.mode == SSBMode::Mode::FILL){
                             if(rs.line_width > 0 && geometry->type != SSBGeometry::Type::POINTS){
-                                draw_func(DrawType::BORDER);
-                                draw_func(DrawType::FILL_WITHOUT_BLUR);
+                                overlay = create_overlay(DrawType::BORDER);
+                                ImageData overlay2 = create_overlay(DrawType::FILL_WITHOUT_BLUR);
+                                cairo_set_operator(overlay.image, CAIRO_OPERATOR_ADD);
+                                cairo_identity_matrix(overlay.image);
+                                cairo_set_source_surface(overlay.image, overlay2.image, overlay2.x - overlay.x, overlay2.y - overlay.y);
+                                cairo_paint(overlay.image);
                             }else
-                                draw_func(DrawType::FILL_BLURRED);
+                                overlay = create_overlay(DrawType::FILL_BLURRED);
                         }else   // rs.mode == SSBMode::Mode::WIRE
-                            draw_func(DrawType::WIRE);
+                            overlay = create_overlay(DrawType::WIRE);
+                        // Apply stenciling and/or blending on frame
+                        switch(rs.stencil_mode){
+                            case SSBStencil::Mode::OFF:
+                                this->blend(overlay.image, overlay.x, overlay.y, frame, pitch, overlay.blend_mode);
+                                if(event.static_tags)
+                                    event_images.push_back(overlay);
+                                break;
+                            case SSBStencil::Mode::INSIDE:
+                                cairo_set_operator(overlay.image, CAIRO_OPERATOR_DEST_IN);
+                                cairo_identity_matrix(overlay.image);
+                                cairo_set_source_surface(overlay.image, this->stencil_path_buffer, -overlay.x, -overlay.y);
+                                cairo_paint(overlay.image);
+                                this->blend(overlay.image, overlay.x, overlay.y, frame, pitch, overlay.blend_mode);
+                                if(event.static_tags)
+                                    event_images.push_back(overlay);
+                                break;
+                            case SSBStencil::Mode::OUTSIDE:
+                                cairo_set_operator(overlay.image, CAIRO_OPERATOR_DEST_OUT);
+                                cairo_identity_matrix(overlay.image);
+                                cairo_set_source_surface(overlay.image, this->stencil_path_buffer, -overlay.x, -overlay.y);
+                                cairo_paint(overlay.image);
+                                this->blend(overlay.image, overlay.x, overlay.y, frame, pitch, overlay.blend_mode);
+                                if(event.static_tags)
+                                    event_images.push_back(overlay);
+                                break;
+                            case SSBStencil::Mode::SET:
+                                cairo_set_operator(this->stencil_path_buffer, CAIRO_OPERATOR_ADD);
+                                cairo_set_source_surface(this->stencil_path_buffer, overlay.image, overlay.x, overlay.y);
+                                cairo_paint(this->stencil_path_buffer);
+                                break;
+                            case SSBStencil::Mode::UNSET:
+                                // Invert alpha
+                                cairo_set_operator(overlay.image, CAIRO_OPERATOR_XOR);
+                                cairo_set_source_rgba(overlay.image, 1, 1, 1, 1);
+                                cairo_paint(overlay.image);
+                                // Multiply alpha
+                                cairo_set_operator(this->stencil_path_buffer, CAIRO_OPERATOR_IN);
+                                cairo_set_source_surface(this->stencil_path_buffer, overlay.image, overlay.x, overlay.y);
+                                cairo_paint(this->stencil_path_buffer);
+                                break;
+                        }
                         // Clear path
                         cairo_new_path(this->stencil_path_buffer);
                     }

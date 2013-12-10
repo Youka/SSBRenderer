@@ -10,6 +10,5 @@ v0.0.2 (planned)
 v0.0.1 (planned)
 ----------------
 * added line wrapping
-* filled border-fill gap
 * completed README
 * added examples
