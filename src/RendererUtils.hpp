@@ -47,10 +47,10 @@ namespace{
             do{
                 if(is_space){
                     pos_end = text.find_first_not_of(' ', pos_start);
-                    words.push_back({"", text.substr(pos_start, pos_end)});
+                    words.push_back({"", text.substr(pos_start, pos_end - pos_start)});
                 }else{
                     pos_end = text.find_first_of(' ', pos_start);
-                    words.back().text = text.substr(pos_start, pos_end);
+                    words.back().text = text.substr(pos_start, pos_end - pos_start);
                 }
                 is_space = !is_space;
                 pos_start = pos_end;

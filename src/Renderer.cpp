@@ -307,48 +307,40 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                                             case SSBDirection::Mode::LTR:
                                             case SSBDirection::Mode::RTL:
                                                 {
-                                                    // Unwrapped line
-                                                    double width;
-                                                    auto get_text_width = [&width,&font,&rs](std::string& text){
+                                                    // Width calculation
+                                                    auto get_text_width = [&font,&rs](std::string& text) -> double{
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-equal"
                                                         if(rs.font_space_h != 0){
 #pragma GCC diagnostic pop
-                                                            width = 0;
+                                                            double width = 0;
                                                             std::vector<std::string> chars = utf8_chars(text);
                                                             for(std::string& c : chars)
                                                                 width += font.get_text_width(c) + rs.font_space_h;
+                                                            return width;
                                                         }else
-                                                            width = font.get_text_width(text);
+                                                            return font.get_text_width(text);
                                                     };
-                                                    get_text_width(line);
-                                                    // Line wrap?
-                                                    if(false){//render_sizes.back().lines.back().width + width > wrap_width){
-                                                        std::vector<Word> words = getwords(line);
-                                                        for(Word& word : words){
-                                                            std::string merged_word = word.prespace + word.text;
-                                                            get_text_width(merged_word);
-                                                            if(render_sizes.back().lines.back().geometries.size() > 0 && render_sizes.back().lines.back().width + width > wrap_width){
-                                                                render_sizes.back().lines.back().space = metrics.external_lead + rs.font_space_v;
-                                                                render_sizes.back().lines.push_back({});
-                                                                get_text_width(word.text);
-                                                            }
-                                                            render_sizes.back().lines.back().geometries.push_back({render_sizes.back().lines.back().width, std::accumulate(render_sizes.back().lines.begin(), render_sizes.back().lines.end()-1, 0.0, [](double init, LineSize& lsize){
-                                                                return init + lsize.height + lsize.space;
-                                                            }), width, metrics.height});
-                                                            render_sizes.back().lines.back().width += width;
-                                                            render_sizes.back().lines.back().height = std::max(render_sizes.back().lines.back().height, metrics.height);
+                                                    // Words iteration
+                                                    std::vector<Word> words = getwords(line);
+                                                    std::string merged_word;
+                                                    double width;
+                                                    for(Word& word : words){
+                                                        merged_word = word.prespace + word.text;
+                                                        width = get_text_width(merged_word);
+                                                        if(render_sizes.back().lines.back().geometries.size() > 0 && render_sizes.back().lines.back().width + width > wrap_width){
+                                                            render_sizes.back().lines.back().space = metrics.external_lead + rs.font_space_v;
+                                                            render_sizes.back().lines.push_back({});
+                                                            width = get_text_width(word.text);
                                                         }
-                                                        break;
-                                                    }else{
                                                         render_sizes.back().lines.back().geometries.push_back({render_sizes.back().lines.back().width, std::accumulate(render_sizes.back().lines.begin(), render_sizes.back().lines.end()-1, 0.0, [](double init, LineSize& lsize){
                                                             return init + lsize.height + lsize.space;
                                                         }), width, metrics.height});
                                                         render_sizes.back().lines.back().width += width;
                                                         render_sizes.back().lines.back().height = std::max(render_sizes.back().lines.back().height, metrics.height);
+                                                        render_sizes.back().width = std::max(render_sizes.back().width, render_sizes.back().lines.back().width);
                                                     }
-                                                    // Update position render size
-                                                    render_sizes.back().width = std::max(render_sizes.back().width, render_sizes.back().lines.back().width);
+                                                    // Update position render height
                                                     render_sizes.back().height = std::accumulate(render_sizes.back().lines.begin(), render_sizes.back().lines.end(), 0.0, [](double init, LineSize& lsize){
                                                         return init + lsize.height + lsize.space;
                                                     });
@@ -356,9 +348,8 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                                                 break;
                                             case SSBDirection::Mode::TTB:
                                                 {
-                                                    // Unwrapped line
-                                                    double width, height;
-                                                    auto get_text_extents = [&width,&height,&font,&metrics,&rs](std::string& text){
+                                                    // Extents calculation
+                                                    auto get_text_extents = [&font,&metrics,&rs](std::string& text, double& width, double& height){
                                                         width = height = 0;
                                                         std::vector<std::string> chars = utf8_chars(text);
                                                         for(std::string& c : chars){
@@ -366,35 +357,29 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                                                             height += metrics.height + rs.font_space_v;
                                                         }
                                                     };
-                                                    get_text_extents(line);
-                                                    // Line wrap?
-                                                    if(false){//render_sizes.back().lines.back().height + height > wrap_height){
-                                                        std::vector<Word> words = getwords(line);
-                                                        for(Word& word : words){
-                                                            std::string merged_word = word.prespace + word.text;
-                                                            get_text_extents(merged_word);
-                                                            if(render_sizes.back().lines.back().geometries.size() > 0 && render_sizes.back().lines.back().height + height > wrap_height){
-                                                                render_sizes.back().lines.back().space = rs.font_space_h;
-                                                                render_sizes.back().lines.push_back({});
-                                                                get_text_extents(word.text);
-                                                            }
-                                                            render_sizes.back().lines.back().geometries.push_back({std::accumulate(render_sizes.back().lines.begin(), render_sizes.back().lines.end()-1, 0.0, [](double init, LineSize& lsize){
-                                                                return init + lsize.width + lsize.space;
-                                                            }), render_sizes.back().lines.back().height, width, height});
-                                                            render_sizes.back().lines.back().width = std::max(render_sizes.back().lines.back().width, width);
-                                                            render_sizes.back().lines.back().height += height;
+                                                    // Words iteration
+                                                    std::vector<Word> words = getwords(line);
+                                                    std::string merged_word;
+                                                    double width, height;
+                                                    for(Word& word : words){
+                                                        merged_word = word.prespace + word.text;
+                                                        get_text_extents(merged_word, width, height);
+                                                        if(render_sizes.back().lines.back().geometries.size() > 0 && render_sizes.back().lines.back().height + height > wrap_height){
+                                                            render_sizes.back().lines.back().space = rs.font_space_h;
+                                                            render_sizes.back().lines.push_back({});
+                                                            get_text_extents(word.text, width, height);
                                                         }
-                                                    }else{
                                                         render_sizes.back().lines.back().geometries.push_back({std::accumulate(render_sizes.back().lines.begin(), render_sizes.back().lines.end()-1, 0.0, [](double init, LineSize& lsize){
                                                             return init + lsize.width + lsize.space;
                                                         }), render_sizes.back().lines.back().height, width, height});
                                                         render_sizes.back().lines.back().width = std::max(render_sizes.back().lines.back().width, width);
                                                         render_sizes.back().lines.back().height += height;
+                                                        render_sizes.back().height = std::max(render_sizes.back().height, render_sizes.back().lines.back().height);
                                                     }
+                                                    // Update position render width
                                                     render_sizes.back().width = std::accumulate(render_sizes.back().lines.begin(), render_sizes.back().lines.end(), 0.0, [](double init, LineSize& lsize){
                                                         return init + lsize.width + lsize.space;
                                                     });
-                                                    render_sizes.back().height = std::max(render_sizes.back().height, render_sizes.back().lines.back().height);
                                                 }
                                                 break;
                                         }
@@ -476,48 +461,86 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                                             align_point = calc_align_offset(rs.align, rs.direction, render_sizes[size_index.pos], ++size_index.line);
                                             size_index.geometry = 0;
                                         }
-                                        // Save geometries matrix
-                                        cairo_save(this->stencil_path_buffer);
-                                        cairo_translate(this->stencil_path_buffer, align_point.x, align_point.y + render_sizes[size_index.pos].lines[size_index.line].geometries[size_index.geometry].off_y);
                                         // Draw line
                                         switch(rs.direction){
                                             case SSBDirection::Mode::LTR:
                                             case SSBDirection::Mode::RTL:
-                                                cairo_translate(this->stencil_path_buffer,
-                                                                (rs.direction == SSBDirection::Mode::LTR ?
-                                                                render_sizes[size_index.pos].lines[size_index.line].geometries[size_index.geometry].off_x :
-                                                                render_sizes[size_index.pos].lines[size_index.line].width - render_sizes[size_index.pos].lines[size_index.line].geometries[size_index.geometry].off_x - render_sizes[size_index.pos].lines[size_index.line].geometries[size_index.geometry].width),
-                                                                (render_sizes[size_index.pos].lines[size_index.line].height - render_sizes[size_index.pos].lines[size_index.line].geometries[size_index.geometry].height));
+                                                {
+                                                    std::vector<Word> words = getwords(line);
+                                                    std::string merged_word;
+                                                    for(Word& word : words){
+                                                        merged_word = word.prespace + word.text;
+                                                        // Update geometry index by newline
+                                                        if(size_index.geometry >= render_sizes[size_index.pos].lines[size_index.line].geometries.size()){
+                                                            align_point = calc_align_offset(rs.align, rs.direction, render_sizes[size_index.pos], ++size_index.line);
+                                                            size_index.geometry = 0;
+                                                            merged_word = word.text;
+                                                        }
+                                                        // Define path
+                                                        cairo_save(this->stencil_path_buffer);
+                                                        cairo_translate(this->stencil_path_buffer,
+                                                                        align_point.x +
+                                                                        (rs.direction == SSBDirection::Mode::LTR ?
+                                                                        render_sizes[size_index.pos].lines[size_index.line].geometries[size_index.geometry].off_x :
+                                                                        render_sizes[size_index.pos].lines[size_index.line].width - render_sizes[size_index.pos].lines[size_index.line].geometries[size_index.geometry].off_x - render_sizes[size_index.pos].lines[size_index.line].geometries[size_index.geometry].width),
+                                                                        align_point.y +
+                                                                        render_sizes[size_index.pos].lines[size_index.line].geometries[size_index.geometry].off_y +
+                                                                        (render_sizes[size_index.pos].lines[size_index.line].height - render_sizes[size_index.pos].lines[size_index.line].geometries[size_index.geometry].height));
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-equal"
-                                                if(rs.font_space_h != 0){
+                                                        if(rs.font_space_h != 0){
 #pragma GCC diagnostic pop
-                                                    std::vector<std::string> chars = utf8_chars(line);
-                                                    for(std::string& c: chars){
-                                                        font.text_path_to_cairo(c, this->stencil_path_buffer);
-                                                        cairo_translate(this->stencil_path_buffer, font.get_text_width(c) + rs.font_space_h, 0);
+                                                            std::vector<std::string> chars = utf8_chars(merged_word);
+                                                            for(std::string& c: chars){
+                                                                font.text_path_to_cairo(c, this->stencil_path_buffer);
+                                                                cairo_translate(this->stencil_path_buffer, font.get_text_width(c) + rs.font_space_h, 0);
+                                                            }
+                                                        }else
+                                                            font.text_path_to_cairo(merged_word, this->stencil_path_buffer);
+                                                        cairo_restore(this->stencil_path_buffer);
+                                                        // Increase geometry index
+                                                        if(&word != &words.back())
+                                                            ++size_index.geometry;
                                                     }
-                                                }else
-                                                    font.text_path_to_cairo(line, this->stencil_path_buffer);
+                                                }
                                                 break;
                                             case SSBDirection::Mode::TTB:
                                                 {
-                                                    cairo_translate(this->stencil_path_buffer, render_sizes[size_index.pos].width - render_sizes[size_index.pos].lines[size_index.line].geometries[size_index.geometry].off_x - render_sizes[size_index.pos].lines[size_index.line].width, 0);
-                                                    std::vector<std::string> chars = utf8_chars(line);
-                                                    for(std::string& c: chars){
+                                                    std::vector<Word> words = getwords(line);
+                                                    std::string merged_word;
+                                                    for(Word& word : words){
+                                                        merged_word = word.prespace + word.text;
+                                                        // Update geometry index by newline
+                                                        if(size_index.geometry >= render_sizes[size_index.pos].lines[size_index.line].geometries.size()){
+                                                            align_point = calc_align_offset(rs.align, rs.direction, render_sizes[size_index.pos], ++size_index.line);
+                                                            size_index.geometry = 0;
+                                                            merged_word = word.text;
+                                                        }
+                                                        // Define path
                                                         cairo_save(this->stencil_path_buffer);
                                                         cairo_translate(this->stencil_path_buffer,
-                                                                        (render_sizes[size_index.pos].lines[size_index.line].width - font.get_text_width(c)) / 2,
-                                                                        0);
-                                                        font.text_path_to_cairo(c, this->stencil_path_buffer);
+                                                                        align_point.x +
+                                                                        render_sizes[size_index.pos].width - render_sizes[size_index.pos].lines[size_index.line].geometries[size_index.geometry].off_x - render_sizes[size_index.pos].lines[size_index.line].width,
+                                                                        align_point.y +
+                                                                        render_sizes[size_index.pos].lines[size_index.line].geometries[size_index.geometry].off_y);
+                                                        std::vector<std::string> chars = utf8_chars(merged_word);
+                                                        for(std::string& c: chars){
+                                                            cairo_save(this->stencil_path_buffer);
+                                                            cairo_translate(this->stencil_path_buffer,
+                                                                            (render_sizes[size_index.pos].lines[size_index.line].width - font.get_text_width(c)) / 2,
+                                                                            0);
+                                                            font.text_path_to_cairo(c, this->stencil_path_buffer);
+                                                            cairo_restore(this->stencil_path_buffer);
+                                                            cairo_translate(this->stencil_path_buffer, 0, metrics.height + rs.font_space_v);
+                                                        }
                                                         cairo_restore(this->stencil_path_buffer);
-                                                        cairo_translate(this->stencil_path_buffer, 0, metrics.height + rs.font_space_v);
+                                                        // Increase geometry index
+                                                        if(&word != &words.back())
+                                                            ++size_index.geometry;
                                                     }
                                                 }
                                                 break;
                                         }
-                                        // Restore geometries matrix
-                                        cairo_restore(this->stencil_path_buffer);
                                     }
                                 }
                                 break;

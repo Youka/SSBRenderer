@@ -9,7 +9,6 @@ v0.0.2 (planned)
 
 v0.0.1 (planned)
 ----------------
-* added line wrapping
 * added blending on alpha channel
 * completed README
 * added examples
