@@ -208,12 +208,12 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
         if(start_ms >= event.start_ms && start_ms < event.end_ms){
             // Draw from cache
             if(this->cache.contains(&event))
-                for(ImageData& idata : this->cache.get(&event))
+                for(Renderer::ImageData& idata : this->cache.get(&event))
                     this->blend(idata.image, idata.x, idata.y, frame, pitch, idata.blend_mode);
             // Draw new
             else{
                 // Buffer for cache entry
-                std::vector<ImageData> event_images;
+                std::vector<Renderer::ImageData> event_images;
                 // Calculate image-to-video scale
                 double frame_scale_x, frame_scale_y;
                 if(this->ssb.frame.width > 0 && this->ssb.frame.height > 0)
@@ -307,31 +307,47 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                                             case SSBDirection::Mode::LTR:
                                             case SSBDirection::Mode::RTL:
                                                 {
-                                                    double width = 0;
+                                                    // Unwrapped line
+                                                    double width;
+                                                    auto get_text_width = [&width,&font,&rs](std::string& text){
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-equal"
-                                                    if(rs.font_space_h != 0){
+                                                        if(rs.font_space_h != 0){
 #pragma GCC diagnostic pop
-                                                        std::vector<std::string> chars = utf8_chars(line);
-                                                        for(size_t i = 0; i < chars.size(); ++i)
-                                                            width += font.get_text_width(chars[i]) + rs.font_space_h;
-                                                    }else{
-                                                        width = font.get_text_width(line);
-                                                        // Line wrap?
-                                                        /*if(!line.empty() && render_sizes.back().lines.back().width + width > wrap_width){
-                                                            // Split text
-                                                            std::vector<Word> words = getwords(line);
-                                                            for(Word& word : words){
-
-
+                                                            width = 0;
+                                                            std::vector<std::string> chars = utf8_chars(text);
+                                                            for(std::string& c : chars)
+                                                                width += font.get_text_width(c) + rs.font_space_h;
+                                                        }else
+                                                            width = font.get_text_width(text);
+                                                    };
+                                                    get_text_width(line);
+                                                    // Line wrap?
+                                                    if(false){//render_sizes.back().lines.back().width + width > wrap_width){
+                                                        std::vector<Word> words = getwords(line);
+                                                        for(Word& word : words){
+                                                            std::string merged_word = word.prespace + word.text;
+                                                            get_text_width(merged_word);
+                                                            if(render_sizes.back().lines.back().geometries.size() > 0 && render_sizes.back().lines.back().width + width > wrap_width){
+                                                                render_sizes.back().lines.back().space = metrics.external_lead + rs.font_space_v;
+                                                                render_sizes.back().lines.push_back({});
+                                                                get_text_width(word.text);
                                                             }
-                                                        }*/
+                                                            render_sizes.back().lines.back().geometries.push_back({render_sizes.back().lines.back().width, std::accumulate(render_sizes.back().lines.begin(), render_sizes.back().lines.end()-1, 0.0, [](double init, LineSize& lsize){
+                                                                return init + lsize.height + lsize.space;
+                                                            }), width, metrics.height});
+                                                            render_sizes.back().lines.back().width += width;
+                                                            render_sizes.back().lines.back().height = std::max(render_sizes.back().lines.back().height, metrics.height);
+                                                        }
+                                                        break;
+                                                    }else{
+                                                        render_sizes.back().lines.back().geometries.push_back({render_sizes.back().lines.back().width, std::accumulate(render_sizes.back().lines.begin(), render_sizes.back().lines.end()-1, 0.0, [](double init, LineSize& lsize){
+                                                            return init + lsize.height + lsize.space;
+                                                        }), width, metrics.height});
+                                                        render_sizes.back().lines.back().width += width;
+                                                        render_sizes.back().lines.back().height = std::max(render_sizes.back().lines.back().height, metrics.height);
                                                     }
-                                                    render_sizes.back().lines.back().geometries.push_back({render_sizes.back().lines.back().width, std::accumulate(render_sizes.back().lines.begin(), render_sizes.back().lines.end()-1, 0.0, [](double init, LineSize& lsize){
-                                                        return init + lsize.height + lsize.space;
-                                                    }), width, metrics.height});
-                                                    render_sizes.back().lines.back().width += width;
-                                                    render_sizes.back().lines.back().height = std::max(render_sizes.back().lines.back().height, metrics.height);
+                                                    // Update position render size
                                                     render_sizes.back().width = std::max(render_sizes.back().width, render_sizes.back().lines.back().width);
                                                     render_sizes.back().height = std::accumulate(render_sizes.back().lines.begin(), render_sizes.back().lines.end(), 0.0, [](double init, LineSize& lsize){
                                                         return init + lsize.height + lsize.space;
@@ -340,17 +356,41 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                                                 break;
                                             case SSBDirection::Mode::TTB:
                                                 {
-                                                    double width = 0, height = 0;
-                                                    std::vector<std::string> chars = utf8_chars(line);
-                                                    for(size_t i = 0; i < chars.size(); ++i){
-                                                        width = std::max(width, font.get_text_width(chars[i]));
-                                                        height += metrics.height + rs.font_space_v;
+                                                    // Unwrapped line
+                                                    double width, height;
+                                                    auto get_text_extents = [&width,&height,&font,&metrics,&rs](std::string& text){
+                                                        width = height = 0;
+                                                        std::vector<std::string> chars = utf8_chars(text);
+                                                        for(std::string& c : chars){
+                                                            width = std::max(width, font.get_text_width(c));
+                                                            height += metrics.height + rs.font_space_v;
+                                                        }
+                                                    };
+                                                    get_text_extents(line);
+                                                    // Line wrap?
+                                                    if(false){//render_sizes.back().lines.back().height + height > wrap_height){
+                                                        std::vector<Word> words = getwords(line);
+                                                        for(Word& word : words){
+                                                            std::string merged_word = word.prespace + word.text;
+                                                            get_text_extents(merged_word);
+                                                            if(render_sizes.back().lines.back().geometries.size() > 0 && render_sizes.back().lines.back().height + height > wrap_height){
+                                                                render_sizes.back().lines.back().space = rs.font_space_h;
+                                                                render_sizes.back().lines.push_back({});
+                                                                get_text_extents(word.text);
+                                                            }
+                                                            render_sizes.back().lines.back().geometries.push_back({std::accumulate(render_sizes.back().lines.begin(), render_sizes.back().lines.end()-1, 0.0, [](double init, LineSize& lsize){
+                                                                return init + lsize.width + lsize.space;
+                                                            }), render_sizes.back().lines.back().height, width, height});
+                                                            render_sizes.back().lines.back().width = std::max(render_sizes.back().lines.back().width, width);
+                                                            render_sizes.back().lines.back().height += height;
+                                                        }
+                                                    }else{
+                                                        render_sizes.back().lines.back().geometries.push_back({std::accumulate(render_sizes.back().lines.begin(), render_sizes.back().lines.end()-1, 0.0, [](double init, LineSize& lsize){
+                                                            return init + lsize.width + lsize.space;
+                                                        }), render_sizes.back().lines.back().height, width, height});
+                                                        render_sizes.back().lines.back().width = std::max(render_sizes.back().lines.back().width, width);
+                                                        render_sizes.back().lines.back().height += height;
                                                     }
-                                                    render_sizes.back().lines.back().geometries.push_back({std::accumulate(render_sizes.back().lines.begin(), render_sizes.back().lines.end()-1, 0.0, [](double init, LineSize& lsize){
-                                                        return init + lsize.width + lsize.space;
-                                                    }), render_sizes.back().lines.back().height, width, height});
-                                                    render_sizes.back().lines.back().width = std::max(render_sizes.back().lines.back().width, width);
-                                                    render_sizes.back().lines.back().height += height;
                                                     render_sizes.back().width = std::accumulate(render_sizes.back().lines.begin(), render_sizes.back().lines.end(), 0.0, [](double init, LineSize& lsize){
                                                         return init + lsize.width + lsize.space;
                                                     });
@@ -453,9 +493,9 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                                                 if(rs.font_space_h != 0){
 #pragma GCC diagnostic pop
                                                     std::vector<std::string> chars = utf8_chars(line);
-                                                    for(size_t i = 0; i < chars.size(); ++i){
-                                                        font.text_path_to_cairo(chars[i], this->stencil_path_buffer);
-                                                        cairo_translate(this->stencil_path_buffer, font.get_text_width(chars[i]) + rs.font_space_h, 0);
+                                                    for(std::string& c: chars){
+                                                        font.text_path_to_cairo(c, this->stencil_path_buffer);
+                                                        cairo_translate(this->stencil_path_buffer, font.get_text_width(c) + rs.font_space_h, 0);
                                                     }
                                                 }else
                                                     font.text_path_to_cairo(line, this->stencil_path_buffer);
@@ -464,12 +504,12 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                                                 {
                                                     cairo_translate(this->stencil_path_buffer, render_sizes[size_index.pos].width - render_sizes[size_index.pos].lines[size_index.line].geometries[size_index.geometry].off_x - render_sizes[size_index.pos].lines[size_index.line].width, 0);
                                                     std::vector<std::string> chars = utf8_chars(line);
-                                                    for(size_t i = 0; i < chars.size(); ++i){
+                                                    for(std::string& c: chars){
                                                         cairo_save(this->stencil_path_buffer);
                                                         cairo_translate(this->stencil_path_buffer,
-                                                                        (render_sizes[size_index.pos].lines[size_index.line].width - font.get_text_width(chars[i])) / 2,
+                                                                        (render_sizes[size_index.pos].lines[size_index.line].width - font.get_text_width(c)) / 2,
                                                                         0);
-                                                        font.text_path_to_cairo(chars[i], this->stencil_path_buffer);
+                                                        font.text_path_to_cairo(c, this->stencil_path_buffer);
                                                         cairo_restore(this->stencil_path_buffer);
                                                         cairo_translate(this->stencil_path_buffer, 0, metrics.height + rs.font_space_v);
                                                     }
@@ -521,7 +561,7 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                             set_line_props(this->stencil_path_buffer, rs);
                         // Create overlay by type
                         enum class DrawType{FILL_BLURRED, FILL_WITHOUT_BLUR, BORDER, WIRE};
-                        auto create_overlay = [&](DrawType draw_type) -> ImageData{
+                        auto create_overlay = [&](DrawType draw_type) -> Renderer::ImageData{
                             /*
                                 CODE FOR PERFORMANCE TESTING ON WINDOWS
 
@@ -532,7 +572,7 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                                 QueryPerformanceCounter(&t2);
                                 std::ostringstream s;
                                 s << "Duration: " << (static_cast<double>(t2.QuadPart - t1.QuadPart) / freq.QuadPart * 1000) << "ms";
-                                MessageBoxA(NULL, s.str().c_str(), "Draw duration", MB_OK);
+                                MessageBoxA(NULL, s.str().c_str(), "Performance", MB_OK);
                             */
                             // Create image
                             int border_h = 0, border_v = 0;
@@ -666,11 +706,11 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                             return {image, -border_h + x, -border_v + y, rs.blend_mode};
                         };
                         // Create overlay
-                        ImageData overlay;
+                        Renderer::ImageData overlay;
                         if(rs.mode == SSBMode::Mode::FILL){
                             if(rs.line_width > 0 && geometry->type != SSBGeometry::Type::POINTS){
                                 overlay = create_overlay(DrawType::BORDER);
-                                ImageData overlay2 = create_overlay(DrawType::FILL_WITHOUT_BLUR);
+                                Renderer::ImageData overlay2 = create_overlay(DrawType::FILL_WITHOUT_BLUR);
                                 cairo_set_operator(overlay.image, CAIRO_OPERATOR_ADD);
                                 cairo_identity_matrix(overlay.image);
                                 cairo_set_source_surface(overlay.image, overlay2.image, overlay2.x - overlay.x, overlay2.y - overlay.y);

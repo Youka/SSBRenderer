@@ -1,14 +1,15 @@
 v0.0.2 (planned)
 ----------------
 * ported to Unix (Avxsynth, GStreamer, Text processing)
-* added support for other video colorspaces
-* improved blur algorithm
+* added support for more video colorspaces (YUV2, YV12)
 * improved RTL behaviour
+* improved blur algorithm
 
 ##########################################################################
 
 v0.0.1 (planned)
 ----------------
 * added line wrapping
+* added blending on alpha channel
 * completed README
 * added examples

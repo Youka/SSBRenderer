@@ -36,7 +36,7 @@ namespace{
     }
     // Structure for word text + prespace
     struct Word{
-        std::string word, prespace;
+        std::string text, prespace;
     };
     // Split text in words + pre-spaces
     inline std::vector<Word> getwords(std::string text){
@@ -50,7 +50,7 @@ namespace{
                     words.push_back({"", text.substr(pos_start, pos_end)});
                 }else{
                     pos_end = text.find_first_of(' ', pos_start);
-                    words.back().word = text.substr(pos_start, pos_end);
+                    words.back().text = text.substr(pos_start, pos_end);
                 }
                 is_space = !is_space;
                 pos_start = pos_end;
