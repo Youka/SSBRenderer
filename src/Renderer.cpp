@@ -231,10 +231,17 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                     }else{  // obj->type == SSBObject::Type::GEOMETRY
                         // Calculate wrap limits
                         double wrap_width, wrap_height;
-                        if(frame_scale_x > 0 && frame_scale_y > 0)
-                            wrap_width = (this->width - 2 * rs.margin_h) * frame_scale_x, wrap_height = (this->height - 2 * rs.margin_v) * frame_scale_y;
-                        else
-                            wrap_width = this->width - 2 * rs.margin_h, wrap_height = this->height - 2 * rs.margin_v;
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wfloat-equal"
+                        if(rs.pos_x == std::numeric_limits<decltype(rs.pos_x)>::max() && rs.pos_y == std::numeric_limits<decltype(rs.pos_y)>::max())
+#pragma GCC diagnostic pop
+                            wrap_width = wrap_height = 0;
+                        else{
+                            if(frame_scale_x > 0 && frame_scale_y > 0)
+                                wrap_width = (this->width - 2 * rs.margin_h) * frame_scale_x, wrap_height = (this->height - 2 * rs.margin_v) * frame_scale_y;
+                            else
+                                wrap_width = this->width - 2 * rs.margin_h, wrap_height = this->height - 2 * rs.margin_v;
+                        }
                         // Work with geometry
                         SSBGeometry* geometry = dynamic_cast<SSBGeometry*>(obj.get());
                         switch(geometry->type){
@@ -254,7 +261,7 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                                         case SSBDirection::Mode::LTR:
                                         case SSBDirection::Mode::RTL:
                                             // Line wrap?
-                                            if(render_sizes.back().lines.back().geometries.size() > 0 && render_sizes.back().lines.back().width + x2 > wrap_width){
+                                            if(render_sizes.back().lines.back().geometries.size() > 0 && wrap_width > 0 && render_sizes.back().lines.back().width + x2 > wrap_width){
                                                 render_sizes.back().lines.back().space = rs.font_space_v;
                                                 render_sizes.back().lines.push_back({});
                                             }
@@ -271,7 +278,7 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                                             break;
                                         case SSBDirection::Mode::TTB:
                                             // Line wrap?
-                                            if(render_sizes.back().lines.back().geometries.size() > 0 && render_sizes.back().lines.back().height + y2 > wrap_height){
+                                            if(render_sizes.back().lines.back().geometries.size() > 0 && wrap_height > 0 && render_sizes.back().lines.back().height + y2 > wrap_height){
                                                 render_sizes.back().lines.back().space = rs.font_space_h;
                                                 render_sizes.back().lines.push_back({});
                                             }
@@ -328,7 +335,7 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                                                     for(Word& word : words){
                                                         merged_word = word.prespace + word.text;
                                                         width = get_text_width(merged_word);
-                                                        if(render_sizes.back().lines.back().geometries.size() > 0 && render_sizes.back().lines.back().width + width > wrap_width){
+                                                        if(render_sizes.back().lines.back().geometries.size() > 0 && wrap_width > 0 && render_sizes.back().lines.back().width + width > wrap_width){
                                                             render_sizes.back().lines.back().space = metrics.external_lead + rs.font_space_v;
                                                             render_sizes.back().lines.push_back({});
                                                             width = get_text_width(word.text);
@@ -364,7 +371,7 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                                                     for(Word& word : words){
                                                         merged_word = word.prespace + word.text;
                                                         get_text_extents(merged_word, width, height);
-                                                        if(render_sizes.back().lines.back().geometries.size() > 0 && render_sizes.back().lines.back().height + height > wrap_height){
+                                                        if(render_sizes.back().lines.back().geometries.size() > 0 && wrap_height > 0 && render_sizes.back().lines.back().height + height > wrap_height){
                                                             render_sizes.back().lines.back().space = rs.font_space_h;
                                                             render_sizes.back().lines.push_back({});
                                                             get_text_extents(word.text, width, height);
