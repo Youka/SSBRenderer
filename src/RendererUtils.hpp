@@ -58,6 +58,31 @@ namespace{
         }
         return words;
     }
+    // Creates new image with applied fade
+    CairoImage create_faded_image(CairoImage image, double fade_in, double fade_out,
+                                  unsigned long int cur_ms, unsigned long int start_ms, unsigned long int end_ms){
+        if(cur_ms  >= start_ms && cur_ms < end_ms &&
+           fade_in >= 0 && fade_out >= 0){
+            decltype(cur_ms) inner_ms = cur_ms - start_ms;
+            decltype(cur_ms) inv_inner_ms = end_ms - start_ms - inner_ms;
+            double alpha;
+            if(inner_ms < fade_in)
+                alpha = static_cast<double>(inner_ms) / fade_in;
+            else if(inv_inner_ms < fade_out)
+                alpha = static_cast<double>(inv_inner_ms) / fade_out;
+            else
+                return image;
+            CairoImage new_image(cairo_image_surface_get_width(image), cairo_image_surface_get_height(image), cairo_image_surface_get_format(image));
+            cairo_set_operator(new_image, CAIRO_OPERATOR_SOURCE);
+            cairo_set_source_rgba(new_image, 0, 0, 0, alpha);
+            cairo_paint(new_image);
+            cairo_set_operator(new_image, CAIRO_OPERATOR_IN);
+            cairo_set_source_surface(new_image, image, 0, 0);
+            cairo_paint(new_image);
+            return new_image;
+        }else
+            return image;
+    }
     // Applies deform filter on cairo path
     void path_deform(cairo_t* ctx, std::string& deform_x, std::string& deform_y, double progress){
         mu::Parser parser_x, parser_y;

@@ -59,6 +59,8 @@ namespace{
         SSBBlend::Mode blend_mode = SSBBlend::Mode::OVER;
         double blur_h = 0, blur_v = 0;
         SSBStencil::Mode stencil_mode = SSBStencil::Mode::OFF;
+        // Fade
+        double fade_in = 0, fade_out = 0;
         // Karaoke
         long int karaoke_start = -1, karaoke_duration = 0;
         RGB karaoke_color = {1, 0, 0};
@@ -300,32 +302,10 @@ namespace{
                 case SSBTag::Type::FADE:
                     {
                         SSBFade* fade = dynamic_cast<SSBFade*>(tag);
-                        double progress = -1;
                         switch(fade->type){
-                            case SSBFade::Type::INFADE:
-                                if(inner_ms < fade->in)
-                                    progress = static_cast<double>(inner_ms) / fade->in;
-                                break;
-                            case SSBFade::Type::OUTFADE:
-                                {
-                                    decltype(inner_ms) inv_inner_ms = inner_duration - inner_ms;
-                                    if(inv_inner_ms < fade->out)
-                                        progress = static_cast<double>(inv_inner_ms) / fade->out;
-                                }
-                                break;
-                            case SSBFade::Type::BOTH:
-                                if(inner_ms < fade->in)
-                                    progress = static_cast<double>(inner_ms) / fade->in;
-                                else{
-                                    decltype(inner_ms) inv_inner_ms = inner_duration - inner_ms;
-                                    if(inv_inner_ms < fade->out)
-                                        progress = static_cast<double>(inv_inner_ms) / fade->out;
-                                }
-                                break;
-                        }
-                        if(progress >= 0){
-                            std::for_each(this->alphas.begin(), this->alphas.end(), [&progress](double& a){a *= progress;});
-                            this->line_alpha *= progress;
+                            case SSBFade::Type::INFADE: this->fade_in = fade->in; break;
+                            case SSBFade::Type::OUTFADE: this->fade_out = fade->out; break;
+                            case SSBFade::Type::BOTH: this->fade_in = fade->in; this->fade_out = fade->out; break;
                         }
                     }
                     break;
@@ -619,7 +599,15 @@ namespace{
                                         this->stencil_mode = dynamic_cast<SSBStencil*>(animate_tag)->mode;
                                     break;
                                 case SSBTag::Type::FADE:
-                                    // Doesn't exist in an animation
+                                    {
+                                        SSBFade* fade = dynamic_cast<SSBFade*>(tag);
+                                        switch(fade->type){
+                                            case SSBFade::Type::INFADE: this->fade_in += progress * (fade->in - this->fade_in); break;
+                                            case SSBFade::Type::OUTFADE: this->fade_out += progress * (fade->out - this->fade_out); break;
+                                            case SSBFade::Type::BOTH: this->fade_in += progress * (fade->in - this->fade_in); this->fade_out += progress * (fade->out - this->fade_out); break;
+                                        }
+                                    }
+                                    break;
                                     break;
                                 case SSBTag::Type::ANIMATE:
                                     // Doesn't exist in an animation

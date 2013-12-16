@@ -35,6 +35,7 @@ class Renderer{
             CairoImage image;
             int x, y;
             SSBBlend::Mode blend_mode;
+            double fade_in, fade_out;
         };
         Cache<SSBEvent*,std::vector<ImageData>> cache;
         // Blend image on frame

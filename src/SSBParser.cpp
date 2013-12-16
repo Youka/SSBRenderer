@@ -587,27 +587,23 @@ namespace{
             }else if(tags_token.compare(0, 5, "fade=") == 0){
                 std::string tag_value = tags_token.substr(5);
                 decltype(SSBFade::in) in, out;
-                if(string_to_number(tag_value, in)){
-                    ssb_event.static_tags = false;
+                if(string_to_number(tag_value, in))
                     ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBFade(SSBFade::Type::BOTH, in)));
-                }else if(string_to_number_pair(tag_value, in, out)){
-                    ssb_event.static_tags = false;
+                else if(string_to_number_pair(tag_value, in, out))
                     ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBFade(in, out)));
-                }else if(warnings)
+                else if(warnings)
                     throw_parse_error(line_i, "Invalid fade");
             }else if(tags_token.compare(0, 8, "fade-in=") == 0){
                 decltype(SSBFade::in) in;
-                if(string_to_number(tags_token.substr(8), in)){
-                    ssb_event.static_tags = false;
+                if(string_to_number(tags_token.substr(8), in))
                     ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBFade(SSBFade::Type::INFADE, in)));
-                }else if(warnings)
+                else if(warnings)
                     throw_parse_error(line_i, "Invalid infade");
             }else if(tags_token.compare(0, 9, "fade-out=") == 0){
                 decltype(SSBFade::out) out;
-                if(string_to_number(tags_token.substr(9), out)){
-                    ssb_event.static_tags = false;
+                if(string_to_number(tags_token.substr(9), out))
                     ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBFade(SSBFade::Type::OUTFADE, out)));
-                }else if(warnings)
+                else if(warnings)
                     throw_parse_error(line_i, "Invalid outfade");
             }else if(tags_token.compare(0, 8, "animate=") == 0){
                 // Collect animation tokens (maximum: 4)

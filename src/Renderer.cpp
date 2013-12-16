@@ -209,7 +209,8 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
             // Draw from cache
             if(this->cache.contains(&event))
                 for(Renderer::ImageData& idata : this->cache.get(&event))
-                    this->blend(idata.image, idata.x, idata.y, frame, pitch, idata.blend_mode);
+                    this->blend(create_faded_image(idata.image, idata.fade_in, idata.fade_out, start_ms, event.start_ms, event.end_ms),
+                                idata.x, idata.y, frame, pitch, idata.blend_mode);
             // Draw new
             else{
                 // Buffer for cache entry
@@ -233,15 +234,14 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                         double wrap_width, wrap_height;
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-equal"
-                        if(rs.pos_x == std::numeric_limits<decltype(rs.pos_x)>::max() && rs.pos_y == std::numeric_limits<decltype(rs.pos_y)>::max())
+                        if(rs.pos_x == std::numeric_limits<decltype(rs.pos_x)>::max() && rs.pos_y == std::numeric_limits<decltype(rs.pos_y)>::max()){
 #pragma GCC diagnostic pop
-                            wrap_width = wrap_height = 0;
-                        else{
                             if(frame_scale_x > 0 && frame_scale_y > 0)
                                 wrap_width = (this->width - 2 * rs.margin_h) * frame_scale_x, wrap_height = (this->height - 2 * rs.margin_v) * frame_scale_y;
                             else
                                 wrap_width = this->width - 2 * rs.margin_h, wrap_height = this->height - 2 * rs.margin_v;
-                        }
+                        }else
+                            wrap_width = wrap_height = 0;
                         // Work with geometry
                         SSBGeometry* geometry = dynamic_cast<SSBGeometry*>(obj.get());
                         switch(geometry->type){
@@ -733,7 +733,7 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                                 cairo_fill(image);
                             }
                             // Return complete overlay data
-                            return {image, -border_h + x, -border_v + y, rs.blend_mode};
+                            return {image, -border_h + x, -border_v + y, rs.blend_mode, rs.fade_in, rs.fade_out};
                         };
                         // Create overlay
                         Renderer::ImageData overlay;
@@ -752,7 +752,8 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                         // Apply stenciling and/or blending on frame
                         switch(rs.stencil_mode){
                             case SSBStencil::Mode::OFF:
-                                this->blend(overlay.image, overlay.x, overlay.y, frame, pitch, overlay.blend_mode);
+                                this->blend(create_faded_image(overlay.image, overlay.fade_in, overlay.fade_out, start_ms, event.start_ms, event.end_ms),
+                                            overlay.x, overlay.y, frame, pitch, overlay.blend_mode);
                                 if(event.static_tags)
                                     event_images.push_back(overlay);
                                 break;
@@ -761,7 +762,8 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                                 cairo_identity_matrix(overlay.image);
                                 cairo_set_source_surface(overlay.image, this->stencil_path_buffer, -overlay.x, -overlay.y);
                                 cairo_paint(overlay.image);
-                                this->blend(overlay.image, overlay.x, overlay.y, frame, pitch, overlay.blend_mode);
+                                this->blend(create_faded_image(overlay.image, overlay.fade_in, overlay.fade_out, start_ms, event.start_ms, event.end_ms),
+                                            overlay.x, overlay.y, frame, pitch, overlay.blend_mode);
                                 if(event.static_tags)
                                     event_images.push_back(overlay);
                                 break;
@@ -770,7 +772,8 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                                 cairo_identity_matrix(overlay.image);
                                 cairo_set_source_surface(overlay.image, this->stencil_path_buffer, -overlay.x, -overlay.y);
                                 cairo_paint(overlay.image);
-                                this->blend(overlay.image, overlay.x, overlay.y, frame, pitch, overlay.blend_mode);
+                                this->blend(create_faded_image(overlay.image, overlay.fade_in, overlay.fade_out, start_ms, event.start_ms, event.end_ms),
+                                            overlay.x, overlay.y, frame, pitch, overlay.blend_mode);
                                 if(event.static_tags)
                                     event_images.push_back(overlay);
                                 break;
