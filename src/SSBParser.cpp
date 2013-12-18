@@ -546,7 +546,7 @@ namespace{
                 else if(tag_value == "screen")
                     ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBBlend(SSBBlend::Mode::SCREEN)));
                 else if(tag_value == "differ")
-                    ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBBlend(SSBBlend::Mode::DIFFERENT)));
+                    ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBBlend(SSBBlend::Mode::DIFFERENCES)));
                 else if(warnings)
                     throw_parse_error(line_i, "Invalid blending");
             }else if(tags_token.compare(0, 5, "blur=") == 0){

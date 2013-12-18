@@ -1,14 +1,15 @@
 v0.0.2 (planned)
 ----------------
-* ported to Unix (Avxsynth, GStreamer, Text processing)
+* ported to Unix (Avxsynth, GStreamer, [Text processing])
+* added DirectShow Bridge
 * added support for more video colorspaces (YUV2, YV12)
-* improved RTL behaviour
-* improved blur algorithm
+* (fixed RTL behaviour)
+* improved performance (blur algorithm)
 
 ##########################################################################
 
 v0.0.1 (planned)
 ----------------
-* added blending on alpha channel
+* changed overlay creation to multithreaded version
 * completed README
 * added examples

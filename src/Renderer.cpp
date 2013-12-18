@@ -84,118 +84,238 @@ void Renderer::blend(cairo_surface_t* src, int dst_x, int dst_y,
         unsigned char* src_row = src_data + src_rect_y * src_stride + (src_rect_x << 2);
         unsigned char* dst_row = dst_data + dst_offset_y * dst_stride + (dst_offset_x * dst_pix_size);
         unsigned char inv_alpha;
-        // Overlay by blending mode (hint: source has premultiplied alpha)
+        // Overlay by blending mode (hint: source & destination have premultiplied alpha)
         switch(blend_mode){
             case SSBBlend::Mode::OVER:
-                for(int src_y = 0; src_y < src_rect_height; ++src_y){
-                    for(int src_x = 0; src_x < src_rect_width; ++src_x){
-                        if(src_row[3] == 255){
-                            dst_row[0] = src_row[0];
-                            dst_row[1] = src_row[1];
-                            dst_row[2] = src_row[2];
-                        }else if(src_row[3] > 0){
-                            inv_alpha = src_row[3] ^ 0xFF;
-                            dst_row[0] = dst_row[0] * inv_alpha / 255 + src_row[0];
-                            dst_row[1] = dst_row[1] * inv_alpha / 255 + src_row[1];
-                            dst_row[2] = dst_row[2] * inv_alpha / 255 + src_row[2];
+                if(this->format == Renderer::Colorspace::BGRA)
+                    for(int src_y = 0; src_y < src_rect_height; ++src_y){
+                        for(int src_x = 0; src_x < src_rect_width; ++src_x){
+                            if(src_row[3] == 255){
+                                dst_row[0] = src_row[0];
+                                dst_row[1] = src_row[1];
+                                dst_row[2] = src_row[2];
+                                dst_row[3] = src_row[3];
+                            }else if(src_row[3] > 0){
+                                inv_alpha = src_row[3] ^ 0xFF;
+                                dst_row[0] = src_row[0] + dst_row[0] * inv_alpha / 255;
+                                dst_row[1] = src_row[1] + dst_row[1] * inv_alpha / 255;
+                                dst_row[2] = src_row[2] + dst_row[2] * inv_alpha / 255;
+                                dst_row[3] = src_row[3] + dst_row[3] * inv_alpha / 255;
+                            }
+                            dst_row += dst_pix_size;
+                            src_row += 4;
                         }
-                        dst_row += dst_pix_size;
-                        src_row += 4;
+                        src_row += src_modulo;
+                        dst_row += -dst_stride + dst_modulo - dst_stride;
                     }
-                    src_row += src_modulo;
-                    dst_row += -dst_stride + dst_modulo - dst_stride;
-                }
+                else
+                    for(int src_y = 0; src_y < src_rect_height; ++src_y){
+                        for(int src_x = 0; src_x < src_rect_width; ++src_x){
+                            if(src_row[3] == 255){
+                                dst_row[0] = src_row[0];
+                                dst_row[1] = src_row[1];
+                                dst_row[2] = src_row[2];
+                            }else if(src_row[3] > 0){
+                                inv_alpha = src_row[3] ^ 0xFF;
+                                dst_row[0] = src_row[0] + dst_row[0] * inv_alpha / 255;
+                                dst_row[1] = src_row[1] + dst_row[1] * inv_alpha / 255;
+                                dst_row[2] = src_row[2] + dst_row[2] * inv_alpha / 255;
+                            }
+                            dst_row += dst_pix_size;
+                            src_row += 4;
+                        }
+                        src_row += src_modulo;
+                        dst_row += -dst_stride + dst_modulo - dst_stride;
+                    }
                 break;
             case SSBBlend::Mode::ADDITION:
-                for(int src_y = 0; src_y < src_rect_height; ++src_y){
-                    for(int src_x = 0; src_x < src_rect_width; ++src_x){
-                        if(src_row[3] > 0){
-                            dst_row[0] = std::min(255, dst_row[0] + src_row[0]);
-                            dst_row[1] = std::min(255, dst_row[1] + src_row[1]);
-                            dst_row[2] = std::min(255, dst_row[2] + src_row[2]);
+                if(this->format == Renderer::Colorspace::BGRA)
+                    for(int src_y = 0; src_y < src_rect_height; ++src_y){
+                        for(int src_x = 0; src_x < src_rect_width; ++src_x){
+                            if(src_row[3] > 0){
+                                dst_row[0] = std::min(255, dst_row[0] + src_row[0]);
+                                dst_row[1] = std::min(255, dst_row[1] + src_row[1]);
+                                dst_row[2] = std::min(255, dst_row[2] + src_row[2]);
+                                dst_row[3] = std::min(255, dst_row[3] + src_row[3]);
+                            }
+                            dst_row += dst_pix_size;
+                            src_row += 4;
                         }
-                        dst_row += dst_pix_size;
-                        src_row += 4;
+                        src_row += src_modulo;
+                        dst_row += -dst_stride + dst_modulo - dst_stride;
                     }
-                    src_row += src_modulo;
-                    dst_row += -dst_stride + dst_modulo - dst_stride;
-                }
+                else
+                    for(int src_y = 0; src_y < src_rect_height; ++src_y){
+                        for(int src_x = 0; src_x < src_rect_width; ++src_x){
+                            if(src_row[3] > 0){
+                                dst_row[0] = std::min(255, dst_row[0] + src_row[0]);
+                                dst_row[1] = std::min(255, dst_row[1] + src_row[1]);
+                                dst_row[2] = std::min(255, dst_row[2] + src_row[2]);
+                            }
+                            dst_row += dst_pix_size;
+                            src_row += 4;
+                        }
+                        src_row += src_modulo;
+                        dst_row += -dst_stride + dst_modulo - dst_stride;
+                    }
+
                 break;
             case SSBBlend::Mode::SUBTRACT:
-                for(int src_y = 0; src_y < src_rect_height; ++src_y){
-                    for(int src_x = 0; src_x < src_rect_width; ++src_x){
-                        if(src_row[3] > 0){
-                            dst_row[0] = std::max(0, dst_row[0] - src_row[0]);
-                            dst_row[1] = std::max(0, dst_row[1] - src_row[1]);
-                            dst_row[2] = std::max(0, dst_row[2] - src_row[2]);
+                if(this->format == Renderer::Colorspace::BGRA)
+                    for(int src_y = 0; src_y < src_rect_height; ++src_y){
+                        for(int src_x = 0; src_x < src_rect_width; ++src_x){
+                            if(src_row[3] > 0){
+                                dst_row[0] = std::max(0, dst_row[0] - src_row[0]);
+                                dst_row[1] = std::max(0, dst_row[1] - src_row[1]);
+                                dst_row[2] = std::max(0, dst_row[2] - src_row[2]);
+                                dst_row[3] = std::max(0, dst_row[3] - src_row[3]);
+                            }
+                            dst_row += dst_pix_size;
+                            src_row += 4;
                         }
-                        dst_row += dst_pix_size;
-                        src_row += 4;
+                        src_row += src_modulo;
+                        dst_row += -dst_stride + dst_modulo - dst_stride;
                     }
-                    src_row += src_modulo;
-                    dst_row += -dst_stride + dst_modulo - dst_stride;
-                }
+                else
+                    for(int src_y = 0; src_y < src_rect_height; ++src_y){
+                        for(int src_x = 0; src_x < src_rect_width; ++src_x){
+                            if(src_row[3] > 0){
+                                dst_row[0] = std::max(0, dst_row[0] - src_row[0]);
+                                dst_row[1] = std::max(0, dst_row[1] - src_row[1]);
+                                dst_row[2] = std::max(0, dst_row[2] - src_row[2]);
+                            }
+                            dst_row += dst_pix_size;
+                            src_row += 4;
+                        }
+                        src_row += src_modulo;
+                        dst_row += -dst_stride + dst_modulo - dst_stride;
+                    }
                 break;
             case SSBBlend::Mode::MULTIPLY:
-                for(int src_y = 0; src_y < src_rect_height; ++src_y){
-                    for(int src_x = 0; src_x < src_rect_width; ++src_x){
-                        if(src_row[3] == 255){
-                            dst_row[0] = dst_row[0] * src_row[0] / 255;
-                            dst_row[1] = dst_row[1] * src_row[1] / 255;
-                            dst_row[2] = dst_row[2] * src_row[2] / 255;
-                        }else if(src_row[3] > 0){
-                            inv_alpha = src_row[3] ^ 0xFF;
-                            // Restore original color (invert premultiplied alpha) -> multiply color with destination -> multiply color with alpha -> continue like in OVER
-                            dst_row[0] = dst_row[0] * inv_alpha / 255 + dst_row[0] * (src_row[0] * 255 / src_row[3]) / 255 * src_row[3] / 255;
-                            dst_row[1] = dst_row[1] * inv_alpha / 255 + dst_row[1] * (src_row[1] * 255 / src_row[3]) / 255 * src_row[3] / 255;
-                            dst_row[2] = dst_row[2] * inv_alpha / 255 + dst_row[2] * (src_row[2] * 255 / src_row[3]) / 255 * src_row[3] / 255;
+                if(this->format == Renderer::Colorspace::BGRA)
+                    for(int src_y = 0; src_y < src_rect_height; ++src_y){
+                        for(int src_x = 0; src_x < src_rect_width; ++src_x){
+                            if(src_row[3] == 255){
+                                dst_row[0] = (dst_row[0] * 255 / dst_row[3]) * src_row[0] / 255;
+                                dst_row[1] = (dst_row[1] * 255 / dst_row[3]) * src_row[1] / 255;
+                                dst_row[2] = (dst_row[2] * 255 / dst_row[3]) * src_row[2] / 255;
+                                dst_row[3] = src_row[3];
+                            }else if(src_row[3] > 0){
+                                inv_alpha = src_row[3] ^ 0xFF;
+                                dst_row[0] = (dst_row[0] * 255 / dst_row[3]) * (src_row[0] * 255 / src_row[3]) * src_row[3] / 65025 + dst_row[0] * inv_alpha / 255;
+                                dst_row[1] = (dst_row[1] * 255 / dst_row[3]) * (src_row[1] * 255 / src_row[3]) * src_row[3] / 65025 + dst_row[1] * inv_alpha / 255;
+                                dst_row[2] = (dst_row[2] * 255 / dst_row[3]) * (src_row[2] * 255 / src_row[3]) * src_row[3] / 65025 + dst_row[2] * inv_alpha / 255;
+                                dst_row[3] = src_row[3] + dst_row[3] * inv_alpha / 255;
+                            }
+                            dst_row += dst_pix_size;
+                            src_row += 4;
                         }
-                        dst_row += dst_pix_size;
-                        src_row += 4;
+                        src_row += src_modulo;
+                        dst_row += -dst_stride + dst_modulo - dst_stride;
                     }
-                    src_row += src_modulo;
-                    dst_row += -dst_stride + dst_modulo - dst_stride;
-                }
+                else
+                    for(int src_y = 0; src_y < src_rect_height; ++src_y){
+                        for(int src_x = 0; src_x < src_rect_width; ++src_x){
+                            if(src_row[3] == 255){
+                                dst_row[0] = dst_row[0] * src_row[0] / 255;
+                                dst_row[1] = dst_row[1] * src_row[1] / 255;
+                                dst_row[2] = dst_row[2] * src_row[2] / 255;
+                            }else if(src_row[3] > 0){
+                                inv_alpha = src_row[3] ^ 0xFF;
+                                dst_row[0] = dst_row[0] * (src_row[0] * 255 / src_row[3]) * src_row[3] / 65025 + dst_row[0] * inv_alpha / 255;
+                                dst_row[1] = dst_row[1] * (src_row[1] * 255 / src_row[3]) * src_row[3] / 65025 + dst_row[1] * inv_alpha / 255;
+                                dst_row[2] = dst_row[2] * (src_row[2] * 255 / src_row[3]) * src_row[3] / 65025 + dst_row[2] * inv_alpha / 255;
+                            }
+                            dst_row += dst_pix_size;
+                            src_row += 4;
+                        }
+                        src_row += src_modulo;
+                        dst_row += -dst_stride + dst_modulo - dst_stride;
+                    }
                 break;
             case SSBBlend::Mode::SCREEN:
-                for(int src_y = 0; src_y < src_rect_height; ++src_y){
-                    for(int src_x = 0; src_x < src_rect_width; ++src_x){
-                        if(src_row[3] == 255){
-                            dst_row[0] = (dst_row[0] ^ 0xFF) * (src_row[0] ^ 0xFF) / 255 ^ 0xFF;
-                            dst_row[1] = (dst_row[1] ^ 0xFF) * (src_row[1] ^ 0xFF) / 255 ^ 0xFF;
-                            dst_row[2] = (dst_row[2] ^ 0xFF) * (src_row[2] ^ 0xFF) / 255 ^ 0xFF;
-                        }else if(src_row[3] > 0){
-                            inv_alpha = src_row[3] ^ 0xFF;
-                            dst_row[0] = dst_row[0] * inv_alpha / 255 + ((dst_row[0] ^ 0xFF) * (src_row[0] * 255 / src_row[3] ^ 0xFF) / 255 ^ 0xFF) * src_row[3] / 255;
-                            dst_row[1] = dst_row[1] * inv_alpha / 255 + ((dst_row[1] ^ 0xFF) * (src_row[1] * 255 / src_row[3] ^ 0xFF) / 255 ^ 0xFF) * src_row[3] / 255;
-                            dst_row[2] = dst_row[2] * inv_alpha / 255 + ((dst_row[2] ^ 0xFF) * (src_row[2] * 255 / src_row[3] ^ 0xFF) / 255 ^ 0xFF) * src_row[3] / 255;
+                if(this->format == Renderer::Colorspace::BGRA)
+                    for(int src_y = 0; src_y < src_rect_height; ++src_y){
+                        for(int src_x = 0; src_x < src_rect_width; ++src_x){
+                            if(src_row[3] == 255){
+                                dst_row[0] = (dst_row[0] * 255 / dst_row[3] ^ 0xFF) * (src_row[0] ^ 0xFF) / 255 ^ 0xFF;
+                                dst_row[1] = (dst_row[1] * 255 / dst_row[3] ^ 0xFF) * (src_row[1] ^ 0xFF) / 255 ^ 0xFF;
+                                dst_row[2] = (dst_row[2] * 255 / dst_row[3] ^ 0xFF) * (src_row[2] ^ 0xFF) / 255 ^ 0xFF;
+                                dst_row[3] = src_row[3];
+                            }else if(src_row[3] > 0){
+                                inv_alpha = src_row[3] ^ 0xFF;
+                                dst_row[0] = ((dst_row[0] * 255 / dst_row[3] ^ 0xFF) * (src_row[0] * 255 / src_row[3] ^ 0xFF) / 255 ^ 0xFF) * src_row[3] / 255 + dst_row[0] * inv_alpha / 255;
+                                dst_row[1] = ((dst_row[1] * 255 / dst_row[3] ^ 0xFF) * (src_row[1] * 255 / src_row[3] ^ 0xFF) / 255 ^ 0xFF) * src_row[3] / 255 + dst_row[1] * inv_alpha / 255;
+                                dst_row[2] = ((dst_row[2] * 255 / dst_row[3] ^ 0xFF) * (src_row[2] * 255 / src_row[3] ^ 0xFF) / 255 ^ 0xFF) * src_row[3] / 255 + dst_row[2] * inv_alpha / 255;
+                                dst_row[3] = src_row[3] + dst_row[3] * inv_alpha / 255;
+                            }
+                            dst_row += dst_pix_size;
+                            src_row += 4;
                         }
-                        dst_row += dst_pix_size;
-                        src_row += 4;
+                        src_row += src_modulo;
+                        dst_row += -dst_stride + dst_modulo - dst_stride;
                     }
-                    src_row += src_modulo;
-                    dst_row += -dst_stride + dst_modulo - dst_stride;
-                }
+                else
+                    for(int src_y = 0; src_y < src_rect_height; ++src_y){
+                        for(int src_x = 0; src_x < src_rect_width; ++src_x){
+                            if(src_row[3] == 255){
+                                dst_row[0] = (dst_row[0] ^ 0xFF) * (src_row[0] ^ 0xFF) / 255 ^ 0xFF;
+                                dst_row[1] = (dst_row[1] ^ 0xFF) * (src_row[1] ^ 0xFF) / 255 ^ 0xFF;
+                                dst_row[2] = (dst_row[2] ^ 0xFF) * (src_row[2] ^ 0xFF) / 255 ^ 0xFF;
+                            }else if(src_row[3] > 0){
+                                inv_alpha = src_row[3] ^ 0xFF;
+                                dst_row[0] = ((dst_row[0] ^ 0xFF) * (src_row[0] * 255 / src_row[3] ^ 0xFF) / 255 ^ 0xFF) * src_row[3] / 255 + dst_row[0] * inv_alpha / 255;
+                                dst_row[1] = ((dst_row[1] ^ 0xFF) * (src_row[1] * 255 / src_row[3] ^ 0xFF) / 255 ^ 0xFF) * src_row[3] / 255 + dst_row[1] * inv_alpha / 255;
+                                dst_row[2] = ((dst_row[2] ^ 0xFF) * (src_row[2] * 255 / src_row[3] ^ 0xFF) / 255 ^ 0xFF) * src_row[3] / 255 + dst_row[2] * inv_alpha / 255;
+                            }
+                            dst_row += dst_pix_size;
+                            src_row += 4;
+                        }
+                        src_row += src_modulo;
+                        dst_row += -dst_stride + dst_modulo - dst_stride;
+                    }
                 break;
-            case SSBBlend::Mode::DIFFERENT:
-                for(int src_y = 0; src_y < src_rect_height; ++src_y){
-                    for(int src_x = 0; src_x < src_rect_width; ++src_x){
-                        if(src_row[3] == 255){
-                            dst_row[0] = abs(dst_row[0] - src_row[0]);
-                            dst_row[1] = abs(dst_row[1] - src_row[1]);
-                            dst_row[2] = abs(dst_row[2] - src_row[2]);
-                        }else if(src_row[3] > 0){
-                            inv_alpha = src_row[3] ^ 0xFF;
-                            dst_row[0] = dst_row[0] * inv_alpha / 255 + abs(dst_row[0] - src_row[0] * 255 / src_row[3]) * src_row[3] / 255;
-                            dst_row[1] = dst_row[1] * inv_alpha / 255 + abs(dst_row[1] - src_row[1] * 255 / src_row[3]) * src_row[3] / 255;
-                            dst_row[2] = dst_row[2] * inv_alpha / 255 + abs(dst_row[2] - src_row[2] * 255 / src_row[3]) * src_row[3] / 255;
+            case SSBBlend::Mode::DIFFERENCES:
+                if(this->format == Renderer::Colorspace::BGRA)
+                    for(int src_y = 0; src_y < src_rect_height; ++src_y){
+                        for(int src_x = 0; src_x < src_rect_width; ++src_x){
+                            if(src_row[3] == 255){
+                                dst_row[0] = abs((dst_row[0] * 255 / dst_row[3]) - src_row[0]);
+                                dst_row[1] = abs((dst_row[1] * 255 / dst_row[3]) - src_row[1]);
+                                dst_row[2] = abs((dst_row[2] * 255 / dst_row[3]) - src_row[2]);
+                                dst_row[3] = src_row[3];
+                            }else if(src_row[3] > 0){
+                                inv_alpha = src_row[3] ^ 0xFF;
+                                dst_row[0] = abs((dst_row[0] * 255 / dst_row[3]) - (src_row[0] * 255 / src_row[3])) * src_row[3] / 255 + dst_row[0] * inv_alpha / 255;
+                                dst_row[1] = abs((dst_row[1] * 255 / dst_row[3]) - (src_row[1] * 255 / src_row[3])) * src_row[3] / 255 + dst_row[1] * inv_alpha / 255;
+                                dst_row[2] = abs((dst_row[2] * 255 / dst_row[3]) - (src_row[2] * 255 / src_row[3])) * src_row[3] / 255 + dst_row[2] * inv_alpha / 255;
+                                dst_row[3] = src_row[3] + dst_row[3] * inv_alpha / 255;
+                            }
+                            dst_row += dst_pix_size;
+                            src_row += 4;
                         }
-                        dst_row += dst_pix_size;
-                        src_row += 4;
+                        src_row += src_modulo;
+                        dst_row += -dst_stride + dst_modulo - dst_stride;
                     }
-                    src_row += src_modulo;
-                    dst_row += -dst_stride + dst_modulo - dst_stride;
-                }
+                else
+                    for(int src_y = 0; src_y < src_rect_height; ++src_y){
+                        for(int src_x = 0; src_x < src_rect_width; ++src_x){
+                            if(src_row[3] == 255){
+                                dst_row[0] = abs(dst_row[0] - src_row[0]);
+                                dst_row[1] = abs(dst_row[1] - src_row[1]);
+                                dst_row[2] = abs(dst_row[2] - src_row[2]);
+                            }else if(src_row[3] > 0){
+                                inv_alpha = src_row[3] ^ 0xFF;
+                                dst_row[0] = abs(dst_row[0] - (src_row[0] * 255 / src_row[3])) * src_row[3] / 255 + dst_row[0] * inv_alpha / 255;
+                                dst_row[1] = abs(dst_row[1] - (src_row[1] * 255 / src_row[3])) * src_row[3] / 255 + dst_row[1] * inv_alpha / 255;
+                                dst_row[2] = abs(dst_row[2] - (src_row[2] * 255 / src_row[3])) * src_row[3] / 255 + dst_row[2] * inv_alpha / 255;
+                            }
+                            dst_row += dst_pix_size;
+                            src_row += 4;
+                        }
+                        src_row += src_modulo;
+                        dst_row += -dst_stride + dst_modulo - dst_stride;
+                    }
                 break;
         }
     }

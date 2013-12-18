@@ -69,7 +69,7 @@ span{
 Addition of space after characters (even the last one) or lines.
 <hr>
 <h1>RTL (direction)</h1>
-Geometries placed from right to left. Text rendering depends on internal font renderer RTL calculation. With font space, normal left-to-right text rendering will be performed.
+Geometries (words by text) placed from right to left. Text rendering depends on internal font renderer's RTL calculation. With font space, normal left-to-right text rendering will be performed.
 <hr>
 <h1>Deformation</h1>
 Deformation occurs on the already aligned geometry. Before deformation, the geometry path will be splitted to moves + tiny line segments.
@@ -98,7 +98,7 @@ Add a new tag value store class (see others classes, inheriting from SSBTag). Th
 Parse tag from text in function 'parse_tags' (see other tag parsing). Tag data are collected here.
 <br><br>
 <i>RenderState.hpp</i>:<br>
-Add tag value in native format for renderer to RenderState structure and implent his insertion to RenderState from store instance in function 'eval_tag' (note: normal insertion AND insertion with interpolated value on animation).
+Add tag value in native format for the renderer to RenderState structure and implent his insertion to RenderState from store instance in function 'eval_tag' (note: normal insertion AND insertion with interpolated value on animation).
 <br><br>
 <i>Renderer.cpp</i>:<br>
 Whereever your tag belongs to, implent it here on the right place to influence rendering.
