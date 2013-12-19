@@ -561,9 +561,17 @@ namespace{
                                     break;
                                 case SSBTag::Type::TEXTURE:
                                     {
+                                        // Get image filename
+                                        std::string filename = dynamic_cast<SSBTexture*>(animate_tag)->filename;
+                                        // Create image number by progress
                                         std::stringstream s;
-                                        s << dynamic_cast<SSBTexture*>(animate_tag)->filename << static_cast<int>(floor(progress));
-                                        this->texture = s.str();
+                                        s << static_cast<int>(floor(progress));
+                                        // Insert number in filename
+                                        std::string::size_type pos = filename.rfind('.');
+                                        if(pos != std::string::npos) filename.insert(pos, s.str());
+                                        else filename += s.str();
+                                        // Save filename
+                                        this->texture = filename;
                                     }
                                     break;
                                 case SSBTag::Type::TEXFILL:
