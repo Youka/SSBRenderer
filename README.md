@@ -5,16 +5,17 @@
 </tr></table>
 
 ### Build
-Comes after further development.
+* Use Code::Blocks to open project file <b>SSBRenderer.cbp</b>. Select your build and compile.
+* Execute the fitting <b>Makefile</b> for your platform/compiler.
 
 ### Example
-Comes after further development.
+See [examples](examples).
 
 ### Contact
 In future, there'll be an IRC channel [#SSB @ freenode](irc://#SSB@chat.freenode.net/).
 
 ### Contributing
-Currently no help is needed. After the first binary release it's going to change.
+Currently no help is needed, after further development surely.
 
 ### License
 This software is under zlib license. For details, read <b>LICENSE.txt<b>.
