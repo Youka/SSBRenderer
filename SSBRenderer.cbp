@@ -170,6 +170,9 @@
 		<Unit filename="src/textconv.hpp">
 			<Option virtualFolder="Utils/" />
 		</Unit>
+		<Unit filename="src/thread.h">
+			<Option virtualFolder="Utils/" />
+		</Unit>
 		<Unit filename="src/user.cpp">
 			<Option virtualFolder="Interfaces/" />
 		</Unit>

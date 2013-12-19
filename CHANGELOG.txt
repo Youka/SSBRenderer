@@ -4,12 +4,11 @@ v0.0.2 (planned)
 * added DirectShow Bridge
 * added support for more video colorspaces (YUV2, YV12)
 * (fixed RTL behaviour)
-* improved performance (blur algorithm)
+* improved performance (blur algorithm, overlay creation multithreaded)
 
 ##########################################################################
 
 v0.0.1 (planned)
 ----------------
-* changed overlay creation to multithreaded version
 * completed README
 * added examples
