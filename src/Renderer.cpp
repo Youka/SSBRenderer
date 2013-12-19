@@ -357,7 +357,7 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                         if(rs.pos_x == std::numeric_limits<decltype(rs.pos_x)>::max() && rs.pos_y == std::numeric_limits<decltype(rs.pos_y)>::max()){
 #pragma GCC diagnostic pop
                             if(frame_scale_x > 0 && frame_scale_y > 0)
-                                wrap_width = (this->width - 2 * rs.margin_h) * frame_scale_x, wrap_height = (this->height - 2 * rs.margin_v) * frame_scale_y;
+                                wrap_width = (this->width - 2 * rs.margin_h) / frame_scale_x, wrap_height = (this->height - 2 * rs.margin_v) / frame_scale_y;
                             else
                                 wrap_width = this->width - 2 * rs.margin_h, wrap_height = this->height - 2 * rs.margin_v;
                         }else
