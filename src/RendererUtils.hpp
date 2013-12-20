@@ -18,6 +18,7 @@ Permission is granted to anyone to use this software for any purpose, including 
 #include "RenderState.hpp"
 #include "cairo++.hpp"
 #include "SSBData.hpp"
+#include "thread.h"
 
 namespace{
     // Get line from stream, including last empty one
@@ -310,4 +311,9 @@ namespace{
             cairo_set_dash(ctx, rs.dashes.data(), rs.dashes.size(), rs.dash_offset);
         }
     }
+    // Simple threading layer
+    static THREAD_FUNC_BEGIN(call_in_thread)
+        std::function<void()>* func = reinterpret_cast<std::function<void()>*>(userdata);
+        (*func)();
+    THREAD_FUNC_END
 }

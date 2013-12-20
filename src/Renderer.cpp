@@ -865,8 +865,13 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                         Renderer::ImageData overlay;
                         if(rs.mode == SSBMode::Mode::FILL){
                             if(rs.line_width > 0 && geometry->type != SSBGeometry::Type::POINTS){
-                                overlay = create_overlay(DrawType::BORDER);
+                                std::function<void()> create_overlay_wrapper = [&overlay,&create_overlay]() -> void{
+                                    overlay = create_overlay(DrawType::BORDER);
+                                };
+                                nthread_t thread = nthread_create(call_in_thread, &create_overlay_wrapper);
                                 Renderer::ImageData overlay2 = create_overlay(DrawType::FILL_WITHOUT_BLUR);
+                                nthread_join(thread);
+                                nthread_destroy(thread);
                                 cairo_set_operator(overlay.image, CAIRO_OPERATOR_ADD);
                                 cairo_identity_matrix(overlay.image);
                                 cairo_set_source_surface(overlay.image, overlay2.image, overlay2.x - overlay.x, overlay2.y - overlay.y);

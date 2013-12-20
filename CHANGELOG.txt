@@ -7,9 +7,10 @@ v0.0.3 (planned)
 
 v0.0.2 (planned)
 ----------------
-* ported to Unix (Avxsynth, GStreamer, [Text processing])
+* ported to Unix (Avxsynth, GStreamer)
 * added DirectShow bridge
-* improved performance (faster blur algorithm, overlay creation multithreaded, more efficient texturing algorithm)
+* added CSRI interface (Aegisub)
+* improved performance (faster blur algorithm, more efficient texturing algorithm)
 
 ##########################################################################
 
