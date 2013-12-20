@@ -8,7 +8,7 @@ v0.0.3 (planned)
 v0.0.2 (planned)
 ----------------
 * ported to Unix (Avxsynth, GStreamer)
-* added DirectShow bridge
+* added DirectShow bridge (MPC)
 * added CSRI interface (Aegisub)
 * improved performance (faster blur algorithm, ?)
 
@@ -16,4 +16,5 @@ v0.0.2 (planned)
 
 v0.0.1 (planned)
 ----------------
+* fix crash on vertical newline (see karaoke example)
 * added examples

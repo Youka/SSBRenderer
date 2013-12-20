@@ -13,7 +13,6 @@ Default: {align=5;font-size=40;font-style=b;fade=250}
 Header: \\Default\\************************************\n
 Footer: \n************************************
 
-
 #EVENTS
 // Greet the user
 500-3.0|Default||Hi there!

@@ -1,2 +1,2 @@
 #EVENTS
-0-10.0|||{geometry=points;position=0,0;align=7;line-width=50}100 100 .5 -1.25{align=7;line-width=20}200 100{geometry=path;align=7;line-width=0}m 150 210.5 l 190 210.5 200 150 b 210 250 230 180 250 210.5 200 100 110 70 150 210.5 m 300 200 a 400 200 270 l 400 200
+0-10.0|||{position=0,0;align=7;geometry=points;line-width=50}100 100 .5 -1.25{align=7;line-width=20}200 100{align=7;geometry=path;line-width=0}m 150 210.5 l 190 210.5 200 150 b 210 250 230 180 250 210.5 200 100 110 70 150 210.5 m 300 200 a 400 200 270 l 400 200
