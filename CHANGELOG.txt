@@ -1,14 +1,18 @@
+v0.0.3 (planned)
+----------------
+* added support for more video colorspaces (YUV2, YV12)
+* (fixed RTL behaviour)
+
+##########################################################################
+
 v0.0.2 (planned)
 ----------------
 * ported to Unix (Avxsynth, GStreamer, [Text processing])
 * added DirectShow bridge
-* added support for more video colorspaces (YUV2, YV12)
-* (fixed RTL behaviour)
-* improved performance (blur algorithm, overlay creation multithreaded)
+* improved performance (faster blur algorithm, overlay creation multithreaded, more efficient texturing algorithm)
 
 ##########################################################################
 
 v0.0.1 (planned)
 ----------------
-* completed README
 * added examples

@@ -741,116 +741,122 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                                     break;
                             }
                             CairoImage image(width + (border_h << 1), height + (border_v << 1), CAIRO_FORMAT_ARGB32);
-                            // Transfer shifted path & matrix from buffer to image
-                            cairo_translate(image, -x + border_h, -y + border_v);
-                            cairo_path_t* path = cairo_copy_path(this->stencil_path_buffer);
-                            cairo_append_path(image, path);
-                            cairo_path_destroy(path);
-                            cairo_transform(image, &matrix);
-                            // Set line properties
-                            if(draw_type == DrawType::BORDER || draw_type == DrawType::WIRE){
-                                if(frame_scale_x > 0)
-                                    set_line_props(image, rs, (frame_scale_x + frame_scale_y) / 2);
-                                else
-                                    set_line_props(image, rs);
-                            }
-                            // Draw colored geometry on image
-                            if(draw_type == DrawType::FILL_BLURRED || draw_type == DrawType::FILL_WITHOUT_BLUR){
-                                if(rs.colors.size() == 1 && rs.alphas.size() == 1)
-                                    cairo_set_source_rgba(image, rs.colors[0].r, rs.colors[0].g, rs.colors[0].b, rs.alphas[0]);
-                                else{
+                            // Anything visible?
 #pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wnarrowing"
-                                    cairo_rectangle_t color_rect = {fill_x, fill_y, fill_width, fill_height};
+#pragma GCC diagnostic ignored "-Wfloat-equal"
+                            if(!((rs.alphas.size() == 1 && rs.alphas[0] == 0.0) || (rs.alphas.size() == 4 && std::count(rs.alphas.begin(), rs.alphas.end(), 0) == 4))){
 #pragma GCC diagnostic pop
-                                    if(rs.colors.size() == 4 && rs.alphas.size() == 4)
-                                        cairo_set_source(image, cairo_pattern_create_rect_color(color_rect,
-                                                                                                rs.colors[0].r, rs.colors[0].g, rs.colors[0].b, rs.alphas[0],
-                                                                                                rs.colors[1].r, rs.colors[1].g, rs.colors[1].b, rs.alphas[1],
-                                                                                                rs.colors[2].r, rs.colors[2].g, rs.colors[2].b, rs.alphas[2],
-                                                                                                rs.colors[3].r, rs.colors[3].g, rs.colors[3].b, rs.alphas[3]));
-                                    else if(rs.colors.size() == 4 && rs.alphas.size() == 1)
-                                        cairo_set_source(image, cairo_pattern_create_rect_color(color_rect,
-                                                                                                rs.colors[0].r, rs.colors[0].g, rs.colors[0].b, rs.alphas[0],
-                                                                                                rs.colors[1].r, rs.colors[1].g, rs.colors[1].b, rs.alphas[0],
-                                                                                                rs.colors[2].r, rs.colors[2].g, rs.colors[2].b, rs.alphas[0],
-                                                                                                rs.colors[3].r, rs.colors[3].g, rs.colors[3].b, rs.alphas[0]));
-                                    else    // rs.colors.size() == 1 && rs.alphas.size() == 4
-                                        cairo_set_source(image, cairo_pattern_create_rect_color(color_rect,
-                                                                                                rs.colors[0].r, rs.colors[0].g, rs.colors[0].b, rs.alphas[0],
-                                                                                                rs.colors[0].r, rs.colors[0].g, rs.colors[0].b, rs.alphas[1],
-                                                                                                rs.colors[0].r, rs.colors[0].g, rs.colors[0].b, rs.alphas[2],
-                                                                                                rs.colors[0].r, rs.colors[0].g, rs.colors[0].b, rs.alphas[3]));
+                                // Transfer shifted path & matrix from buffer to image
+                                cairo_translate(image, -x + border_h, -y + border_v);
+                                cairo_path_t* path = cairo_copy_path(this->stencil_path_buffer);
+                                cairo_append_path(image, path);
+                                cairo_path_destroy(path);
+                                cairo_transform(image, &matrix);
+                                // Set line properties
+                                if(draw_type == DrawType::BORDER || draw_type == DrawType::WIRE){
+                                    if(frame_scale_x > 0)
+                                        set_line_props(image, rs, (frame_scale_x + frame_scale_y) / 2);
+                                    else
+                                        set_line_props(image, rs);
                                 }
-                                cairo_fill_preserve(image);
-                            }else{  // draw_type == DrawType::BORDER || draw_type == DrawType::WIRE
-                                cairo_set_source_rgba(image, rs.line_color.r, rs.line_color.g, rs.line_color.b, rs.line_alpha);
-                                cairo_save(image);
-                                cairo_identity_matrix(image);
-                                cairo_stroke_preserve(image);
-                                cairo_restore(image);
-                            }
-                            // Draw texture over image color
-                            if((draw_type == DrawType::FILL_BLURRED || draw_type == DrawType::FILL_WITHOUT_BLUR) && !rs.texture.empty()){
-                                CairoImage texture(rs.texture);
-                                if(cairo_surface_status(texture) == CAIRO_STATUS_SUCCESS){
-                                    // Create RGB version of image
-                                    CairoImage rgb_image(cairo_image_surface_get_width(image), cairo_image_surface_get_height(image), CAIRO_FORMAT_RGB24);
-                                    cairo_set_source_surface(rgb_image, image, 0, 0);
-                                    cairo_set_operator(rgb_image, CAIRO_OPERATOR_SOURCE);
-                                    cairo_paint(rgb_image);
-                                    cairo_copy_matrix(image, rgb_image);
-                                    // Create texture pattern for color
-                                    cairo_matrix_t pattern_matrix = {1, 0, 0, 1, -fill_x - rs.texture_x, -fill_y - rs.texture_y};
-                                    cairo_pattern_t* pattern = cairo_pattern_create_for_surface(texture);
-                                    cairo_pattern_set_matrix(pattern, &pattern_matrix);
-                                    cairo_pattern_set_extend(pattern, rs.wrap_style);
-                                    // Multiply image & texture color
-                                    cairo_set_source(rgb_image, pattern);
-                                    cairo_set_operator(rgb_image, CAIRO_OPERATOR_MULTIPLY);
-                                    cairo_paint(rgb_image);
-                                    // Create texture pattern for alpha
-                                    pattern = cairo_pattern_create_for_surface(texture);
-                                    cairo_pattern_set_matrix(pattern, &pattern_matrix);
-                                    cairo_pattern_set_extend(pattern, rs.wrap_style);
-                                    // Multiply image & texture alpha
-                                    cairo_set_source(image, pattern);
-                                    cairo_set_operator(image, CAIRO_OPERATOR_IN);
-                                    cairo_paint(image);
-                                    // Merge color & alpha to image
+                                // Draw colored geometry on image
+                                if(draw_type == DrawType::FILL_BLURRED || draw_type == DrawType::FILL_WITHOUT_BLUR){
+                                    if(rs.colors.size() == 1 && rs.alphas.size() == 1)
+                                        cairo_set_source_rgba(image, rs.colors[0].r, rs.colors[0].g, rs.colors[0].b, rs.alphas[0]);
+                                    else{
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wnarrowing"
+                                        cairo_rectangle_t color_rect = {fill_x, fill_y, fill_width, fill_height};
+    #pragma GCC diagnostic pop
+                                        if(rs.colors.size() == 4 && rs.alphas.size() == 4)
+                                            cairo_set_source(image, cairo_pattern_create_rect_color(color_rect,
+                                                                                                    rs.colors[0].r, rs.colors[0].g, rs.colors[0].b, rs.alphas[0],
+                                                                                                    rs.colors[1].r, rs.colors[1].g, rs.colors[1].b, rs.alphas[1],
+                                                                                                    rs.colors[2].r, rs.colors[2].g, rs.colors[2].b, rs.alphas[2],
+                                                                                                    rs.colors[3].r, rs.colors[3].g, rs.colors[3].b, rs.alphas[3]));
+                                        else if(rs.colors.size() == 4 && rs.alphas.size() == 1)
+                                            cairo_set_source(image, cairo_pattern_create_rect_color(color_rect,
+                                                                                                    rs.colors[0].r, rs.colors[0].g, rs.colors[0].b, rs.alphas[0],
+                                                                                                    rs.colors[1].r, rs.colors[1].g, rs.colors[1].b, rs.alphas[0],
+                                                                                                    rs.colors[2].r, rs.colors[2].g, rs.colors[2].b, rs.alphas[0],
+                                                                                                    rs.colors[3].r, rs.colors[3].g, rs.colors[3].b, rs.alphas[0]));
+                                        else    // rs.colors.size() == 1 && rs.alphas.size() == 4
+                                            cairo_set_source(image, cairo_pattern_create_rect_color(color_rect,
+                                                                                                    rs.colors[0].r, rs.colors[0].g, rs.colors[0].b, rs.alphas[0],
+                                                                                                    rs.colors[0].r, rs.colors[0].g, rs.colors[0].b, rs.alphas[1],
+                                                                                                    rs.colors[0].r, rs.colors[0].g, rs.colors[0].b, rs.alphas[2],
+                                                                                                    rs.colors[0].r, rs.colors[0].g, rs.colors[0].b, rs.alphas[3]));
+                                    }
+                                    cairo_fill_preserve(image);
+                                }else{  // draw_type == DrawType::BORDER || draw_type == DrawType::WIRE
+                                    cairo_set_source_rgba(image, rs.line_color.r, rs.line_color.g, rs.line_color.b, rs.line_alpha);
                                     cairo_save(image);
                                     cairo_identity_matrix(image);
-                                    cairo_set_source_surface(image, rgb_image, 0, 0);
-                                    cairo_paint(image);
+                                    cairo_stroke_preserve(image);
                                     cairo_restore(image);
                                 }
-                            }
-                            // Draw karaoke over image
-                            if((draw_type == DrawType::FILL_BLURRED || draw_type == DrawType::FILL_WITHOUT_BLUR) && rs.karaoke_start >= 0){
-                                int elapsed_time = start_ms - event.start_ms;
-                                cairo_set_operator(image, CAIRO_OPERATOR_ATOP);
-                                cairo_set_source_rgb(image, rs.karaoke_color.r, rs.karaoke_color.g, rs.karaoke_color.b);
-                                if(elapsed_time >= rs.karaoke_start + rs.karaoke_duration)
-                                    cairo_paint(image);
-                                else if(elapsed_time >= rs.karaoke_start){
-                                    double progress = static_cast<double>(elapsed_time - rs.karaoke_start) / rs.karaoke_duration;
-                                    cairo_new_path(image);
-                                    switch(rs.direction){
-                                        case SSBDirection::Mode::LTR: cairo_rectangle(image, fill_x, fill_y, progress * fill_width, fill_height); break;
-                                        case SSBDirection::Mode::RTL: cairo_rectangle(image, fill_x + (1 - progress) * fill_width, fill_y, progress * fill_width, fill_height); break;
-                                        case SSBDirection::Mode::TTB: cairo_rectangle(image, fill_x, fill_y, fill_width, progress * fill_height); break;
+                                // Draw texture over image color
+                                if((draw_type == DrawType::FILL_BLURRED || draw_type == DrawType::FILL_WITHOUT_BLUR) && !rs.texture.empty()){
+                                    CairoImage texture(rs.texture);
+                                    if(cairo_surface_status(texture) == CAIRO_STATUS_SUCCESS){
+                                        // Create RGB version of image
+                                        CairoImage rgb_image(cairo_image_surface_get_width(image), cairo_image_surface_get_height(image), CAIRO_FORMAT_RGB24);
+                                        cairo_set_source_surface(rgb_image, image, 0, 0);
+                                        cairo_set_operator(rgb_image, CAIRO_OPERATOR_SOURCE);
+                                        cairo_paint(rgb_image);
+                                        cairo_copy_matrix(image, rgb_image);
+                                        // Create texture pattern for color
+                                        cairo_matrix_t pattern_matrix = {1, 0, 0, 1, -fill_x - rs.texture_x, -fill_y - rs.texture_y};
+                                        cairo_pattern_t* pattern = cairo_pattern_create_for_surface(texture);
+                                        cairo_pattern_set_matrix(pattern, &pattern_matrix);
+                                        cairo_pattern_set_extend(pattern, rs.wrap_style);
+                                        // Multiply image & texture color
+                                        cairo_set_source(rgb_image, pattern);
+                                        cairo_set_operator(rgb_image, CAIRO_OPERATOR_MULTIPLY);
+                                        cairo_paint(rgb_image);
+                                        // Create texture pattern for alpha
+                                        pattern = cairo_pattern_create_for_surface(texture);
+                                        cairo_pattern_set_matrix(pattern, &pattern_matrix);
+                                        cairo_pattern_set_extend(pattern, rs.wrap_style);
+                                        // Multiply image & texture alpha
+                                        cairo_set_source(image, pattern);
+                                        cairo_set_operator(image, CAIRO_OPERATOR_IN);
+                                        cairo_paint(image);
+                                        // Merge color & alpha to image
+                                        cairo_save(image);
+                                        cairo_identity_matrix(image);
+                                        cairo_set_source_surface(image, rgb_image, 0, 0);
+                                        cairo_paint(image);
+                                        cairo_restore(image);
                                     }
+                                }
+                                // Draw karaoke over image
+                                if((draw_type == DrawType::FILL_BLURRED || draw_type == DrawType::FILL_WITHOUT_BLUR) && rs.karaoke_start >= 0){
+                                    int elapsed_time = start_ms - event.start_ms;
+                                    cairo_set_operator(image, CAIRO_OPERATOR_ATOP);
+                                    cairo_set_source_rgb(image, rs.karaoke_color.r, rs.karaoke_color.g, rs.karaoke_color.b);
+                                    if(elapsed_time >= rs.karaoke_start + rs.karaoke_duration)
+                                        cairo_paint(image);
+                                    else if(elapsed_time >= rs.karaoke_start){
+                                        double progress = static_cast<double>(elapsed_time - rs.karaoke_start) / rs.karaoke_duration;
+                                        cairo_new_path(image);
+                                        switch(rs.direction){
+                                            case SSBDirection::Mode::LTR: cairo_rectangle(image, fill_x, fill_y, progress * fill_width, fill_height); break;
+                                            case SSBDirection::Mode::RTL: cairo_rectangle(image, fill_x + (1 - progress) * fill_width, fill_y, progress * fill_width, fill_height); break;
+                                            case SSBDirection::Mode::TTB: cairo_rectangle(image, fill_x, fill_y, fill_width, progress * fill_height); break;
+                                        }
+                                        cairo_fill(image);
+                                    }
+                                }
+                                // Blur image
+                                if(draw_type != DrawType::FILL_WITHOUT_BLUR)
+                                    cairo_image_surface_blur(image, rs.blur_h, rs.blur_v);
+                                // Erase filling in stroke -> create border
+                                if(draw_type == DrawType::BORDER){
+                                    cairo_set_source_rgba(image, 0, 0, 0, 1);
+                                    cairo_set_operator(image, CAIRO_OPERATOR_DEST_OUT);
                                     cairo_fill(image);
                                 }
-                            }
-                            // Blur image
-                            if(draw_type != DrawType::FILL_WITHOUT_BLUR)
-                                cairo_image_surface_blur(image, rs.blur_h, rs.blur_v);
-                            // Erase filling in stroke -> create border
-                            if(draw_type == DrawType::BORDER){
-                                cairo_set_source_rgba(image, 0, 0, 0, 1);
-                                cairo_set_operator(image, CAIRO_OPERATOR_DEST_OUT);
-                                cairo_fill(image);
                             }
                             // Return complete overlay data
                             return {image, -border_h + x, -border_v + y, rs.blend_mode, rs.fade_in, rs.fade_out};
