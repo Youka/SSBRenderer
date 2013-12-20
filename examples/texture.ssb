@@ -1,5 +1,2 @@
-#STYLES
-: 
-
 #EVENTS
 0-10.0|||{align=7;geometry=path;scale=0.5,0.5;texfill=0,0,mirror;animate=0,3000,t*2,(texture=pics/animate.png;texfill=0,0,clamp);alpha=ff,00,00,ff;color=ff0000,00ff00,0000ff,ffff00}m 0 0 l 800 0 800 800 0 800 c

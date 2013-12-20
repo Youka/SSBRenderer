@@ -908,12 +908,17 @@ void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
                                     break;
                                 }
                                 // Get style content for later text insertion
-                                std::string style_content;
-                                if(!std::getline(event_stream, event_token, '|') || !this->ssb.styles.count(event_token)){
+                                if(!std::getline(event_stream, event_token, '|')){
                                     if(warnings)
                                         throw_parse_error(line_i, "Couldn't find style");
                                     break;
-                                }else
+                                }
+                                std::string style_content;
+                                if(!event_token.empty() && !this->ssb.styles.count(event_token)){
+                                    if(warnings)
+                                        throw_parse_error(line_i, "Invalid style");
+                                    break;
+                                }else if(this->ssb.styles.count(event_token))
                                     style_content = this->ssb.styles[event_token];
                                 // Skip note
                                 if(!std::getline(event_stream, event_token, '|')){
