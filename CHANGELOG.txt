@@ -1,7 +1,7 @@
 v0.0.3 (planned)
 ----------------
 * added support for more video colorspaces (YUV2, YV12)
-* (fixed RTL behaviour)
+* [fixed RTL behaviour]
 
 ##########################################################################
 
@@ -10,7 +10,7 @@ v0.0.2 (planned)
 * ported to Unix (Avxsynth, GStreamer)
 * added DirectShow bridge
 * added CSRI interface (Aegisub)
-* improved performance (faster blur algorithm, more efficient texturing algorithm)
+* improved performance (faster blur algorithm, ?)
 
 ##########################################################################
 

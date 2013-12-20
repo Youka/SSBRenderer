@@ -799,35 +799,45 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                                 if((draw_type == DrawType::FILL_BLURRED || draw_type == DrawType::FILL_WITHOUT_BLUR) && !rs.texture.empty()){
                                     CairoImage texture(rs.texture);
                                     if(cairo_surface_status(texture) == CAIRO_STATUS_SUCCESS){
-                                        // Create RGB version of image
-                                        CairoImage rgb_image(cairo_image_surface_get_width(image), cairo_image_surface_get_height(image), CAIRO_FORMAT_RGB24);
-                                        cairo_set_source_surface(rgb_image, image, 0, 0);
-                                        cairo_set_operator(rgb_image, CAIRO_OPERATOR_SOURCE);
-                                        cairo_paint(rgb_image);
-                                        cairo_copy_matrix(image, rgb_image);
-                                        // Create texture pattern for color
+                                        // Create texture pattern
                                         cairo_matrix_t pattern_matrix = {1, 0, 0, 1, -fill_x - rs.texture_x, -fill_y - rs.texture_y};
                                         cairo_pattern_t* pattern = cairo_pattern_create_for_surface(texture);
                                         cairo_pattern_set_matrix(pattern, &pattern_matrix);
                                         cairo_pattern_set_extend(pattern, rs.wrap_style);
-                                        // Multiply image & texture color
-                                        cairo_set_source(rgb_image, pattern);
-                                        cairo_set_operator(rgb_image, CAIRO_OPERATOR_MULTIPLY);
-                                        cairo_paint(rgb_image);
-                                        // Create texture pattern for alpha
-                                        pattern = cairo_pattern_create_for_surface(texture);
-                                        cairo_pattern_set_matrix(pattern, &pattern_matrix);
-                                        cairo_pattern_set_extend(pattern, rs.wrap_style);
-                                        // Multiply image & texture alpha
-                                        cairo_set_source(image, pattern);
-                                        cairo_set_operator(image, CAIRO_OPERATOR_IN);
-                                        cairo_paint(image);
-                                        // Merge color & alpha to image
-                                        cairo_save(image);
-                                        cairo_identity_matrix(image);
-                                        cairo_set_source_surface(image, rgb_image, 0, 0);
-                                        cairo_paint(image);
-                                        cairo_restore(image);
+                                        cairo_pattern_set_filter(pattern, CAIRO_FILTER_BEST);
+                                        // Draw texture pattern on texture image
+                                        CairoImage tex_image(cairo_image_surface_get_width(image), cairo_image_surface_get_height(image), CAIRO_FORMAT_ARGB32);
+                                        cairo_copy_matrix(image, tex_image);
+                                        cairo_set_source(tex_image, pattern);
+                                        cairo_set_operator(tex_image, CAIRO_OPERATOR_SOURCE);
+                                        cairo_paint(tex_image);
+                                        // Multiply texture image to overlay image
+                                        int width = cairo_image_surface_get_width(image);
+                                        int height = cairo_image_surface_get_height(image);
+                                        int offset = cairo_image_surface_get_stride(image) - (width << 2);
+                                        cairo_surface_flush(image);
+                                        cairo_surface_flush(tex_image);
+                                        unsigned char* img_data = cairo_image_surface_get_data(image);
+                                        unsigned char* tex_data = cairo_image_surface_get_data(tex_image);
+                                        unsigned char new_alpha;
+                                        for(int y = 0; y < height; ++y){
+                                            for(int x = 0; x < width; ++x){
+                                                if(img_data[3] == 0 || tex_data[3] == 0)
+                                                    img_data[0] = img_data[1] = img_data[2] = img_data[3] = 0;
+                                                else{
+                                                    new_alpha = img_data[3] * tex_data[3] / 255;
+                                                    img_data[0] = (img_data[0] * 255 / img_data[3]) * (tex_data[0] * 255 / tex_data[3]) * new_alpha / 65025;
+                                                    img_data[1] = (img_data[1] * 255 / img_data[3]) * (tex_data[1] * 255 / tex_data[3]) * new_alpha / 65025;
+                                                    img_data[2] = (img_data[2] * 255 / img_data[3]) * (tex_data[2] * 255 / tex_data[3]) * new_alpha / 65025;
+                                                    img_data[3] = new_alpha;
+                                                }
+                                                img_data += 4;
+                                                tex_data += 4;
+                                            }
+                                            img_data += offset;
+                                            tex_data += offset;
+                                        }
+                                        cairo_surface_mark_dirty(image);
                                     }
                                 }
                                 // Draw karaoke over image
