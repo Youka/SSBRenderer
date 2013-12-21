@@ -12,10 +12,10 @@
 See [examples](examples).
 
 ### Contact
-In future, there'll be an IRC channel [#SSB @ freenode](irc://#SSB@chat.freenode.net/).
+Just whisper <b>Youka</b> on <a href="http://en.wikipedia.org/wiki/IRC">IRC</a> servers [freenode](https://www.freenode.net/) or [rizon](http://rizon.net/).
 
 ### Contributing
-Currently no help is needed, after further development surely.
+Help is welcome, just contact me and tell me what you can/want to do.
 
 ### License
 This software is under zlib license. For details, read <b>LICENSE.txt<b>.
