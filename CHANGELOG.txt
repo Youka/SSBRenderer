@@ -16,5 +16,4 @@ v0.0.2 (planned)
 
 v0.0.1 (planned)
 ----------------
-* fix crash on vertical newline (see karaoke example)
 * added examples

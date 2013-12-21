@@ -331,6 +331,7 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                 for(Renderer::ImageData& idata : this->cache.get(&event))
                     this->blend(create_faded_image(idata.image, idata.fade_in, idata.fade_out, start_ms, event.start_ms, event.end_ms),
                                 idata.x, idata.y, frame, pitch, idata.blend_mode);
+
             // Draw new
             else{
                 // Buffer for cache entry
@@ -764,10 +765,10 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                                     if(rs.colors.size() == 1 && rs.alphas.size() == 1)
                                         cairo_set_source_rgba(image, rs.colors[0].r, rs.colors[0].g, rs.colors[0].b, rs.alphas[0]);
                                     else{
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wnarrowing"
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnarrowing"
                                         cairo_rectangle_t color_rect = {fill_x, fill_y, fill_width, fill_height};
-    #pragma GCC diagnostic pop
+#pragma GCC diagnostic pop
                                         if(rs.colors.size() == 4 && rs.alphas.size() == 4)
                                             cairo_set_source(image, cairo_pattern_create_rect_color(color_rect,
                                                                                                     rs.colors[0].r, rs.colors[0].g, rs.colors[0].b, rs.alphas[0],

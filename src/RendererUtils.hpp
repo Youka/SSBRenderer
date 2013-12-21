@@ -56,7 +56,8 @@ namespace{
                 is_space = !is_space;
                 pos_start = pos_end;
             }while(pos_end != std::string::npos);
-        }
+        }else
+            words.push_back({"", ""});
         return words;
     }
     // Creates new image with applied fade
