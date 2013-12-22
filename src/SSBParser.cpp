@@ -824,9 +824,12 @@ void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
         while(file.getline(line)){
             // Update line number
             line_i++;
-            // Remove windows carriage return at end of lines
-            if(!line.empty() && line.back() == '\r')
-                line.pop_back();
+            // Remove windows carriage returns at end of lines
+            size_t to_erase = 0;
+            for(auto iter = line.rbegin(); iter != line.rend(); ++iter)
+                if(*iter == '\r') to_erase++;
+                else break;
+            if(to_erase > 0) line.resize(line.size() - to_erase);
             // No skippable line
             if(!line.empty() && line.compare(0, 2, "//") != 0){
                 // Got section
