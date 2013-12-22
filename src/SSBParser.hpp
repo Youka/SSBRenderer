@@ -21,13 +21,19 @@ class SSBParser{
     private:
         // Collected SSB data
         SSBData ssb;
+        // SSB Section
+        enum class SSBSection{NONE, META, FRAME, STYLES, EVENTS};
+        // Parse single line
+        void process_line(std::string& line, SSBSection& section, unsigned long int line_i, bool warnings);
     public:
         // Constructors
         SSBParser() = default;
         SSBParser(SSBData& ssb);
         SSBParser(std::string& script, bool warnings) throw(std::string);
+        SSBParser(std::istream& script, bool warnings) throw(std::string);
         // Get SSB data
         SSBData data() const;
         // Parse script & fill data
         void parse(std::string& script, bool warnings) throw(std::string);
+        void parse(std::istream& script, bool warnings) throw(std::string);
 };

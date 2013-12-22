@@ -83,47 +83,6 @@ class CairoImage{
         }
 };
 
-class CairoPath{
-    private:
-        unsigned int* reference_counter;
-        cairo_path_t* path;
-    public:
-        // Ctor & dtor
-        CairoPath() : reference_counter(new unsigned int), path(nullptr){
-            *this->reference_counter = 1;
-        }
-        CairoPath(cairo_t* ctx) : reference_counter(new unsigned int){
-            *this->reference_counter = 1;
-            this->path = cairo_copy_path(ctx);
-            if(this->path->status != CAIRO_STATUS_SUCCESS)
-                this->path = nullptr;
-        }
-        ~CairoPath(){
-            if(--*this->reference_counter == 0){
-                delete this->reference_counter;
-                if(this->path) cairo_path_destroy(this->path);
-            }
-        }
-        // Copy
-        CairoPath(const CairoPath& other) : reference_counter(other.reference_counter), path(other.path){
-            *this->reference_counter += 1;
-        }
-        CairoPath& operator=(const CairoPath& other){
-            if(--*this->reference_counter == 0){
-                delete this->reference_counter;
-                if(this->path) cairo_path_destroy(this->path);
-            }
-            this->reference_counter = other.reference_counter;
-            *this->reference_counter += 1;
-            this->path = other.path;
-            return *this;
-        }
-        // Access
-        operator cairo_path_t*() const {
-            return this->path;
-        }
-};
-
 #ifdef _WIN32
 #include "textconv.hpp"
 #else

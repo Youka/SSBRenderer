@@ -24,6 +24,10 @@ SSBParser::SSBParser(std::string& script, bool warnings) throw(std::string){
     this->parse(script, warnings);
 }
 
+SSBParser::SSBParser(std::istream& script, bool warnings) throw(std::string){
+    this->parse(script, warnings);
+}
+
 SSBData SSBParser::data() const {
     return this->ssb;
 }
@@ -809,13 +813,181 @@ namespace{
     }
 }
 
+void SSBParser::process_line(std::string& line, SSBSection& section, unsigned long int line_i, bool warnings){
+    // Remove windows carriage returns at end of lines
+    size_t to_erase = 0;
+    for(auto iter = line.rbegin(); iter != line.rend(); ++iter)
+        if(*iter == '\r') to_erase++;
+        else break;
+    if(to_erase > 0) line.resize(line.size() - to_erase);
+    // No skippable line
+    if(!line.empty() && line.compare(0, 2, "//") != 0){
+        // Got section
+        if(line.front() == '#'){
+            std::string section_name = line.substr(1);
+            if(section_name == "META")
+                section = SSBSection::META;
+            else if(section_name == "FRAME")
+                section = SSBSection::FRAME;
+            else if(section_name == "STYLES")
+                section = SSBSection::STYLES;
+            else if(section_name == "EVENTS")
+                section = SSBSection::EVENTS;
+            else if(warnings)
+                throw_parse_error(line_i, "Invalid section name");
+        // Got section value
+        }else
+            switch(section){
+                case SSBSection::META:
+                    if(line.compare(0, 7, "Title: ") == 0)
+                        this->ssb.meta.title = line.substr(7);
+                    else if(line.compare(0, 8, "Author: ") == 0)
+                        this->ssb.meta.author = line.substr(8);
+                    else if(line.compare(0, 13, "Description: ") == 0)
+                        this->ssb.meta.description = line.substr(13);
+                    else if(line.compare(0, 9, "Version: ") == 0)
+                        this->ssb.meta.version = line.substr(9);
+                    else if(warnings)
+                        throw_parse_error(line_i, "Invalid meta field");
+                    break;
+                case SSBSection::FRAME:
+                    if(line.compare(0, 7, "Width: ") == 0){
+                        decltype(SSBFrame::width) width;
+                        if(string_to_number(line.substr(7), width))
+                            this->ssb.frame.width = width;
+                        else if(warnings)
+                            throw_parse_error(line_i, "Invalid frame width");
+                    }else if(line.compare(0, 8, "Height: ") == 0){
+                        decltype(SSBFrame::height) height;
+                        if(string_to_number(line.substr(8), height))
+                            this->ssb.frame.height = height;
+                        else if(warnings)
+                            throw_parse_error(line_i, "Invalid frame height");
+                    }else if(warnings)
+                        throw_parse_error(line_i, "Invalid frame field");
+                    break;
+                case SSBSection::STYLES:
+                    {
+                        auto pos = line.find(": ");
+                        if(pos != std::string::npos){
+                            this->ssb.styles[line.substr(0, pos)] = line.substr(pos+2);
+                        }else if(warnings)
+                            throw_parse_error(line_i, "Invalid style format");
+                    }
+                    break;
+                case SSBSection::EVENTS:
+                    {
+                        // Output buffer
+                        SSBEvent ssb_event;
+                        // Split line into tokens
+                        std::istringstream event_stream(line);
+                        std::string event_token;
+                        // Get start time
+                        if(!std::getline(event_stream, event_token, '-') || !parse_time(event_token, ssb_event.start_ms)){
+                            if(warnings)
+                                throw_parse_error(line_i, "Couldn't find start time");
+                            break;
+                        }
+                        // Get end time
+                        if(!std::getline(event_stream, event_token, '|') || !parse_time(event_token, ssb_event.end_ms)){
+                            if(warnings)
+                                throw_parse_error(line_i, "Couldn't find end time");
+                            break;
+                        }
+                        // Check times
+                        if(ssb_event.end_ms <= ssb_event.start_ms){
+                            if(warnings)
+                                throw_parse_error(line_i, "Invalid time range");
+                            break;
+                        }
+                        // Get style content for later text insertion
+                        if(!std::getline(event_stream, event_token, '|')){
+                            if(warnings)
+                                throw_parse_error(line_i, "Couldn't find style");
+                            break;
+                        }
+                        std::string style_content;
+                        if(!event_token.empty() && !this->ssb.styles.count(event_token)){
+                            if(warnings)
+                                throw_parse_error(line_i, "Invalid style");
+                            break;
+                        }else if(this->ssb.styles.count(event_token))
+                            style_content = this->ssb.styles[event_token];
+                        // Skip note
+                        if(!std::getline(event_stream, event_token, '|')){
+                            if(warnings)
+                                throw_parse_error(line_i, "Couldn't find note");
+                            break;
+                        }
+                        // Get text
+                        if(!event_stream.unget() || event_stream.get() != '|'){
+                            if(warnings)
+                                throw_parse_error(line_i, "Couldn't find text");
+                            break;
+                        }
+                        std::string text = std::getline(event_stream, event_token) ? style_content + event_token : style_content;
+                        // Add inline styles to text
+                        uint8_t macro_insert_count = 64;
+                        std::string::size_type pos_start = 0, pos_end;
+                        while(macro_insert_count && (pos_start = text.find("\\\\", pos_start)) != std::string::npos && (pos_end = text.find("\\\\", pos_start+2)) != std::string::npos){
+                            std::string macro = text.substr(pos_start + 2, pos_end - (pos_start + 2));
+                            if(this->ssb.styles.count(macro)){
+                                text.replace(pos_start, macro.length() + 4, this->ssb.styles[macro]);
+                                macro_insert_count--;  // Blocker to avoid infinite recursive macros
+                            }else
+                                pos_start = pos_end + 2;
+                        }
+                        // Parse text
+                        pos_start = 0;
+                        bool in_tags = false;
+                        SSBGeometry::Type geometry_type = SSBGeometry::Type::TEXT;
+                        do{
+                            // Evaluate tags
+                            if(in_tags){
+                                // Search tags end at closing bracket or cause error
+                                pos_end = text.find('}', pos_start);
+                                if(pos_end == std::string::npos){
+                                    if(warnings)
+                                        throw_parse_error(line_i, "Tags closing brace not found");
+                                    break;
+                                }
+                                // Parse single tags
+                                std::string tags = text.substr(pos_start, pos_end - pos_start);
+                                if(!tags.empty())
+                                    parse_tags(tags, ssb_event, geometry_type, line_i, warnings);
+                            // Evaluate geometry
+                            }else{
+                                // Search geometry end at tags bracket (unescaped) or text end
+                                pos_end = find_non_escaped_character(text, '{', pos_start);
+                                if(pos_end == std::string::npos)
+                                    pos_end = text.length();
+                                // Parse geometry by type
+                                std::string geometry = text.substr(pos_start, pos_end - pos_start);
+                                if(!geometry.empty())
+                                    parse_geometry(geometry, geometry_type, ssb_event, line_i, warnings);
+                            }
+                            pos_start = pos_end + 1;
+                            in_tags = !in_tags;
+                        }while(pos_end < text.length());
+                        // Parsing successfull without exception -> commit output
+                        this->ssb.events.push_back(ssb_event);
+                    }
+                    break;
+                case SSBSection::NONE:
+                    if(warnings)
+                        throw_parse_error(line_i, "No section set");
+                    break;
+            }
+    }
+}
+
 void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
     // File reading
     FileReader file(script);
     // File valid?
     if(file){
         // Current SSB section
-        enum class SSBSection{NONE, META, FRAME, STYLES, EVENTS} section = SSBSection::NONE;
+        SSBSection section = SSBSection::NONE;
         // File line number (needed for warnings)
         unsigned long int line_i = 0;
         // File line buffer
@@ -824,173 +996,26 @@ void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
         while(file.getline(line)){
             // Update line number
             line_i++;
-            // Remove windows carriage returns at end of lines
-            size_t to_erase = 0;
-            for(auto iter = line.rbegin(); iter != line.rend(); ++iter)
-                if(*iter == '\r') to_erase++;
-                else break;
-            if(to_erase > 0) line.resize(line.size() - to_erase);
-            // No skippable line
-            if(!line.empty() && line.compare(0, 2, "//") != 0){
-                // Got section
-                if(line.front() == '#'){
-                    std::string section_name = line.substr(1);
-                    if(section_name == "META")
-                        section = SSBSection::META;
-                    else if(section_name == "FRAME")
-                        section = SSBSection::FRAME;
-                    else if(section_name == "STYLES")
-                        section = SSBSection::STYLES;
-                    else if(section_name == "EVENTS")
-                        section = SSBSection::EVENTS;
-                    else if(warnings)
-                        throw_parse_error(line_i, "Invalid section name");
-                // Got section value
-                }else
-                    switch(section){
-                        case SSBSection::META:
-                            if(line.compare(0, 7, "Title: ") == 0)
-                                this->ssb.meta.title = line.substr(7);
-                            else if(line.compare(0, 8, "Author: ") == 0)
-                                this->ssb.meta.author = line.substr(8);
-                            else if(line.compare(0, 13, "Description: ") == 0)
-                                this->ssb.meta.description = line.substr(13);
-                            else if(line.compare(0, 9, "Version: ") == 0)
-                                this->ssb.meta.version = line.substr(9);
-                            else if(warnings)
-                                throw_parse_error(line_i, "Invalid meta field");
-                            break;
-                        case SSBSection::FRAME:
-                            if(line.compare(0, 7, "Width: ") == 0){
-                                decltype(SSBFrame::width) width;
-                                if(string_to_number(line.substr(7), width))
-                                    this->ssb.frame.width = width;
-                                else if(warnings)
-                                    throw_parse_error(line_i, "Invalid frame width");
-                            }else if(line.compare(0, 8, "Height: ") == 0){
-                                decltype(SSBFrame::height) height;
-                                if(string_to_number(line.substr(8), height))
-                                    this->ssb.frame.height = height;
-                                else if(warnings)
-                                    throw_parse_error(line_i, "Invalid frame height");
-                            }else if(warnings)
-                                throw_parse_error(line_i, "Invalid frame field");
-                            break;
-                        case SSBSection::STYLES:
-                            {
-                                auto pos = line.find(": ");
-                                if(pos != std::string::npos){
-                                    this->ssb.styles[line.substr(0, pos)] = line.substr(pos+2);
-                                }else if(warnings)
-                                    throw_parse_error(line_i, "Invalid style format");
-                            }
-                            break;
-                        case SSBSection::EVENTS:
-                            {
-                                // Output buffer
-                                SSBEvent ssb_event;
-                                // Split line into tokens
-                                std::istringstream event_stream(line);
-                                std::string event_token;
-                                // Get start time
-                                if(!std::getline(event_stream, event_token, '-') || !parse_time(event_token, ssb_event.start_ms)){
-                                    if(warnings)
-                                        throw_parse_error(line_i, "Couldn't find start time");
-                                    break;
-                                }
-                                // Get end time
-                                if(!std::getline(event_stream, event_token, '|') || !parse_time(event_token, ssb_event.end_ms)){
-                                    if(warnings)
-                                        throw_parse_error(line_i, "Couldn't find end time");
-                                    break;
-                                }
-                                // Check times
-                                if(ssb_event.end_ms <= ssb_event.start_ms){
-                                    if(warnings)
-                                        throw_parse_error(line_i, "Invalid time range");
-                                    break;
-                                }
-                                // Get style content for later text insertion
-                                if(!std::getline(event_stream, event_token, '|')){
-                                    if(warnings)
-                                        throw_parse_error(line_i, "Couldn't find style");
-                                    break;
-                                }
-                                std::string style_content;
-                                if(!event_token.empty() && !this->ssb.styles.count(event_token)){
-                                    if(warnings)
-                                        throw_parse_error(line_i, "Invalid style");
-                                    break;
-                                }else if(this->ssb.styles.count(event_token))
-                                    style_content = this->ssb.styles[event_token];
-                                // Skip note
-                                if(!std::getline(event_stream, event_token, '|')){
-                                    if(warnings)
-                                        throw_parse_error(line_i, "Couldn't find note");
-                                    break;
-                                }
-                                // Get text
-                                if(!event_stream.unget() || event_stream.get() != '|'){
-                                    if(warnings)
-                                        throw_parse_error(line_i, "Couldn't find text");
-                                    break;
-                                }
-                                std::string text = std::getline(event_stream, event_token) ? style_content + event_token : style_content;
-                                // Add inline styles to text
-                                uint8_t macro_insert_count = 64;
-                                std::string::size_type pos_start = 0, pos_end;
-                                while(macro_insert_count && (pos_start = text.find("\\\\", pos_start)) != std::string::npos && (pos_end = text.find("\\\\", pos_start+2)) != std::string::npos){
-                                    std::string macro = text.substr(pos_start + 2, pos_end - (pos_start + 2));
-                                    if(this->ssb.styles.count(macro)){
-                                        text.replace(pos_start, macro.length() + 4, this->ssb.styles[macro]);
-                                        macro_insert_count--;  // Blocker to avoid infinite recursive macros
-                                    }else
-                                        pos_start = pos_end + 2;
-                                }
-                                // Parse text
-                                pos_start = 0;
-                                bool in_tags = false;
-                                SSBGeometry::Type geometry_type = SSBGeometry::Type::TEXT;
-                                do{
-                                    // Evaluate tags
-                                    if(in_tags){
-                                        // Search tags end at closing bracket or cause error
-                                        pos_end = text.find('}', pos_start);
-                                        if(pos_end == std::string::npos){
-                                            if(warnings)
-                                                throw_parse_error(line_i, "Tags closing brace not found");
-                                            break;
-                                        }
-                                        // Parse single tags
-                                        std::string tags = text.substr(pos_start, pos_end - pos_start);
-                                        if(!tags.empty())
-                                            parse_tags(tags, ssb_event, geometry_type, line_i, warnings);
-                                    // Evaluate geometry
-                                    }else{
-                                        // Search geometry end at tags bracket (unescaped) or text end
-                                        pos_end = find_non_escaped_character(text, '{', pos_start);
-                                        if(pos_end == std::string::npos)
-                                            pos_end = text.length();
-                                        // Parse geometry by type
-                                        std::string geometry = text.substr(pos_start, pos_end - pos_start);
-                                        if(!geometry.empty())
-                                            parse_geometry(geometry, geometry_type, ssb_event, line_i, warnings);
-                                    }
-                                    pos_start = pos_end + 1;
-                                    in_tags = !in_tags;
-                                }while(pos_end < text.length());
-                                // Parsing successfull without exception -> commit output
-                                this->ssb.events.push_back(ssb_event);
-                            }
-                            break;
-                        case SSBSection::NONE:
-                            if(warnings)
-                                throw_parse_error(line_i, "No section set");
-                            break;
-                    }
-            }
+            // Process line
+            this->process_line(line, section, line_i, warnings);
         }
     // File couldn't be read
     }else if(warnings)
         throw std::string("Script couldn't be read: ") + script;
+}
+
+void SSBParser::parse(std::istream& script, bool warnings) throw(std::string){
+    // Current SSB section
+    SSBSection section = SSBSection::NONE;
+    // File line number (needed for warnings)
+    unsigned long int line_i = 0;
+    // File line buffer
+    std::string line;
+    // Line iteration
+    while(std::getline(script, line)){
+        // Update line number
+        line_i++;
+        // Process line
+        this->process_line(line, section, line_i, warnings);
+    }
 }

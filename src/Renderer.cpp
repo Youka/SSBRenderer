@@ -45,6 +45,9 @@ Renderer::Renderer(int width, int height, Colorspace format, std::string& script
 #endif
 }
 
+Renderer::Renderer(int width, int height, Colorspace format, std::istream& script, bool warnings)
+: width(width), height(height), format(format), ssb(SSBParser(script, warnings).data()), stencil_path_buffer(width, height, CAIRO_FORMAT_A8){}
+
 void Renderer::set_target(int width, int height, Colorspace format){
     this->width = width;
     this->height = height;

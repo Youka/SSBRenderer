@@ -16,7 +16,6 @@ Permission is granted to anyone to use this software for any purpose, including 
 #include "Renderer.hpp"
 #include "file_info.h"
 #include <sstream>
-#include <fstream>
 #define CSRI_OWN_HANDLES
 #define CSRIAPI extern "C" __declspec(dllexport)
 typedef const char* csri_rend;
@@ -185,25 +184,15 @@ CSRIAPI csri_inst* csri_open_file(csri_rend*, const char* filename, struct csri_
         std::string ssb_content, line;
         while(file.getline(line))
             ssb_content.append(cvt_ass_to_ssb(line)).push_back('\n');
-        // Create temporary file for SSBRenderer input
-        std::string tmp_filename(L_tmpnam, '\0');
-        if(tmpnam(const_cast<char*>(tmp_filename.data()))){
-            std::ofstream ssb_file(tmp_filename);
-            if(ssb_file){
-                ssb_file << ssb_content;
-                ssb_file.close();
-                // Create renderer
-                Renderer* renderer;
-                try{
-                    renderer = new Renderer(0, 0, Renderer::Colorspace::BGR, tmp_filename, false);
-                }catch(std::string err){
-                    remove(tmp_filename.c_str());
-                    return NULL;
-                }
-                remove(tmp_filename.c_str());
-                return new csri_inst{0, renderer};
-            }
+        // Create renderer
+        std::istringstream ssb_stream(ssb_content);
+        Renderer* renderer;
+        try{
+            renderer = new Renderer(0, 0, Renderer::Colorspace::BGR, ssb_stream, false);
+        }catch(std::string err){
+            return NULL;
         }
+        return new csri_inst{0, renderer};
     }
     return NULL;
 }
@@ -216,26 +205,15 @@ CSRIAPI csri_inst* csri_open_mem(csri_rend*, const void* data, size_t length, st
     std::string ssb_content, line;
     while(std::getline(ass_stream, line))
         ssb_content.append(cvt_ass_to_ssb(line)).push_back('\n');
-    // Create temporary file for SSBRenderer input
-    std::string tmp_filename(L_tmpnam, '\0');
-    if(tmpnam(const_cast<char*>(tmp_filename.data()))){
-        std::ofstream ssb_file(tmp_filename);
-        if(ssb_file){
-            ssb_file << ssb_content;
-            ssb_file.close();
-            // Create renderer
-            Renderer* renderer;
-            try{
-                renderer = new Renderer(1, 1, Renderer::Colorspace::BGR, tmp_filename, false);
-            }catch(std::string err){
-                remove(tmp_filename.c_str());
-                return NULL;
-            }
-            remove(tmp_filename.c_str());
-            return new csri_inst{0, renderer};
-        }
+    // Create renderer
+    std::istringstream ssb_stream(ssb_content);
+    Renderer* renderer;
+    try{
+        renderer = new Renderer(1, 1, Renderer::Colorspace::BGR, ssb_stream, false);
+    }catch(std::string err){
+        return NULL;
     }
-    return NULL;
+    return new csri_inst{0, renderer};
 }
 
 // Close interface

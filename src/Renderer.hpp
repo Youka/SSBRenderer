@@ -45,6 +45,7 @@ class Renderer{
     public:
         // Frame meta informations saving + SSB parsing + path buffer creation
         Renderer(int width, int height, Colorspace format, std::string& script, bool warnings);
+        Renderer(int width, int height, Colorspace format, std::istream& script, bool warnings);
         // Change frame meta informations
         void set_target(int width, int height, Colorspace format);
         // Render SSB contents on frame
