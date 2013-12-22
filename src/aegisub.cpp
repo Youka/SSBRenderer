@@ -20,7 +20,10 @@ Permission is granted to anyone to use this software for any purpose, including 
 #define CSRI_OWN_HANDLES
 #define CSRIAPI extern "C" __declspec(dllexport)
 typedef const char* csri_rend;
-typedef Renderer csri_inst;
+struct csri_inst{
+    int height;
+    Renderer* renderer;
+};
 #include <csri.h>
 
 // Only renderer
@@ -157,7 +160,7 @@ std::string& cvt_ass_to_ssb(std::string& line){
                             // MarginL, MarginR, MarginV, Effect
                             if(std::getline(dialog_stream, dialog_field, ',') && std::getline(dialog_stream, dialog_field, ',') && std::getline(dialog_stream, dialog_field, ',') && std::getline(dialog_stream, dialog_field, ',')){
                                 // Text
-                                if(std::getline(dialog_stream, dialog_field, ',')){
+                                if(std::getline(dialog_stream, dialog_field)){
                                     line.push_back('|');
                                     line.append(dialog_field);
                                 }
@@ -198,7 +201,7 @@ CSRIAPI csri_inst* csri_open_file(csri_rend*, const char* filename, struct csri_
                     return NULL;
                 }
                 remove(tmp_filename.c_str());
-                return renderer;
+                return new csri_inst{0, renderer};
             }
         }
     }
@@ -223,14 +226,13 @@ CSRIAPI csri_inst* csri_open_mem(csri_rend*, const void* data, size_t length, st
             // Create renderer
             Renderer* renderer;
             try{
-                renderer = new Renderer(1, 1, Renderer::Colorspace::BGR, tmp_filename, true);
+                renderer = new Renderer(1, 1, Renderer::Colorspace::BGR, tmp_filename, false);
             }catch(std::string err){
-                MessageBoxA(NULL, err.c_str(), "SSB error", MB_OK);
                 remove(tmp_filename.c_str());
                 return NULL;
             }
             remove(tmp_filename.c_str());
-            return renderer;
+            return new csri_inst{0, renderer};
         }
     }
     return NULL;
@@ -238,13 +240,16 @@ CSRIAPI csri_inst* csri_open_mem(csri_rend*, const void* data, size_t length, st
 
 // Close interface
 CSRIAPI void csri_close(csri_inst* inst){
-    if(inst)
+    if(inst){
+        if(inst->renderer)
+            delete inst->renderer;
         delete inst;
+    }
 }
 
 // Offer supported format and save him
 CSRIAPI int csri_request_fmt(csri_inst* inst, const struct csri_fmt* fmt){
-    if(!inst || fmt->width == 0 || fmt->height == 0)
+    if(!inst || !inst->renderer || fmt->width == 0 || fmt->height == 0)
         return -1;
     else{
         Renderer::Colorspace colorspace;
@@ -267,15 +272,35 @@ CSRIAPI int csri_request_fmt(csri_inst* inst, const struct csri_fmt* fmt){
             case CSRI_F_YV12:
             default: return -1;
         }
-        inst->set_target(fmt->width, fmt->height, colorspace);
+        inst->height = fmt->height;
+        inst->renderer->set_target(fmt->width, fmt->height, colorspace);
         return 0;
+    }
+}
+
+// Inverts frame vertically
+void frame_flip_y(unsigned char* data, long int pitch, int height){
+    // Row buffer
+    std::vector<unsigned char> temp_row(pitch * height);
+    // Data last row
+    unsigned char* data_end = data + (height - 1) * pitch;
+    // Copy inverted from old to new
+    for(int y = 0; y < height >> 1; ++y){
+        ::memcpy(temp_row.data(), data, pitch);
+        ::memcpy(data, data_end, pitch);
+        ::memcpy(data_end, temp_row.data(), pitch);
+        data += pitch;
+        data_end -= pitch;
     }
 }
 
 // Render on frame with instance data
 CSRIAPI void csri_render(csri_inst* inst, struct csri_frame* frame, double time){
-    if(inst)
-        inst->render(frame->planes[0], frame->strides[0], time * 1000);
+    if(inst && inst->renderer){
+        frame_flip_y(frame->planes[0], frame->strides[0], inst->height);
+        inst->renderer->render(frame->planes[0], frame->strides[0], time * 1000);
+        frame_flip_y(frame->planes[0], frame->strides[0], inst->height);
+    }
 }
 
 // No extensions supported
