@@ -8,6 +8,6 @@ v0.0.3 (planned)
 
 v0.0.2 (planned)
 ----------------
-* added CSRI interface (Aegisub)
+* added CSRI interface (Aegisub) [Renderer loads from memory; add top-down rendering]
 * added DirectShow bridge (MPC)
 * ported to Unix (Avxsynth, GStreamer)

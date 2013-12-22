@@ -141,6 +141,9 @@
 		<Unit filename="src/SSBParser.hpp">
 			<Option virtualFolder="Filter/" />
 		</Unit>
+		<Unit filename="src/aegisub.cpp">
+			<Option virtualFolder="Interfaces/" />
+		</Unit>
 		<Unit filename="src/avisynth.cpp">
 			<Option virtualFolder="Interfaces/" />
 		</Unit>
