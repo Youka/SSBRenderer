@@ -28,88 +28,134 @@ struct csri_inst{
 // Only renderer
 csri_rend csri_ssbrenderer = FILTER_NAME;
 
-// Converts ASS line to SSB line
-std::string& cvt_ass_to_ssb(std::string& line){
-    // Save frame resolution
-    if(line.compare(0, 13, "[Script Info]") == 0)
-        line = "#FRAME";
-    else if(line.compare(0, 10, "PlayResX: ") == 0)
-        line.replace(0, 10, "Width: ");
-    else if(line.compare(0, 10, "PlayResY: ") == 0)
-        line.replace(0, 10, "Height: ");
-    // Save & reformat styles
-    else if(line.compare(0, 12, "[V4+ Styles]") == 0)
-        line = "#STYLES";
-    else if(line.compare(0, 7, "Style: ") == 0){
-        std::stringstream style_stream(line.substr(7));
-        line.clear();
-        // Style name
-        std::string style_field;
-        if(std::getline(style_stream, style_field, ',')){
-            line.append(style_field).append(": ");
-            // Fontname
+// Convert ASS lines to SSB
+struct ASS_to_SSB{
+    std::string ssb;
+    enum class SSBSection{NONE, META, FRAME, STYLES, EVENTS} current_section = SSBSection::NONE;
+    void convert_line(std::string line){
+        // Save meta
+        if(line.compare(0, 7, "Title: ") == 0){
+            if(current_section != SSBSection::META){
+                if(!ssb.empty())
+                    ssb.push_back('\n');
+                ssb.append("#META\n");
+                current_section = SSBSection::META;
+            }
+            ssb.append(line).push_back('\n');
+        }else if(line.compare(0, 17, "Original Script: ") == 0){
+            if(current_section != SSBSection::META){
+                if(!ssb.empty())
+                    ssb.push_back('\n');
+                ssb.append("#META\n");
+                current_section = SSBSection::META;
+            }
+            ssb.append(line.replace(0, 17, "Author: ")).push_back('\n');
+        }else if(line.compare(0, 16, "Update Details: ") == 0){
+            if(current_section != SSBSection::META){
+                if(!ssb.empty())
+                    ssb.push_back('\n');
+                ssb.append("#META\n");
+                current_section = SSBSection::META;
+            }
+            ssb.append(line.replace(0, 16, "Description: ")).push_back('\n');
+        // Save frame
+        }else if(line.compare(0, 10, "PlayResX: ") == 0){
+            if(current_section != SSBSection::FRAME){
+                if(!ssb.empty())
+                    ssb.push_back('\n');
+                ssb.append("#FRAME\n");
+                current_section = SSBSection::FRAME;
+            }
+            ssb.append(line.replace(0, 10, "Width: ")).push_back('\n');
+        }else if(line.compare(0, 10, "PlayResY: ") == 0){
+            if(current_section != SSBSection::FRAME){
+                if(!ssb.empty())
+                    ssb.push_back('\n');
+                ssb.append("#FRAME\n");
+                current_section = SSBSection::FRAME;
+            }
+            ssb.append(line.replace(0, 10, "Height: ")).push_back('\n');
+        // Save style
+        }else if(line.compare(0, 7, "Style: ") == 0){
+            if(current_section != SSBSection::STYLES){
+                if(!ssb.empty())
+                    ssb.push_back('\n');
+                ssb.append("#STYLES\n");
+                current_section = SSBSection::STYLES;
+            }
+            std::istringstream style_stream(line.substr(7));
+            // Style name
+            std::string style_field;
             if(std::getline(style_stream, style_field, ',')){
-                line.append("{font-family=").append(style_field);
-                // Font size
+                ssb.append(style_field).append(": ");
+                // Fontname
                 if(std::getline(style_stream, style_field, ',')){
-                    line.append(";font-size=").append(style_field);
-                    // Primary color
-                    if(std::getline(style_stream, style_field, ',') && style_field.length() == 10){
-                        line.append(";color=").append(style_field.substr(8,2) + style_field.substr(6,2) + style_field.substr(4,2)).append(";alpha=").append(style_field.substr(2,2));
-                        // Secondary color
+                    ssb.append("{font-family=").append(style_field);
+                    // Font size
+                    if(std::getline(style_stream, style_field, ',')){
+                        ssb.append(";font-size=").append(style_field);
+                        // Primary color
                         if(std::getline(style_stream, style_field, ',') && style_field.length() == 10){
-                            line.append(";kcolor=").append(style_field.substr(8,2) + style_field.substr(6,2) + style_field.substr(4,2));
-                            // Border color
+                            ssb.append(";color=").append(style_field.substr(8,2) + style_field.substr(6,2) + style_field.substr(4,2)).append(";alpha=").append(style_field.substr(2,2));
+                            // Secondary color
                             if(std::getline(style_stream, style_field, ',') && style_field.length() == 10){
-                                line.append(";line-color=").append(style_field.substr(8,2) + style_field.substr(6,2) + style_field.substr(4,2)).append(";line-alpha=").append(style_field.substr(2,2));
-                                // Shadow color
+                                ssb.append(";kcolor=").append(style_field.substr(8,2) + style_field.substr(6,2) + style_field.substr(4,2));
+                                // Border color
                                 if(std::getline(style_stream, style_field, ',') && style_field.length() == 10){
-                                    // Bold
-                                    if(std::getline(style_stream, style_field, ',')){
-                                        line.append(";font-style=");
-                                        if(style_field == "-1") line.push_back('b');
-                                        // Italic
+                                    ssb.append(";line-color=").append(style_field.substr(8,2) + style_field.substr(6,2) + style_field.substr(4,2)).append(";line-alpha=").append(style_field.substr(2,2));
+                                    // Shadow color
+                                    if(std::getline(style_stream, style_field, ',') && style_field.length() == 10){
+                                        // Bold
                                         if(std::getline(style_stream, style_field, ',')){
-                                            if(style_field == "-1") line.push_back('i');
-                                            // Underline
+                                            ssb.append(";font-style=");
+                                            if(style_field == "-1") ssb.push_back('b');
+                                            // Italic
                                             if(std::getline(style_stream, style_field, ',')){
-                                                if(style_field == "-1") line.push_back('u');
-                                                // Strikeout
+                                                if(style_field == "-1") ssb.push_back('i');
+                                                // Underline
                                                 if(std::getline(style_stream, style_field, ',')){
-                                                    if(style_field == "-1") line.push_back('s');
-                                                    // ScaleX
-                                                    if(std::getline(style_stream, style_field, ',') && style_field.length() > 0){
-                                                        line.append(";scale-x=").append(style_field.insert(1,1,'.'));
-                                                        // ScaleY
-                                                        if(std::getline(style_stream, style_field, ',') && style_field.length() > 0){
-                                                            line.append(";scale-y=").append(style_field.insert(1,1,'.'));
-                                                            // Spacing
+                                                    if(style_field == "-1") ssb.push_back('u');
+                                                    // Strikeout
+                                                    if(std::getline(style_stream, style_field, ',')){
+                                                        if(style_field == "-1") ssb.push_back('s');
+                                                        // ScaleX
+                                                        if(std::getline(style_stream, style_field, ',')){
+                                                            std::stringstream cvt(style_field); double val;
+                                                            cvt >> val; cvt.str(""); cvt.clear(); cvt << (val / 100.0);
+                                                            ssb.append(";scale-x=").append(cvt.str());
+                                                            // ScaleY
                                                             if(std::getline(style_stream, style_field, ',')){
-                                                                line.append(";font-space-h=").append(style_field);
-                                                                // Angle
+                                                                cvt.str(style_field); cvt.clear();
+                                                                cvt >> val; cvt.str(""); cvt.clear(); cvt << (val / 100.0);
+                                                                ssb.append(";scale-y=").append(cvt.str());
+                                                                // Spacing
                                                                 if(std::getline(style_stream, style_field, ',')){
-                                                                    line.append(";rotate-z=").append(style_field);
-                                                                    // Border style
+                                                                    ssb.append(";font-space-h=").append(style_field);
+                                                                    // Angle
                                                                     if(std::getline(style_stream, style_field, ',')){
-                                                                        // Outline
+                                                                        ssb.append(";rotate-z=").append(style_field);
+                                                                        // Border style
                                                                         if(std::getline(style_stream, style_field, ',')){
-                                                                            line.append(";line-width=").append(style_field);
-                                                                            // Shadow
+                                                                            // Outline
                                                                             if(std::getline(style_stream, style_field, ',')){
-                                                                                // Alignment
+                                                                                ssb.append(";line-width=").append(style_field);
+                                                                                // Shadow
                                                                                 if(std::getline(style_stream, style_field, ',')){
-                                                                                    line.append(";align=").append(style_field);
-                                                                                    // MarginL
+                                                                                    // Alignment
                                                                                     if(std::getline(style_stream, style_field, ',')){
-                                                                                        line.append(";margin-h=").append(style_field);
-                                                                                        // MarginR
+                                                                                        ssb.append(";align=").append(style_field);
+                                                                                        // MarginL
                                                                                         if(std::getline(style_stream, style_field, ',')){
-                                                                                            // MarginV
+                                                                                            ssb.append(";margin-h=").append(style_field);
+                                                                                            // MarginR
                                                                                             if(std::getline(style_stream, style_field, ',')){
-                                                                                                line.append(";margin-v=").append(style_field);
-                                                                                                // Encoding
+                                                                                                // MarginV
                                                                                                 if(std::getline(style_stream, style_field, ',')){
-                                                                                                    line.push_back('}');
+                                                                                                    ssb.append(";margin-v=").append(style_field);
+                                                                                                    // Encoding
+                                                                                                    if(std::getline(style_stream, style_field, ',')){
+                                                                                                        ssb.push_back('}');
+                                                                                                    }
                                                                                                 }
                                                                                             }
                                                                                         }
@@ -132,47 +178,53 @@ std::string& cvt_ass_to_ssb(std::string& line){
                     }
                 }
             }
-        }
-    // Save & reformat events
-    }else if(line.compare(0, 8, "[Events]") == 0)
-        line = "#EVENTS";
-    else if(line.compare(0, 10, "Dialogue: ") == 0){
-        std::stringstream dialog_stream(line.substr(10));
-        line.clear();
-        // Layer
-        std::string dialog_field;
-        if(std::getline(dialog_stream, dialog_field, ',')){
-            // Start time
+            // Final newline
+            ssb.push_back('\n');
+        // Save event
+        }else if(line.compare(0, 10, "Dialogue: ") == 0 || line.compare(0, 9, "Comment: ") == 0){
+            if(current_section != SSBSection::EVENTS){
+                if(!ssb.empty())
+                    ssb.push_back('\n');
+                ssb.append("#EVENTS\n");
+                current_section = SSBSection::EVENTS;
+            }
+            if(line.compare(0, 9, "Comment: ") == 0) ssb.append("// ");
+            std::istringstream dialog_stream(line.substr(10));
+            // Layer
+            std::string dialog_field;
             if(std::getline(dialog_stream, dialog_field, ',')){
-                line.append(dialog_field).push_back('0');
-                // End time
+                // Start time
                 if(std::getline(dialog_stream, dialog_field, ',')){
-                    line.push_back('-');
-                    line.append(dialog_field).push_back('0');
-                    // Style
+                    ssb.append(dialog_field).push_back('0');
+                    // End time
                     if(std::getline(dialog_stream, dialog_field, ',')){
-                        line.push_back('|');
-                        line.append(dialog_field);
-                        // Name
+                        ssb.push_back('-');
+                        ssb.append(dialog_field).push_back('0');
+                        // Style
                         if(std::getline(dialog_stream, dialog_field, ',')){
-                            line.push_back('|');
-                            // MarginL, MarginR, MarginV, Effect
-                            if(std::getline(dialog_stream, dialog_field, ',') && std::getline(dialog_stream, dialog_field, ',') && std::getline(dialog_stream, dialog_field, ',') && std::getline(dialog_stream, dialog_field, ',')){
-                                // Text
-                                if(std::getline(dialog_stream, dialog_field)){
-                                    line.push_back('|');
-                                    line.append(dialog_field);
+                            ssb.push_back('|');
+                            ssb.append(dialog_field);
+                            // Name
+                            if(std::getline(dialog_stream, dialog_field, ',')){
+                                ssb.push_back('|');
+                                // MarginL, MarginR, MarginV, Effect
+                                if(std::getline(dialog_stream, dialog_field, ',') && std::getline(dialog_stream, dialog_field, ',') && std::getline(dialog_stream, dialog_field, ',') && std::getline(dialog_stream, dialog_field, ',')){
+                                    // Text
+                                    if(std::getline(dialog_stream, dialog_field)){
+                                        ssb.push_back('|');
+                                        ssb.append(dialog_field);
+                                    }
                                 }
                             }
                         }
                     }
                 }
             }
+            // Final newline
+            ssb.push_back('\n');
         }
-    }else
-        line.clear();
-    return line;
-}
+    }
+};
 
 // Open interface with file content
 CSRIAPI csri_inst* csri_open_file(csri_rend*, const char* filename, struct csri_openflag*){
@@ -181,11 +233,12 @@ CSRIAPI csri_inst* csri_open_file(csri_rend*, const char* filename, struct csri_
     FileReader file(filename_s);
     if(file){
         // Convert ass to ssb
-        std::string ssb_content, line;
+        ASS_to_SSB text;
+        std::string line;
         while(file.getline(line))
-            ssb_content.append(cvt_ass_to_ssb(line)).push_back('\n');
+            text.convert_line(line);
         // Create renderer
-        std::istringstream ssb_stream(ssb_content);
+        std::istringstream ssb_stream(text.ssb);
         Renderer* renderer;
         try{
             renderer = new Renderer(0, 0, Renderer::Colorspace::BGR, ssb_stream, false);
@@ -200,13 +253,14 @@ CSRIAPI csri_inst* csri_open_file(csri_rend*, const char* filename, struct csri_
 // Open interface with memory content
 CSRIAPI csri_inst* csri_open_mem(csri_rend*, const void* data, size_t length, struct csri_openflag*){
     // Get ass content in stream
-    std::stringstream ass_stream(std::string(reinterpret_cast<char*>(const_cast<void*>(data)), length));
+    std::istringstream ass_stream(std::string(reinterpret_cast<char*>(const_cast<void*>(data)), length));
     // Convert ass to ssb
-    std::string ssb_content, line;
+    ASS_to_SSB text;
+    std::string line;
     while(std::getline(ass_stream, line))
-        ssb_content.append(cvt_ass_to_ssb(line)).push_back('\n');
+        text.convert_line(line);
     // Create renderer
-    std::istringstream ssb_stream(ssb_content);
+    std::istringstream ssb_stream(text.ssb);
     Renderer* renderer;
     try{
         renderer = new Renderer(1, 1, Renderer::Colorspace::BGR, ssb_stream, false);
