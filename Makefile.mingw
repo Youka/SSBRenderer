@@ -4,7 +4,7 @@ RC = windres
 IDIR = -Isrc/include -Isrc/include/cairo -Isrc/include/muparser
 LDIR = -Lsrc/libs/win32
 RDIR = -Isrc/res
-LIBS = -lcomdlg32 -lgdi32 -lavisynth -lcairo -lpixman-1 -lpng -lz -lmuparser
+LIBS = -lcomdlg32 -lgdi32 -lcairo -lpixman-1 -lpng -lz -lmuparser
 WARNINGS = -Winit-self -Wredundant-decls -Wundef -Wfloat-equal -Wunreachable-code -Wmissing-include-dirs -Wswitch-enum -pedantic -std=c++11 -Wextra -Wall
 DEFINES = -DBUILD_DLL -D_WIN32 -DWIN32_LEAN_AND_MEAN -DWIN32_EXTRA_LEAN
 OPTIMIZATION = -Os -O2
@@ -25,8 +25,8 @@ endif
 
 #Build binary
 all: Dirs SSBRenderer
-SSBRenderer: Renderer.o SSBParser.o avisynth.o user.o virtualdub.o cairo++.o module.o FileReader.o resources.res
-	$(CC) -Wl,--output-def=bin/SSBRenderer.def -Wl,--out-implib=bin/SSBRenderer.a src/obj/Renderer.o src/obj/SSBParser.o src/obj/avisynth.o src/obj/user.o src/obj/virtualdub.o src/obj/cairo++.o src/obj/module.o src/obj/FileReader.o src/obj/resources.res $(LFLAGS) -o bin/SSBRenderer.dll
+SSBRenderer: Renderer.o SSBParser.o aegisub.o avisynth.o user.o virtualdub.o cairo++.o module.o FileReader.o resources.res
+	$(CC) -Wl,--output-def=bin/SSBRenderer.def -Wl,--out-implib=bin/SSBRenderer.a src/obj/Renderer.o src/obj/SSBParser.o src/obj/aegisub.o src/obj/avisynth.o src/obj/user.o src/obj/virtualdub.o src/obj/cairo++.o src/obj/FileReader.o src/obj/module.o src/obj/resources.res $(LFLAGS) -o bin/SSBRenderer.dll
 
 #Build single objects
 Dirs:
@@ -35,6 +35,8 @@ Renderer.o:
 	$(CC) $(CFLAGS) -c src/Renderer.cpp -o src/obj/Renderer.o
 SSBParser.o:
 	$(CC) $(CFLAGS) -c src/SSBParser.cpp -o src/obj/SSBParser.o
+aegisub.o:
+	$(CC) $(CFLAGS) -c src/aegisub.cpp -o src/obj/aegisub.o
 avisynth.o:
 	$(CC) $(CFLAGS) -c src/avisynth.cpp -o src/obj/avisynth.o
 user.o:
@@ -43,10 +45,10 @@ virtualdub.o:
 	$(CC) $(CFLAGS) -c src/virtualdub.cpp -o src/obj/virtualdub.o
 cairo++.o:
 	$(CC) $(CFLAGS) -c src/cairo++.cpp -o src/obj/cairo++.o
-module.o:
-	$(CC) $(CFLAGS) -c src/module.c -o src/obj/module.o
 FileReader.o:
 	$(CC) $(CFLAGS) -c src/FileReader.cpp -o src/obj/FileReader.o
+module.o:
+	$(CC) $(CFLAGS) -c src/module.c -o src/obj/module.o
 resources.res:
 	$(RC) $(RFLAGS) -i src/resources.rc -o src/obj/resources.res
 

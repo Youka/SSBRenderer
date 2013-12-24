@@ -13,6 +13,9 @@ Permission is granted to anyone to use this software for any purpose, including 
     This notice may not be removed or altered from any source distribution.
 */
 
+#define AVSC_NO_DECLSPEC
+#include <windows.h>
+#include <cstdlib>
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
 #include <avisynth_c.h>
@@ -21,6 +24,8 @@ Permission is granted to anyone to use this software for any purpose, including 
 #include "Renderer.hpp"
 
 namespace AVS{
+    // Avisynth library handle (defined in plugin initialization)
+    AVS_Library* avs_lib = nullptr;
     // Memory-safe wrapper for AVS_Clip
     class AVSClip{
         private:
@@ -29,8 +34,8 @@ namespace AVS{
             AVS_Clip* clip;
         public:
             // Allocate & free resources
-            AVSClip(AVS_ScriptEnvironment* env, AVS_Value val) : clip(avs_new_c_filter(env, &this->filter_info, val, 1)){}
-            ~AVSClip(){avs_release_clip(this->clip);}
+            AVSClip(AVS_ScriptEnvironment* env, AVS_Value val) : clip(avs_lib->avs_new_c_filter(env, &this->filter_info, val, 1)){}
+            ~AVSClip(){avs_lib->avs_release_clip(this->clip);}
             // No copy
             AVSClip(const AVSClip&) = delete;
             AVSClip& operator=(const AVSClip&) = delete;
@@ -42,9 +47,9 @@ namespace AVS{
     // Frame filtering
     AVS_VideoFrame* AVSC_CC get_frame(AVS_FilterInfo* filter_info, int n){
         // Get current frame
-        AVS_VideoFrame* frame = avs_get_frame(filter_info->child, n);
+        AVS_VideoFrame* frame = avs_lib->avs_get_frame(filter_info->child, n);
         // Make frame writable
-        avs_make_writable(filter_info->env, &frame);
+        avs_lib->avs_make_writable(filter_info->env, &frame);
         // Render on frame
         reinterpret_cast<Renderer*>(filter_info->user_data)->render(avs_get_write_ptr(frame), avs_get_pitch(frame), n * (filter_info->vi.fps_denominator * 1000.0 / filter_info->vi.fps_numerator));
         // Pass frame further in processing chain
@@ -64,7 +69,7 @@ namespace AVS{
         std::string script = avs_as_string(avs_array_elt(args, 1));
         bool warnings = avs_defined(avs_array_elt(args, 2)) ? avs_as_bool(avs_array_elt(args, 2)) : true;
         // Check filter arguments
-        const AVS_VideoInfo* video_info = avs_get_video_info(clip);
+        const AVS_VideoInfo* video_info = avs_lib->avs_get_video_info(clip);
         if(!avs_has_video(video_info))  // Clip must have a video stream
             return avs_new_value_error("Video required!");
         else if(!avs_is_rgb(video_info))    // Video must store colors in RGB24 or RGBA32 format
@@ -84,17 +89,24 @@ namespace AVS{
             // Set callback function for frame processing
             filter_info->get_frame = get_frame;
             // Return filtered clip
-            return avs_new_value_clip(clip);
+            AVS_Value v;
+            avs_lib->avs_set_to_clip(&v, clip);
+            return v;
         }
     }
 }
 
 // Avisynth plugin interface
 AVSC_EXPORT const char* avisynth_c_plugin_init(AVS_ScriptEnvironment* env){
+    // Get avisynth library
+    if(!AVS::avs_lib && !(AVS::avs_lib = avs_load_library())){
+        MessageBoxA(NULL, "Couldn't load avisynth functions from library", "Loading error", MB_OK);
+        ::exit(1);
+    }
     // Valid Avisynth interface version?
-    avs_check_version(env, AVISYNTH_INTERFACE_VERSION);
+    AVS::avs_lib->avs_check_version(env, AVISYNTH_INTERFACE_VERSION);
     // Register functin to Avisynth scripting environment
-    avs_add_function(env, FILTER_NAME, "cs[warnings]b", AVS::apply_filter, nullptr);
+    AVS::avs_lib->avs_add_function(env, FILTER_NAME, "cs[warnings]b", AVS::apply_filter, nullptr);
     // Return plugin description
     return FILTER_DESCRIPTION;
 }

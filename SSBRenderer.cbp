@@ -45,7 +45,6 @@
 				</ResourceCompiler>
 				<Linker>
 					<Add option="-s" />
-					<Add library="avisynth" />
 					<Add library="comdlg32" />
 					<Add library="cairo" />
 					<Add library="pixman-1" />
@@ -99,7 +98,6 @@
 				</ResourceCompiler>
 				<Linker>
 					<Add option="-pg -lgmon" />
-					<Add library="avisynth" />
 					<Add library="comdlg32" />
 					<Add library="cairo" />
 					<Add library="pixman-1" />

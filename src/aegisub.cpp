@@ -18,7 +18,7 @@ Permission is granted to anyone to use this software for any purpose, including 
 #include <sstream>
 #define CSRI_OWN_HANDLES
 #define CSRIAPI extern "C" __declspec(dllexport)
-typedef const char* csri_rend;
+using csri_rend = const char*;
 struct csri_inst{
     int height;
     Renderer* renderer;
@@ -313,14 +313,14 @@ CSRIAPI int csri_request_fmt(csri_inst* inst, const struct csri_fmt* fmt){
 // Inverts frame vertically
 void frame_flip_y(unsigned char* data, long int pitch, int height){
     // Row buffer
-    std::vector<unsigned char> temp_row(pitch * height);
+    std::vector<unsigned char> temp_row(pitch);
     // Data last row
     unsigned char* data_end = data + (height - 1) * pitch;
     // Copy inverted from old to new
     for(int y = 0; y < height >> 1; ++y){
-        ::memcpy(temp_row.data(), data, pitch);
-        ::memcpy(data, data_end, pitch);
-        ::memcpy(data_end, temp_row.data(), pitch);
+        std::copy(data, data+pitch, temp_row.begin());
+        std::copy(data_end, data_end+pitch, data);
+        std::copy(temp_row.begin(), temp_row.end(), data_end);
         data += pitch;
         data_end -= pitch;
     }
