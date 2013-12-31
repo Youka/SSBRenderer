@@ -297,6 +297,12 @@ struct RGB{
         this->b += value.b;
         return *this;
     }
+    bool operator==(const RGB& value){
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wfloat-equal"
+        return this->r == value.r && this->g == value.g && this->b == value.b;
+#pragma GCC diagnostic pop
+    }
 };
 
 // Color state

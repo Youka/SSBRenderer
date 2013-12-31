@@ -49,11 +49,11 @@ class aligned_memory{
         aligned_memory(size_t size) : reference_counter(new unsigned int){
             *this->reference_counter = 1;
             if(size == 0 || align == 0){
-                this->p = this->aligned_p = NULL;
+                this->p = this->aligned_p = nullptr;
                 this->msize = 0;
             }else{
                 this->p = malloc(sizeof(T) * size + align);
-                this->aligned_p = this->p ? reinterpret_cast<T*>(reinterpret_cast<size_t>(this->p) + (align - reinterpret_cast<size_t>(this->p) % align)) : NULL;
+                this->aligned_p = this->p ? reinterpret_cast<T*>(reinterpret_cast<size_t>(this->p) + (align - reinterpret_cast<size_t>(this->p) % align)) : nullptr;
                 this->msize = this->aligned_p ? size : 0;
             }
         }

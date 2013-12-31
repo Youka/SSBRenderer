@@ -815,11 +815,9 @@ namespace{
 
 void SSBParser::process_line(std::string& line, SSBSection& section, unsigned long int line_i, bool warnings){
     // Remove windows carriage returns at end of lines
-    size_t to_erase = 0;
-    for(auto iter = line.rbegin(); iter != line.rend(); ++iter)
-        if(*iter == '\r') to_erase++;
-        else break;
-    if(to_erase > 0) line.resize(line.size() - to_erase);
+    auto pos = line.find_last_not_of('\r');
+    if(pos != std::string::npos)
+        line.erase(pos+1);
     // No skippable line
     if(!line.empty() && line.compare(0, 2, "//") != 0){
         // Got section

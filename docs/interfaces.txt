@@ -14,6 +14,12 @@ A dialog appears to configure the filter.
 
 ########################################################
 
+Aegisub
+-------
+Copy SSBRenderer.dll into the csri folder of Aegisub and set the renderer in Aegisub's options to CSRI/SSBRenderer.
+
+########################################################
+
 DLL
 ---
 See "src/user.h".

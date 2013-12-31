@@ -339,6 +339,8 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
             else{
                 // Buffer for cache entry
                 std::vector<Renderer::ImageData> event_images;
+                // Stencil entry mode (on change: stencil was modified)
+                cairo_set_operator(this->stencil_path_buffer, CAIRO_OPERATOR_SOURCE);
                 // Calculate image-to-video scale
                 double frame_scale_x, frame_scale_y;
                 if(this->ssb.frame.width > 0 && this->ssb.frame.height > 0)
@@ -748,7 +750,7 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                             // Anything visible?
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-equal"
-                            if(!((rs.alphas.size() == 1 && rs.alphas[0] == 0.0) || (rs.alphas.size() == 4 && std::count(rs.alphas.begin(), rs.alphas.end(), 0) == 4))){
+                            if(!std::all_of(rs.alphas.begin(), rs.alphas.end(), [](double& a){return a == 0.0;})){
 #pragma GCC diagnostic pop
                                 // Transfer shifted path & matrix from buffer to image
                                 cairo_translate(image, -x + border_h, -y + border_v);
@@ -765,7 +767,11 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                                 }
                                 // Draw colored geometry on image
                                 if(draw_type == DrawType::FILL_BLURRED || draw_type == DrawType::FILL_WITHOUT_BLUR){
-                                    if(rs.colors.size() == 1 && rs.alphas.size() == 1)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wfloat-equal"
+                                    if(std::all_of(rs.colors.begin(), rs.colors.end(), [&rs](RGB& color){return color == rs.colors.front();}) &&
+                                       std::all_of(rs.alphas.begin(), rs.alphas.end(), [&rs](double& alpha){return alpha == rs.alphas.front();}))
+#pragma GCC diagnostic pop
                                         cairo_set_source_rgba(image, rs.colors[0].r, rs.colors[0].g, rs.colors[0].b, rs.alphas[0]);
                                     else{
 #pragma GCC diagnostic push
@@ -941,10 +947,12 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                         // Clear path
                         cairo_new_path(this->stencil_path_buffer);
                     }
-                // Clear stencil
-                cairo_set_operator(this->stencil_path_buffer, CAIRO_OPERATOR_SOURCE);
-                cairo_set_source_rgba(this->stencil_path_buffer, 0, 0, 0, 0);
-                cairo_paint(this->stencil_path_buffer);
+                // Clear stencil (on modification)
+                if(cairo_get_operator(this->stencil_path_buffer) != CAIRO_OPERATOR_SOURCE){
+                    cairo_set_operator(this->stencil_path_buffer, CAIRO_OPERATOR_SOURCE);
+                    cairo_set_source_rgba(this->stencil_path_buffer, 0, 0, 0, 0);
+                    cairo_paint(this->stencil_path_buffer);
+                }
                 // Save event images to cache
                 if(!event_images.empty())
                     this->cache.add(&event, event_images);

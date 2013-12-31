@@ -68,7 +68,7 @@ namespace VDub{
                             ofn.nFilterIndex = 1;
                             ofn.lpstrFile = file;
                             ofn.nMaxFile = sizeof(file);
-                            ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+                            ofn.Flags = OFN_FILEMUSTEXIST;
                             // Show file selection dialog
                             if(GetOpenFileNameW(&ofn)){
                                 // Save filename input to dialog
