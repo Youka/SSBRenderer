@@ -31,35 +31,10 @@ csri_rend csri_ssbrenderer = FILTER_NAME;
 // Convert ASS lines to SSB
 struct ASS_to_SSB{
     std::string ssb;
-    enum class SSBSection{NONE, META, FRAME, STYLES, EVENTS} current_section = SSBSection::NONE;
+    enum class SSBSection{NONE, FRAME, STYLES, EVENTS} current_section = SSBSection::NONE;
     void convert_line(std::string line){
-        // Save meta
-        if(line.compare(0, 7, "Title: ") == 0){
-            if(current_section != SSBSection::META){
-                if(!ssb.empty())
-                    ssb.push_back('\n');
-                ssb.append("#META\n");
-                current_section = SSBSection::META;
-            }
-            ssb.append(line).push_back('\n');
-        }else if(line.compare(0, 17, "Original Script: ") == 0){
-            if(current_section != SSBSection::META){
-                if(!ssb.empty())
-                    ssb.push_back('\n');
-                ssb.append("#META\n");
-                current_section = SSBSection::META;
-            }
-            ssb.append(line.replace(0, 17, "Author: ")).push_back('\n');
-        }else if(line.compare(0, 16, "Update Details: ") == 0){
-            if(current_section != SSBSection::META){
-                if(!ssb.empty())
-                    ssb.push_back('\n');
-                ssb.append("#META\n");
-                current_section = SSBSection::META;
-            }
-            ssb.append(line.replace(0, 16, "Description: ")).push_back('\n');
         // Save frame
-        }else if(line.compare(0, 10, "PlayResX: ") == 0){
+        if(line.compare(0, 10, "PlayResX: ") == 0){
             if(current_section != SSBSection::FRAME){
                 if(!ssb.empty())
                     ssb.push_back('\n');
@@ -76,6 +51,16 @@ struct ASS_to_SSB{
             }
             ssb.append(line.replace(0, 10, "Height: ")).push_back('\n');
         // Save style
+        }else if(line.compare(0, 10, "SSBStyle: ") == 0){
+            if(current_section != SSBSection::STYLES){
+                if(!ssb.empty())
+                    ssb.push_back('\n');
+                ssb.append("#STYLES\n");
+                current_section = SSBSection::STYLES;
+            }
+            auto sep_pos = line.find_first_of(',', 10);
+            if(sep_pos != std::string::npos)
+                ssb.append(line.substr(10, sep_pos-10)).append(": ").append(line.substr(sep_pos+1)).push_back('\n');
         }else if(line.compare(0, 7, "Style: ") == 0){
             if(current_section != SSBSection::STYLES){
                 if(!ssb.empty())
@@ -120,14 +105,10 @@ struct ASS_to_SSB{
                                                         if(style_field == "-1") ssb.push_back('s');
                                                         // ScaleX
                                                         if(std::getline(style_stream, style_field, ',')){
-                                                            std::stringstream cvt(style_field); double val;
-                                                            cvt >> val; cvt.str(""); cvt.clear(); cvt << (val / 100.0);
-                                                            ssb.append(";scale-x=").append(cvt.str());
+                                                            ssb.append(";scale-x=").append(style_field);
                                                             // ScaleY
                                                             if(std::getline(style_stream, style_field, ',')){
-                                                                cvt.str(style_field); cvt.clear();
-                                                                cvt >> val; cvt.str(""); cvt.clear(); cvt << (val / 100.0);
-                                                                ssb.append(";scale-y=").append(cvt.str());
+                                                                ssb.append(";scale-y=").append(style_field);
                                                                 // Spacing
                                                                 if(std::getline(style_stream, style_field, ',')){
                                                                     ssb.append(";font-space-h=").append(style_field);
