@@ -2,7 +2,6 @@ v0.0.3 (planned)
 ----------------
 * added support for more video colorspaces (YUV2, YV12)
 * added support for other subtitle formats (SRT, MicroDVD, ?)
-* added support for more directshow renderers (madVR, Haali)
 * [fixed RTL behaviour]
 * improved performance (faster blur algorithm, ?)
 
@@ -10,5 +9,5 @@ v0.0.3 (planned)
 
 v0.0.2 (planned)
 ----------------
-* added Aegisub macros for SSB usage (SSB styles, SSB export)
+* added support for more directshow renderers (madVR, Haali)
 * ported to Unix (Avxsynth, GStreamer)
