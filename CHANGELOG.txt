@@ -9,5 +9,4 @@ v0.0.3 (planned)
 
 v0.0.2 (planned)
 ----------------
-* added support for more directshow renderers (madVR, Haali)
 * ported to Unix (Avxsynth, GStreamer)

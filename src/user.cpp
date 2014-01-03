@@ -15,11 +15,23 @@ Permission is granted to anyone to use this software for any purpose, including 
 
 #include "user.h"
 #include "Renderer.hpp"
+#include <sstream>
 
 ssb_renderer ssb_create_renderer(int width, int height, char format, const char* script, char* warning){
     try{
         std::string script_string = script;
         return new Renderer(width, height, format == SSB_BGR ? Renderer::Colorspace::BGR : (format == SSB_BGRX ? Renderer::Colorspace::BGRX : Renderer::Colorspace::BGRA), script_string, warning != 0);
+    }catch(std::string err){
+        if(warning)
+            warning[err.copy(warning, SSB_WARNING_LENGTH - 1)] = '\0';
+        return 0;
+    }
+}
+
+ssb_renderer ssb_create_renderer_from_memory(int width, int height, char format, const char* data, char* warning){
+    try{
+        std::istringstream data_stream(data);
+        return new Renderer(width, height, format == SSB_BGR ? Renderer::Colorspace::BGR : (format == SSB_BGRX ? Renderer::Colorspace::BGRX : Renderer::Colorspace::BGRA), data_stream, warning != 0);
     }catch(std::string err){
         if(warning)
             warning[err.copy(warning, SSB_WARNING_LENGTH - 1)] = '\0';

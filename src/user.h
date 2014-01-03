@@ -41,7 +41,7 @@ enum {SSB_BGR = 0, SSB_BGRX, SSB_BGRA};
 #define SSB_WARNING_LENGTH 256
 
 /**
-Create renderer handle.
+Create renderer handle from file.
 
 @param width Frame width
 @param height Frame height
@@ -51,6 +51,18 @@ Create renderer handle.
 @return Renderer handle or zero
 */
 DLL_EXPORT ssb_renderer ssb_create_renderer(int width, int height, char format, const char* script, char* warning);
+
+/**
+Create renderer handle from memory.
+
+@param width Frame width
+@param height Frame height
+@param format Frame colorspace
+@param data SSB data to render (null-terminated string)
+@param warning Output warning, pointer can be zero
+@return Renderer handle or zero
+*/
+DLL_EXPORT ssb_renderer ssb_create_renderer_from_memory(int width, int height, char format, const char* data, char* warning);
 
 /**
 Set target frame information.
