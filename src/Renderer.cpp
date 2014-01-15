@@ -767,6 +767,7 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                                 }
                                 // Draw colored geometry on image
                                 if(draw_type == DrawType::FILL_BLURRED || draw_type == DrawType::FILL_WITHOUT_BLUR){
+                                    // Draw color
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-equal"
                                     if(std::all_of(rs.colors.begin(), rs.colors.end(), [&rs](RGB& color){return color == rs.colors.front();}) &&
@@ -798,90 +799,95 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                                                                                                     rs.colors[0].r, rs.colors[0].g, rs.colors[0].b, rs.alphas[3]));
                                     }
                                     cairo_fill_preserve(image);
+                                    // Draw texture
+                                    if(!rs.texture.empty()){
+                                        CairoImage texture(rs.texture);
+                                        if(cairo_surface_status(texture) == CAIRO_STATUS_SUCCESS){
+                                            // Create texture pattern
+                                            cairo_matrix_t pattern_matrix = {1, 0, 0, 1, -fill_x - rs.texture_x, -fill_y - rs.texture_y};
+                                            cairo_pattern_t* pattern = cairo_pattern_create_for_surface(texture);
+                                            cairo_pattern_set_matrix(pattern, &pattern_matrix);
+                                            cairo_pattern_set_extend(pattern, rs.wrap_style);
+                                            cairo_pattern_set_filter(pattern, CAIRO_FILTER_BEST);
+                                            // Draw texture pattern on texture image
+                                            CairoImage tex_image(cairo_image_surface_get_width(image), cairo_image_surface_get_height(image), CAIRO_FORMAT_ARGB32);
+                                            cairo_copy_matrix(image, tex_image);
+                                            cairo_set_source(tex_image, pattern);
+                                            cairo_set_operator(tex_image, CAIRO_OPERATOR_SOURCE);
+                                            cairo_paint(tex_image);
+                                            // Multiply texture image to overlay image
+                                            int width = cairo_image_surface_get_width(image);
+                                            int height = cairo_image_surface_get_height(image);
+                                            int offset = cairo_image_surface_get_stride(image) - (width << 2);
+                                            cairo_surface_flush(image);
+                                            cairo_surface_flush(tex_image);
+                                            unsigned char* img_data = cairo_image_surface_get_data(image);
+                                            unsigned char* tex_data = cairo_image_surface_get_data(tex_image);
+                                            unsigned char new_alpha;
+                                            for(int y = 0; y < height; ++y){
+                                                for(int x = 0; x < width; ++x){
+                                                    if(img_data[3] == 0 || tex_data[3] == 0)
+                                                        img_data[0] = img_data[1] = img_data[2] = img_data[3] = 0;
+                                                    else if(img_data[3] == 255 && tex_data[3] == 255){
+                                                        img_data[0] = img_data[0] * tex_data[0] / 255;
+                                                        img_data[1] = img_data[1] * tex_data[1] / 255;
+                                                        img_data[2] = img_data[2] * tex_data[2] / 255;
+                                                    }else{
+                                                        new_alpha = img_data[3] * tex_data[3] / 255;
+                                                        img_data[0] = (img_data[0] * 255 / img_data[3]) * (tex_data[0] * 255 / tex_data[3]) * new_alpha / 65025;
+                                                        img_data[1] = (img_data[1] * 255 / img_data[3]) * (tex_data[1] * 255 / tex_data[3]) * new_alpha / 65025;
+                                                        img_data[2] = (img_data[2] * 255 / img_data[3]) * (tex_data[2] * 255 / tex_data[3]) * new_alpha / 65025;
+                                                        img_data[3] = new_alpha;
+                                                    }
+                                                    img_data += 4;
+                                                    tex_data += 4;
+                                                }
+                                                img_data += offset;
+                                                tex_data += offset;
+                                            }
+                                            cairo_surface_mark_dirty(image);
+                                        }
+                                    }
+                                    // Draw karaoke
+                                    if(rs.karaoke_start >= 0){
+                                        int elapsed_time = start_ms - event.start_ms;
+                                        cairo_set_operator(image, CAIRO_OPERATOR_ATOP);
+                                        switch(rs.karaoke_mode){
+                                            case SSBKaraokeMode::Mode::FILL:
+                                            case SSBKaraokeMode::Mode::SOLID:
+                                                cairo_set_source_rgb(image, rs.karaoke_color.r, rs.karaoke_color.g, rs.karaoke_color.b);
+                                                if(elapsed_time >= rs.karaoke_start + rs.karaoke_duration)
+                                                    cairo_paint(image);
+                                                else if(elapsed_time >= rs.karaoke_start){
+                                                    if(rs.karaoke_mode == SSBKaraokeMode::Mode::SOLID)
+                                                        cairo_paint(image);
+                                                    else{
+                                                        double progress = static_cast<double>(elapsed_time - rs.karaoke_start) / rs.karaoke_duration;
+                                                        cairo_new_path(image);
+                                                        switch(rs.direction){
+                                                            case SSBDirection::Mode::LTR: cairo_rectangle(image, fill_x, fill_y, progress * fill_width, fill_height); break;
+                                                            case SSBDirection::Mode::RTL: cairo_rectangle(image, fill_x + (1 - progress) * fill_width, fill_y, progress * fill_width, fill_height); break;
+                                                            case SSBDirection::Mode::TTB: cairo_rectangle(image, fill_x, fill_y, fill_width, progress * fill_height); break;
+                                                        }
+                                                        cairo_fill(image);
+                                                    }
+                                                }
+                                                break;
+                                            case SSBKaraokeMode::Mode::GLOW:
+                                                if(elapsed_time >= rs.karaoke_start && elapsed_time < rs.karaoke_start + rs.karaoke_duration){
+                                                    cairo_set_source_rgba(image, rs.karaoke_color.r, rs.karaoke_color.g, rs.karaoke_color.b, std::sin(static_cast<double>(elapsed_time - rs.karaoke_start) / rs.karaoke_duration * M_PI));
+                                                    cairo_paint(image);
+                                                }
+                                                break;
+                                        }
+                                    }
                                 }else{  // draw_type == DrawType::BORDER || draw_type == DrawType::WIRE
+                                    // Draw color
                                     cairo_set_source_rgba(image, rs.line_color.r, rs.line_color.g, rs.line_color.b, rs.line_alpha);
                                     cairo_save(image);
                                     cairo_identity_matrix(image);
                                     cairo_stroke_preserve(image);
                                     cairo_restore(image);
-                                }
-                                // Draw texture over image color
-                                if((draw_type == DrawType::FILL_BLURRED || draw_type == DrawType::FILL_WITHOUT_BLUR) && !rs.texture.empty()){
-                                    CairoImage texture(rs.texture);
-                                    if(cairo_surface_status(texture) == CAIRO_STATUS_SUCCESS){
-                                        // Create texture pattern
-                                        cairo_matrix_t pattern_matrix = {1, 0, 0, 1, -fill_x - rs.texture_x, -fill_y - rs.texture_y};
-                                        cairo_pattern_t* pattern = cairo_pattern_create_for_surface(texture);
-                                        cairo_pattern_set_matrix(pattern, &pattern_matrix);
-                                        cairo_pattern_set_extend(pattern, rs.wrap_style);
-                                        cairo_pattern_set_filter(pattern, CAIRO_FILTER_BEST);
-                                        // Draw texture pattern on texture image
-                                        CairoImage tex_image(cairo_image_surface_get_width(image), cairo_image_surface_get_height(image), CAIRO_FORMAT_ARGB32);
-                                        cairo_copy_matrix(image, tex_image);
-                                        cairo_set_source(tex_image, pattern);
-                                        cairo_set_operator(tex_image, CAIRO_OPERATOR_SOURCE);
-                                        cairo_paint(tex_image);
-                                        // Multiply texture image to overlay image
-                                        int width = cairo_image_surface_get_width(image);
-                                        int height = cairo_image_surface_get_height(image);
-                                        int offset = cairo_image_surface_get_stride(image) - (width << 2);
-                                        cairo_surface_flush(image);
-                                        cairo_surface_flush(tex_image);
-                                        unsigned char* img_data = cairo_image_surface_get_data(image);
-                                        unsigned char* tex_data = cairo_image_surface_get_data(tex_image);
-                                        unsigned char new_alpha;
-                                        for(int y = 0; y < height; ++y){
-                                            for(int x = 0; x < width; ++x){
-                                                if(img_data[3] == 0 || tex_data[3] == 0)
-                                                    img_data[0] = img_data[1] = img_data[2] = img_data[3] = 0;
-                                                else{
-                                                    new_alpha = img_data[3] * tex_data[3] / 255;
-                                                    img_data[0] = (img_data[0] * 255 / img_data[3]) * (tex_data[0] * 255 / tex_data[3]) * new_alpha / 65025;
-                                                    img_data[1] = (img_data[1] * 255 / img_data[3]) * (tex_data[1] * 255 / tex_data[3]) * new_alpha / 65025;
-                                                    img_data[2] = (img_data[2] * 255 / img_data[3]) * (tex_data[2] * 255 / tex_data[3]) * new_alpha / 65025;
-                                                    img_data[3] = new_alpha;
-                                                }
-                                                img_data += 4;
-                                                tex_data += 4;
-                                            }
-                                            img_data += offset;
-                                            tex_data += offset;
-                                        }
-                                        cairo_surface_mark_dirty(image);
-                                    }
-                                }
-                                // Draw karaoke over image
-                                if((draw_type == DrawType::FILL_BLURRED || draw_type == DrawType::FILL_WITHOUT_BLUR) && rs.karaoke_start >= 0){
-                                    int elapsed_time = start_ms - event.start_ms;
-                                    cairo_set_operator(image, CAIRO_OPERATOR_ATOP);
-                                    switch(rs.karaoke_mode){
-                                        case SSBKaraokeMode::Mode::FILL:
-                                        case SSBKaraokeMode::Mode::SOLID:
-                                            cairo_set_source_rgb(image, rs.karaoke_color.r, rs.karaoke_color.g, rs.karaoke_color.b);
-                                            if(elapsed_time >= rs.karaoke_start + rs.karaoke_duration)
-                                                cairo_paint(image);
-                                            else if(elapsed_time >= rs.karaoke_start){
-                                                if(rs.karaoke_mode == SSBKaraokeMode::Mode::SOLID)
-                                                    cairo_paint(image);
-                                                else{
-                                                    double progress = static_cast<double>(elapsed_time - rs.karaoke_start) / rs.karaoke_duration;
-                                                    cairo_new_path(image);
-                                                    switch(rs.direction){
-                                                        case SSBDirection::Mode::LTR: cairo_rectangle(image, fill_x, fill_y, progress * fill_width, fill_height); break;
-                                                        case SSBDirection::Mode::RTL: cairo_rectangle(image, fill_x + (1 - progress) * fill_width, fill_y, progress * fill_width, fill_height); break;
-                                                        case SSBDirection::Mode::TTB: cairo_rectangle(image, fill_x, fill_y, fill_width, progress * fill_height); break;
-                                                    }
-                                                    cairo_fill(image);
-                                                }
-                                            }
-                                            break;
-                                        case SSBKaraokeMode::Mode::GLOW:
-                                            if(elapsed_time >= rs.karaoke_start && elapsed_time < rs.karaoke_start + rs.karaoke_duration){
-                                                cairo_set_source_rgba(image, rs.karaoke_color.r, rs.karaoke_color.g, rs.karaoke_color.b, std::sin(static_cast<double>(elapsed_time - rs.karaoke_start) / rs.karaoke_duration * M_PI));
-                                                cairo_paint(image);
-                                            }
-                                            break;
-                                    }
                                 }
                                 // Blur image
                                 if(draw_type != DrawType::FILL_WITHOUT_BLUR)
