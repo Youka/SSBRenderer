@@ -64,6 +64,7 @@ namespace{
         // Karaoke
         long int karaoke_start = -1, karaoke_duration = 0;
         RGB karaoke_color = {1, 0, 0};
+        SSBKaraokeMode::Mode karaoke_mode = SSBKaraokeMode::Mode::FILL;
         // State modifier
         struct StateChange{
             bool position = false;
@@ -627,6 +628,10 @@ namespace{
                                     if(progress >= threshold)
                                         this->karaoke_color = dynamic_cast<SSBKaraokeColor*>(animate_tag)->color;
                                     break;
+                                case SSBTag::Type::KARAOKE_MODE:
+                                    if(progress >= threshold)
+                                        this->karaoke_mode = dynamic_cast<SSBKaraokeMode*>(animate_tag)->mode;
+                                    break;
                             }
                         }
                     }
@@ -650,6 +655,9 @@ namespace{
                     break;
                 case SSBTag::Type::KARAOKE_COLOR:
                     this->karaoke_color = dynamic_cast<SSBKaraokeColor*>(tag)->color;
+                    break;
+                case SSBTag::Type::KARAOKE_MODE:
+                    this->karaoke_mode = dynamic_cast<SSBKaraokeMode*>(tag)->mode;
                     break;
             }
             return change;

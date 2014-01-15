@@ -854,18 +854,33 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                                 if((draw_type == DrawType::FILL_BLURRED || draw_type == DrawType::FILL_WITHOUT_BLUR) && rs.karaoke_start >= 0){
                                     int elapsed_time = start_ms - event.start_ms;
                                     cairo_set_operator(image, CAIRO_OPERATOR_ATOP);
-                                    cairo_set_source_rgb(image, rs.karaoke_color.r, rs.karaoke_color.g, rs.karaoke_color.b);
-                                    if(elapsed_time >= rs.karaoke_start + rs.karaoke_duration)
-                                        cairo_paint(image);
-                                    else if(elapsed_time >= rs.karaoke_start){
-                                        double progress = static_cast<double>(elapsed_time - rs.karaoke_start) / rs.karaoke_duration;
-                                        cairo_new_path(image);
-                                        switch(rs.direction){
-                                            case SSBDirection::Mode::LTR: cairo_rectangle(image, fill_x, fill_y, progress * fill_width, fill_height); break;
-                                            case SSBDirection::Mode::RTL: cairo_rectangle(image, fill_x + (1 - progress) * fill_width, fill_y, progress * fill_width, fill_height); break;
-                                            case SSBDirection::Mode::TTB: cairo_rectangle(image, fill_x, fill_y, fill_width, progress * fill_height); break;
-                                        }
-                                        cairo_fill(image);
+                                    switch(rs.karaoke_mode){
+                                        case SSBKaraokeMode::Mode::FILL:
+                                        case SSBKaraokeMode::Mode::SOLID:
+                                            cairo_set_source_rgb(image, rs.karaoke_color.r, rs.karaoke_color.g, rs.karaoke_color.b);
+                                            if(elapsed_time >= rs.karaoke_start + rs.karaoke_duration)
+                                                cairo_paint(image);
+                                            else if(elapsed_time >= rs.karaoke_start){
+                                                if(rs.karaoke_mode == SSBKaraokeMode::Mode::SOLID)
+                                                    cairo_paint(image);
+                                                else{
+                                                    double progress = static_cast<double>(elapsed_time - rs.karaoke_start) / rs.karaoke_duration;
+                                                    cairo_new_path(image);
+                                                    switch(rs.direction){
+                                                        case SSBDirection::Mode::LTR: cairo_rectangle(image, fill_x, fill_y, progress * fill_width, fill_height); break;
+                                                        case SSBDirection::Mode::RTL: cairo_rectangle(image, fill_x + (1 - progress) * fill_width, fill_y, progress * fill_width, fill_height); break;
+                                                        case SSBDirection::Mode::TTB: cairo_rectangle(image, fill_x, fill_y, fill_width, progress * fill_height); break;
+                                                    }
+                                                    cairo_fill(image);
+                                                }
+                                            }
+                                            break;
+                                        case SSBKaraokeMode::Mode::GLOW:
+                                            if(elapsed_time >= rs.karaoke_start && elapsed_time < rs.karaoke_start + rs.karaoke_duration){
+                                                cairo_set_source_rgba(image, rs.karaoke_color.r, rs.karaoke_color.g, rs.karaoke_color.b, std::sin(static_cast<double>(elapsed_time - rs.karaoke_start) / rs.karaoke_duration * M_PI));
+                                                cairo_paint(image);
+                                            }
+                                            break;
                                     }
                                 }
                                 // Blur image

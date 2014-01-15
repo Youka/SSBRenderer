@@ -701,6 +701,16 @@ namespace{
                                                                                        )));
                 else if(warnings)
                     throw_parse_error(line_i, "Invalid karaoke color");
+            }else if(tags_token.compare(0, 6, "kmode=") == 0){
+                std::string tag_value = tags_token.substr(6);
+                if(tag_value == "fill")
+                    ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBKaraokeMode(SSBKaraokeMode::Mode::FILL)));
+                else if(tag_value == "solid")
+                    ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBKaraokeMode(SSBKaraokeMode::Mode::SOLID)));
+                else if(tag_value == "glow")
+                    ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBKaraokeMode(SSBKaraokeMode::Mode::GLOW)));
+                else if(warnings)
+                    throw_parse_error(line_i, "Invalid karaoke mode");
             }else if(warnings)
                 throw_parse_error(line_i, "Invalid tag \"" + tags_token + '\"');
 	}

@@ -9,7 +9,6 @@ v0.0.3 (planned)
 
 v0.0.2 (planned)
 ----------------
-* added style tag kmode(=fill/solid/glow)
-* added style mode 'boxed'
+* added style tag kmode(=fill/solid/glow)	*DONE*
 * sped up texturing
 * improved blurring quality and performance

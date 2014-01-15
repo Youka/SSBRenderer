@@ -72,7 +72,8 @@ class SSBTag : public SSBObject{
             FADE,
             ANIMATE,
             KARAOKE,
-            KARAOKE_COLOR
+            KARAOKE_COLOR,
+            KARAOKE_MODE
         } const type;
         SSBTag(const SSBTag&) = delete;
         SSBTag& operator =(const SSBTag&) = delete;
@@ -412,6 +413,13 @@ class SSBKaraokeColor : public SSBTag{
     public:
         RGB color;
         SSBKaraokeColor(double r, double g, double b) : SSBTag(SSBTag::Type::KARAOKE_COLOR), color({r, g, b}){}
+};
+
+// Karaoke filling mode
+class SSBKaraokeMode : public SSBTag{
+    public:
+        enum class Mode{FILL, SOLID, GLOW} mode;
+        SSBKaraokeMode(Mode mode) : SSBTag(SSBTag::Type::KARAOKE_MODE), mode(mode){}
 };
 
 // Point structure for geometries
