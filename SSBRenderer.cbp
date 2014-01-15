@@ -53,6 +53,7 @@
 					<Add library="libmuparser.a" />
 					<Add library="gdi32" />
 					<Add directory="src/libs/win32" />
+					<Add directory="src/libs/win64" />
 				</Linker>
 			</Target>
 			<Target title="Debug - Windows">
@@ -106,6 +107,7 @@
 					<Add library="libmuparser.a" />
 					<Add library="gdi32" />
 					<Add directory="src/libs/win32" />
+					<Add directory="src/libs/win64" />
 				</Linker>
 			</Target>
 		</Build>

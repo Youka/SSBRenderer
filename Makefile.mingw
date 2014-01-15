@@ -2,13 +2,13 @@
 CC = g++
 RC = windres
 IDIR = -Isrc/include -Isrc/include/cairo -Isrc/include/muparser
-LDIR = -Lsrc/libs/win32
+LDIR = -Lsrc/libs/win32 -Lsrc/libs/win64
 RDIR = -Isrc/res
 LIBS = -lcomdlg32 -lgdi32 -lcairo -lpixman-1 -lpng -lz -lmuparser
-WARNINGS = -Winit-self -Wredundant-decls -Wundef -Wfloat-equal -Wunreachable-code -Wmissing-include-dirs -Wswitch-enum -pedantic -std=c++11 -Wextra -Wall
+WARNINGS = -Winit-self -Wredundant-decls -Wundef -Wfloat-equal -Wunreachable-code -Wmissing-include-dirs -Wswitch-enum -pedantic -Wextra -Wall
 DEFINES = -DBUILD_DLL -D_WIN32 -DWIN32_LEAN_AND_MEAN -DWIN32_EXTRA_LEAN
 OPTIMIZATION = -Os -O2
-ADDITIONAL = -static -msse2
+ADDITIONAL = -static -msse2 -std=c++11
 CFLAGS = $(IDIR) $(WARNINGS) $(DEFINES) $(OPTIMIZATION) $(ADDITIONAL)
 LFLAGS = -shared -Wl,--dll $(LDIR) $(LIBS)
 RFLAGS = -J rc -O coff $(RDIR)

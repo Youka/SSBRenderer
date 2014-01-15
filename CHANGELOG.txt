@@ -2,11 +2,14 @@ v0.0.3 (planned)
 ----------------
 * added support for more video colorspaces (YUV2, YV12)
 * added support for other subtitle formats (SRT, MicroDVD, ?)
-* [fixed RTL behaviour]
-* improved performance (faster blur algorithm, ?)
+* ported to Unix (Avxsynth, GStreamer)
+* rewrote text layout (for context-sensitive characters and right-to-left languages)
 
 ##########################################################################
 
 v0.0.2 (planned)
 ----------------
-* ported to Unix (Avxsynth, GStreamer)
+* added style tag kmode(=fill/solid/glow)
+* added style mode 'boxed'
+* sped up texturing
+* improved blurring quality and performance
