@@ -46,12 +46,12 @@
 				<Linker>
 					<Add option="-s" />
 					<Add library="comdlg32" />
+					<Add library="gdi32" />
 					<Add library="cairo" />
 					<Add library="pixman-1" />
 					<Add library="png" />
 					<Add library="z" />
-					<Add library="libmuparser.a" />
-					<Add library="gdi32" />
+					<Add library="muparser" />
 					<Add directory="src/libs/win32" />
 					<Add directory="src/libs/win64" />
 				</Linker>
@@ -100,14 +100,49 @@
 				<Linker>
 					<Add option="-pg -lgmon" />
 					<Add library="comdlg32" />
+					<Add library="gdi32" />
 					<Add library="cairo" />
 					<Add library="pixman-1" />
 					<Add library="png" />
 					<Add library="z" />
-					<Add library="libmuparser.a" />
-					<Add library="gdi32" />
+					<Add library="muparser" />
 					<Add directory="src/libs/win32" />
 					<Add directory="src/libs/win64" />
+				</Linker>
+			</Target>
+			<Target title="Release - Unix">
+				<Option platforms="Unix;" />
+				<Option output="bin/SSBRenderer" prefix_auto="0" extension_auto="1" />
+				<Option object_output="src/obj" />
+				<Option type="3" />
+				<Option compiler="gcc" />
+				<Option createDefFile="1" />
+				<Option createStaticLib="1" />
+				<Compiler>
+					<Add option="-Os" />
+					<Add option="-O2" />
+					<Add option="-Winit-self" />
+					<Add option="-Wredundant-decls" />
+					<Add option="-Wundef" />
+					<Add option="-Wfloat-equal" />
+					<Add option="-Wunreachable-code" />
+					<Add option="-Wmissing-include-dirs" />
+					<Add option="-Wswitch-enum" />
+					<Add option="-pedantic" />
+					<Add option="-std=c++11" />
+					<Add option="-Wextra" />
+					<Add option="-Wall" />
+					<Add option="-msse2" />
+					<Add option="-DBUILD_DLL" />
+					<Add directory="src/include" />
+					<Add directory="src/include/muparser" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+					<Add library="fontconfig" />
+					<Add library="freetype" />
+					<Add library="cairo" />
+					<Add library="muparser" />
 				</Linker>
 			</Target>
 		</Build>
@@ -146,6 +181,8 @@
 		</Unit>
 		<Unit filename="src/avisynth.cpp">
 			<Option virtualFolder="Interfaces/" />
+			<Option target="Release - Windows" />
+			<Option target="Debug - Windows" />
 		</Unit>
 		<Unit filename="src/cairo++.cpp">
 			<Option virtualFolder="Utils/" />
@@ -159,19 +196,27 @@
 		<Unit filename="src/module.c">
 			<Option compilerVar="CPP" />
 			<Option virtualFolder="Utils/" />
+			<Option target="Release - Windows" />
+			<Option target="Debug - Windows" />
 		</Unit>
 		<Unit filename="src/module.h">
 			<Option virtualFolder="Utils/" />
+			<Option target="Release - Windows" />
+			<Option target="Debug - Windows" />
 		</Unit>
 		<Unit filename="src/resources.rc">
 			<Option compilerVar="WINDRES" />
 			<Option virtualFolder="Meta/" />
+			<Option target="Release - Windows" />
+			<Option target="Debug - Windows" />
 		</Unit>
 		<Unit filename="src/sse.hpp">
 			<Option virtualFolder="Utils/" />
 		</Unit>
 		<Unit filename="src/textconv.hpp">
 			<Option virtualFolder="Utils/" />
+			<Option target="Release - Windows" />
+			<Option target="Debug - Windows" />
 		</Unit>
 		<Unit filename="src/thread.h">
 			<Option virtualFolder="Utils/" />
@@ -187,9 +232,13 @@
 		</Unit>
 		<Unit filename="src/virtualdub.cpp">
 			<Option virtualFolder="Interfaces/" />
+			<Option target="Release - Windows" />
+			<Option target="Debug - Windows" />
 		</Unit>
 		<Unit filename="src/virtualdub_dialog.h">
 			<Option virtualFolder="Interfaces/" />
+			<Option target="Release - Windows" />
+			<Option target="Debug - Windows" />
 		</Unit>
 		<Extensions>
 			<code_completion />
