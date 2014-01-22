@@ -716,7 +716,7 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                         else
                             set_line_props(this->stencil_path_buffer, rs);
                         // Create overlay by type
-                        enum class DrawType{FILL_BLURRED, FILL_WITHOUT_BLUR, BORDER, WIRE};
+                        enum class DrawType{FILL_BLURRED, FILL_WITHOUT_BLUR, BORDER, BOX, WIRE};
                         auto create_overlay = [&](DrawType draw_type) -> Renderer::ImageData{
                             /*
                                 CODE FOR PERFORMANCE TESTING ON WINDOWS
@@ -735,8 +735,9 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                             switch(draw_type){
                                 case DrawType::WIRE:
                                 case DrawType::BORDER:
-                                    border_h = ceil(rs.blur_h + cairo_get_line_width(this->stencil_path_buffer) / 2),
-                                    border_v = ceil(rs.blur_v + cairo_get_line_width(this->stencil_path_buffer) / 2);
+                                case DrawType::BOX:
+                                    border_h = ceil(rs.blur_h) + ceil(cairo_get_line_width(this->stencil_path_buffer) / 2),
+                                    border_v = ceil(rs.blur_v) + ceil(cairo_get_line_width(this->stencil_path_buffer) / 2);
                                     break;
                                 case DrawType::FILL_BLURRED:
                                     border_h = ceil(rs.blur_h),
@@ -881,19 +882,30 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                                                 break;
                                         }
                                     }
-                                }else{  // draw_type == DrawType::BORDER || draw_type == DrawType::WIRE
+                                }else{  // draw_type == DrawType::BORDER || draw_type == DrawType::WIRE || draw_type == DrawType::BOX
                                     // Draw color
                                     cairo_set_source_rgba(image, rs.line_color.r, rs.line_color.g, rs.line_color.b, rs.line_alpha);
                                     cairo_save(image);
                                     cairo_identity_matrix(image);
-                                    cairo_stroke_preserve(image);
+                                    if(draw_type == DrawType::BOX){
+                                        double x1, y1, x2, y2;
+                                        cairo_fill_extents(image, &x1, &y1, &x2, &y2);
+                                        double box_border = cairo_get_line_width(this->stencil_path_buffer) / 2;
+                                        cairo_path_t* path = cairo_copy_path(image);
+                                        cairo_new_path(image);
+                                        cairo_rectangle(image, x1-box_border, y1-box_border, x2-x1+box_border*2, y2-y1+box_border*2);
+                                        cairo_fill(image);
+                                        cairo_append_path(image, path);
+                                        cairo_path_destroy(path);
+                                    }else   // draw_type == DrawType::BORDER || draw_type == DrawType::WIRE
+                                        cairo_stroke_preserve(image);
                                     cairo_restore(image);
                                 }
                                 // Blur image
                                 if(draw_type != DrawType::FILL_WITHOUT_BLUR)
                                     cairo_image_surface_blur(image, rs.blur_h, rs.blur_v);
-                                // Erase filling in stroke -> create border
-                                if(draw_type == DrawType::BORDER){
+                                // Erase filling in stroke/box -> create border
+                                if(draw_type == DrawType::BORDER || draw_type == DrawType::BOX){
                                     cairo_set_source_rgba(image, 0, 0, 0, 1);
                                     cairo_set_operator(image, CAIRO_OPERATOR_DEST_OUT);
                                     cairo_fill(image);
@@ -904,10 +916,10 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                         };
                         // Create overlay
                         Renderer::ImageData overlay;
-                        if(rs.mode == SSBMode::Mode::FILL){
+                        if(rs.mode == SSBMode::Mode::FILL || rs.mode == SSBMode::Mode::BOXED){
                             if(rs.line_width > 0 && geometry->type != SSBGeometry::Type::POINTS){
-                                std::function<void()> create_overlay_wrapper = [&overlay,&create_overlay]() -> void{
-                                    overlay = create_overlay(DrawType::BORDER);
+                                std::function<void()> create_overlay_wrapper = [&overlay,&create_overlay,&rs]() -> void{
+                                    overlay = create_overlay(rs.mode == SSBMode::Mode::FILL ? DrawType::BORDER : DrawType::BOX);
                                 };
                                 nthread_t thread = nthread_create(call_in_thread, &create_overlay_wrapper);
                                 Renderer::ImageData overlay2 = create_overlay(DrawType::FILL_WITHOUT_BLUR);

@@ -105,12 +105,14 @@ cairo_pattern_t* cairo_pattern_create_rect_color(cairo_rectangle_t rect,
 
 namespace{
     struct ThreadData{
+        // Image data
         int width, height;
         cairo_format_t format;
         int stride;
         unsigned char* dst_data;
         float* src_data;
         int first_row, row_step;
+        // Kernel data
         int kernel_radius_x, kernel_radius_y, kernel_width, kernel_height;
         float* kernel_data;
     };
@@ -146,7 +148,7 @@ namespace{
             for(int y = tdata->first_row; y < tdata->height; y += tdata->row_step){
                 row_dst = tdata->dst_data + y * tdata->stride;
                 for(int x = 0; x < tdata->width; ++x){
-                    accum = _mm_xor_ps(accum, accum);
+                    accum = _mm_xor_ps(accum, accum);   // Set to zero
                     for(int kernel_y = 0; kernel_y < tdata->kernel_height; ++kernel_y){
                         image_y = y + kernel_y - tdata->kernel_radius_y;
                         if(image_y < 0 || image_y >= tdata->height)

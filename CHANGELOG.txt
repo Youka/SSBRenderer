@@ -1,14 +1,18 @@
 v0.0.3 (planned)
 ----------------
+* ported to Unix (Avxsynth, GStreamer)
 * added support for more video colorspaces (YUV2, YV12)
 * added support for other subtitle formats (SRT, MicroDVD, ?)
-* ported to Unix (Avxsynth, GStreamer)
 * rewrote text layout (for context-sensitive characters and right-to-left languages)
+* added wrapping mode
 
 ##########################################################################
 
 v0.0.2 (planned)
 ----------------
-* added style tag kmode(=fill/solid/glow)	*DONE*
+* added mode 'boxed'	*DONE*
+* added style tag kmode	*DONE*
 * sped up texturing	*DONE*
-* improved blurring quality and performance
+* sped up blurring
+* (change SSB format [v0 -> v1])
+* added SSB import macro for Aegisub

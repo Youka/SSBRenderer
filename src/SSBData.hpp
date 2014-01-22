@@ -159,7 +159,7 @@ class SSBLineDash : public SSBTag{
 // Painting mode state
 class SSBMode : public SSBTag{
     public:
-        enum class Mode{FILL, WIRE} mode;
+        enum class Mode{FILL, WIRE, BOXED} mode;
         SSBMode(Mode mode) : SSBTag(SSBTag::Type::MODE), mode(mode){}
 };
 

@@ -304,6 +304,8 @@ namespace{
                     ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBMode(SSBMode::Mode::FILL)));
                 else if(tag_value == "wire")
                     ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBMode(SSBMode::Mode::WIRE)));
+                else if(tag_value == "boxed")
+                    ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBMode(SSBMode::Mode::BOXED)));
                 else if(warnings)
                     throw_parse_error(line_i, "Invalid mode");
             }else if(tags_token.compare(0, 7, "deform=") == 0){
