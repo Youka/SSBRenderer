@@ -12,7 +12,8 @@ v0.0.2 (planned)
 ----------------
 * added mode 'boxed'	*DONE*
 * added style tag kmode	*DONE*
-* sped up texturing	*DONE*
-* sped up blurring
-* (change SSB format [v0 -> v1])
+* sped up texturing		*DONE*
+* sped up blurring		*DONE*
 * added SSB import macro for Aegisub
+* updated docs
+* (change SSB format [v0 -> v1])

@@ -18,21 +18,23 @@ Permission is granted to anyone to use this software for any purpose, including 
 #include <xmmintrin.h>
 #include <cstdlib>
 
-inline bool sse2_supported(){
+/*static bool sse2_supported(){
     // Storage for cpu feature bits
-    uint32_t cpu_features;
-    asm(
-        // Get cpu features
-        "movl $1, %%eax\n"
-        "cpuid\n"
-        "movl %%edx, %0\n"
-        : "=r" (cpu_features)
-        : // No input
-        : "%eax", "%ebx", "%ecx", "%edx"
-    );
+    static uint32_t cpu_features = 0x0;
+    if(cpu_features == 0x0){
+        asm(
+            // Get cpu features
+            "movl $1, %%eax\n"
+            "cpuid\n"
+            "movl %%edx, %0\n"
+            : "=r" (cpu_features)
+            : // No input
+            : "%eax", "%ebx", "%ecx", "%edx"
+        );
+    }
     // 26th bit marks SSE2 support
     return cpu_features & 0x04000000;
-}
+}*/
 
 template<typename T, size_t align>
 class aligned_memory{

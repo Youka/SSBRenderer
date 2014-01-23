@@ -104,76 +104,119 @@ cairo_pattern_t* cairo_pattern_create_rect_color(cairo_rectangle_t rect,
 }
 
 namespace{
-    struct ThreadData{
-        // Image data
-        int width, height;
-        cairo_format_t format;
-        int stride;
-        unsigned char* dst_data;
-        float* src_data;
-        int first_row, row_step;
+    struct blur_h_thread_data{
         // Kernel data
-        int kernel_radius_x, kernel_radius_y, kernel_width, kernel_height;
-        float* kernel_data;
+        std::vector<float>* kernel_h;
+        // Image meta data
+        int width, height, stride, first_row, row_step;
+        cairo_format_t format;
+        // Image data
+        float* src, *dst;
     };
-    THREAD_FUNC_BEGIN(convolution_filter)
-        ThreadData* tdata = reinterpret_cast<ThreadData*>(userdata);
+    struct blur_v_thread_data{
+        // Kernel data
+        std::vector<float>* kernel_v;
+        // Image meta data
+        int width, height, stride, first_row, row_step;
+        cairo_format_t format;
+        // Image data
+        float* src;
+        unsigned char* dst;
+    };
+    THREAD_FUNC_BEGIN(blur_h_filter)
+        blur_h_thread_data* tdata = reinterpret_cast<blur_h_thread_data*>(userdata);
+        int kernel_radius_h = (tdata->kernel_h->size() - 1) >> 1;
         if(tdata->format == CAIRO_FORMAT_A8){
+            float* row_src, *row_dst;
             float accum;
-            unsigned char* row_dst;
-            int image_x, image_y;
+            int image_x;
             for(int y = tdata->first_row; y < tdata->height; y += tdata->row_step){
-                row_dst = tdata->dst_data + y * tdata->stride;
+                row_src = tdata->src + y * tdata->stride;
+                row_dst = tdata->dst + y * tdata->stride;
                 for(int x = 0; x < tdata->width; ++x){
                     accum = 0;
-                    for(int kernel_y = 0; kernel_y < tdata->kernel_height; ++kernel_y){
-                        image_y = y + kernel_y - tdata->kernel_radius_y;
-                        if(image_y < 0 || image_y >= tdata->height)
+                    for(decltype(tdata->kernel_h->size()) kernel_x = 0; kernel_x < tdata->kernel_h->size(); ++kernel_x){
+                        image_x = x + kernel_x - kernel_radius_h;
+                        if(image_x < 0 || image_x >= tdata->width)
                             continue;
-                        for(int kernel_x = 0; kernel_x < tdata->kernel_width; ++kernel_x){
-                            image_x = x + kernel_x - tdata->kernel_radius_x;
-                            if(image_x < 0 || image_x >= tdata->width)
-                                continue;
-                            accum += tdata->src_data[image_y * tdata->stride + image_x] * tdata->kernel_data[kernel_y * tdata->kernel_width + kernel_x];
-                        }
+                        accum += *(row_src + image_x) * tdata->kernel_h->at(kernel_x);
                     }
-                    *row_dst++ = accum < 0.0f ? 0.0f : (accum > 255.0f ? 255.0f : accum);
+                    *row_dst++ = accum;
                 }
             }
         }else if(tdata->format == CAIRO_FORMAT_ARGB32 || tdata->format == CAIRO_FORMAT_RGB24){
+            float* row_src, *row_dst;
             __m128 accum;
-            float __attribute__((aligned(16))) accum_buf[4];
-            unsigned char* row_dst;
-            int image_x, image_y;
+            int image_x;
             for(int y = tdata->first_row; y < tdata->height; y += tdata->row_step){
-                row_dst = tdata->dst_data + y * tdata->stride;
+                row_src = tdata->src + y * tdata->stride;
+                row_dst = tdata->dst + y * tdata->stride;
                 for(int x = 0; x < tdata->width; ++x){
                     accum = _mm_xor_ps(accum, accum);   // Set to zero
-                    for(int kernel_y = 0; kernel_y < tdata->kernel_height; ++kernel_y){
-                        image_y = y + kernel_y - tdata->kernel_radius_y;
+                    for(decltype(tdata->kernel_h->size()) kernel_x = 0; kernel_x < tdata->kernel_h->size(); ++kernel_x){
+                        image_x = x + kernel_x - kernel_radius_h;
+                        if(image_x < 0 || image_x >= tdata->width)
+                            continue;
+                        accum = _mm_add_ps(
+                            accum,
+                            _mm_mul_ps(
+                                _mm_load_ps(row_src + (image_x << 2)),
+                                _mm_set_ps1(tdata->kernel_h->at(kernel_x))
+                            )
+                        );
+                    }
+                    _mm_store_ps(row_dst, accum);
+                    row_dst += 4;
+                }
+            }
+        }
+    THREAD_FUNC_END
+    THREAD_FUNC_BEGIN(blur_v_filter)
+        blur_v_thread_data* tdata = reinterpret_cast<blur_v_thread_data*>(userdata);
+        int kernel_radius_v = (tdata->kernel_v->size() - 1) >> 1;
+        if(tdata->format == CAIRO_FORMAT_A8){
+            unsigned char* row_dst;
+            float accum;
+            int image_y;
+            for(int y = tdata->first_row; y < tdata->height; y += tdata->row_step){
+                row_dst = tdata->dst + y * tdata->stride;
+                for(int x = 0; x < tdata->width; ++x){
+                    accum = 0;
+                    for(decltype(tdata->kernel_v->size()) kernel_y = 0; kernel_y < tdata->kernel_v->size(); ++kernel_y){
+                        image_y = y + kernel_y - kernel_radius_v;
                         if(image_y < 0 || image_y >= tdata->height)
                             continue;
-                        for(int kernel_x = 0; kernel_x < tdata->kernel_width; ++kernel_x){
-                            image_x = x + kernel_x - tdata->kernel_radius_x;
-                            if(image_x < 0 || image_x >= tdata->width)
-                                continue;
-                            accum = _mm_add_ps(
-                                accum,
-                                _mm_mul_ps(
-                                    _mm_load_ps(&tdata->src_data[image_y * tdata->stride + (image_x << 2)]),
-                                    _mm_set_ps1(tdata->kernel_data[kernel_y * tdata->kernel_width + kernel_x])
-                                )
-                            );
-                        }
+                        accum += *(tdata->src + image_y * tdata->stride + x) * tdata->kernel_v->at(kernel_y);
+                    }
+                    *row_dst++ = accum > 255.0f ? 255 : accum;
+                }
+            }
+        }else if(tdata->format == CAIRO_FORMAT_ARGB32 || tdata->format == CAIRO_FORMAT_RGB24){
+            unsigned char* row_dst;
+            __m128 accum;
+            int image_y;
+            float __attribute__((aligned(16))) accum_buf[4];
+            for(int y = tdata->first_row; y < tdata->height; y += tdata->row_step){
+                row_dst = tdata->dst + y * tdata->stride;
+                for(int x = 0; x < tdata->width; ++x){
+                    accum = _mm_xor_ps(accum, accum);   // Set to zero
+                    for(decltype(tdata->kernel_v->size()) kernel_y = 0; kernel_y < tdata->kernel_v->size(); ++kernel_y){
+                        image_y = y + kernel_y - kernel_radius_v;
+                        if(image_y < 0 || image_y >= tdata->height)
+                            continue;
+                        accum = _mm_add_ps(
+                            accum,
+                            _mm_mul_ps(
+                                _mm_load_ps(tdata->src + image_y * tdata->stride + (x << 2)),
+                                _mm_set_ps1(tdata->kernel_v->at(kernel_y))
+                            )
+                        );
                     }
                     _mm_store_ps(
                         accum_buf,
-                        _mm_max_ps(
-                            _mm_setzero_ps(),
-                            _mm_min_ps(
-                                _mm_set_ps1(255.0f),
-                                accum
-                            )
+                        _mm_min_ps(
+                            _mm_set_ps1(255.0f),
+                            accum
                         )
                     );
                     row_dst[0] = accum_buf[0];
@@ -183,101 +226,10 @@ namespace{
                     row_dst += 4;
                 }
             }
-            // SSE2 available
-            /*if(sse2_supported()){
-                constexpr float min_val = 0.0f, max_val = 255.0f;
-                asm(
-                    "movss (%0), %%xmm1\n"
-                    "shufps $0x0, %%xmm1, %%xmm1\n"
-                    "movss (%1), %%xmm2\n"
-                    "shufps $0x0, %%xmm2, %%xmm2\n"
-                    : // No output
-                    : "r" (&max_val), "r" (&min_val)
-                );
-                aligned_memory<float,16> aligned_buf(4);
-                unsigned char* row_dst;
-                int image_x, image_y;
-                for(int y = tdata->first_row; y < tdata->height; y += tdata->row_step){
-                    row_dst = tdata->dst_data + y * tdata->stride;
-                    for(int x = 0; x < tdata->width; ++x){
-                        asm __volatile__("xorps %xmm0, %xmm0");  // Set accumulator to zero
-                        for(int kernel_y = 0; kernel_y < tdata->kernel_height; ++kernel_y){
-                            image_y = y + kernel_y - tdata->kernel_radius_y;
-                            if(image_y < 0 || image_y >= tdata->height)
-                                continue;
-                            for(int kernel_x = 0; kernel_x < tdata->kernel_width; ++kernel_x){
-                                image_x = x + kernel_x - tdata->kernel_radius_x;
-                                if(image_x < 0 || image_x >= tdata->width)
-                                    continue;
-                                asm __volatile__(
-                                    "movss (%0), %%xmm3\n"
-                                    "shufps $0x0, %%xmm3, %%xmm3\n"
-                                    "mulps (%1), %%xmm3\n"
-                                    "addps %%xmm3, %%xmm0"
-                                    : // No output
-                                    : "r" (&tdata->kernel_data[kernel_y * tdata->kernel_width + kernel_x]), "r" (&tdata->src_data[image_y * tdata->stride + (image_x << 2)])
-                                );
-                            }
-                        }
-                        asm __volatile__(
-                            "minps %%xmm1, %%xmm0\n"
-                            "maxps %%xmm2, %%xmm0\n"
-                            "movaps %%xmm0, (%0)\n"
-                            "cvttss2si (%0), %%eax\n"
-                            "movb %%al, (%1)\n"
-                            "cvttss2si 4(%0), %%eax\n"
-                            "movb %%al, 1(%1)\n"
-                            "cvttss2si 8(%0), %%eax\n"
-                            "movb %%al, 2(%1)\n"
-                            "cvttss2si 12(%0), %%eax\n"
-                            "movb %%al, 3(%1)"
-                            : // No output
-                            : "r" (aligned_buf.begin()), "r" (row_dst)
-                            : "%eax"
-                        );
-                        row_dst += 4;
-                    }
-                }
-            // No SSE
-            }else{
-                float accum[4];
-                float* pixel;
-                float kernel_value;
-                unsigned char* row_dst;
-                int image_x, image_y;
-                for(int y = tdata->first_row; y < tdata->height; y += tdata->row_step){
-                    row_dst = tdata->dst_data + y * tdata->stride;
-                    for(int x = 0; x < tdata->width; ++x){
-                        accum[0] = accum[1] = accum[2] = accum[3] = 0;
-                        for(int kernel_y = 0; kernel_y < tdata->kernel_height; ++kernel_y){
-                            image_y = y + kernel_y - tdata->kernel_radius_y;
-                            if(image_y < 0 || image_y >= tdata->height)
-                                continue;
-                            for(int kernel_x = 0; kernel_x < tdata->kernel_width; ++kernel_x){
-                                image_x = x + kernel_x - tdata->kernel_radius_x;
-                                if(image_x < 0 || image_x >= tdata->width)
-                                    continue;
-                                pixel = &tdata->src_data[image_y * tdata->stride + (image_x << 2)];
-                                kernel_value = tdata->kernel_data[kernel_y * tdata->kernel_width + kernel_x];
-                                accum[0] += pixel[0] * kernel_value;
-                                accum[1] += pixel[1] * kernel_value;
-                                accum[2] += pixel[2] * kernel_value;
-                                accum[3] += pixel[3] * kernel_value;
-                            }
-                        }
-                        row_dst[0] = accum[0] < 0.0f ? 0.0f : (accum[0] > 255.0f ? 255.0f : accum[0]);
-                        row_dst[1] = accum[1] < 0.0f ? 0.0f : (accum[1] > 255.0f ? 255.0f : accum[1]);
-                        row_dst[2] = accum[2] < 0.0f ? 0.0f : (accum[2] > 255.0f ? 255.0f : accum[2]);
-                        row_dst[3] = accum[3] < 0.0f ? 0.0f : (accum[3] > 255.0f ? 255.0f : accum[3]);
-                        row_dst += 4;
-                    }
-                }
-            }*/
         }
     THREAD_FUNC_END
 }
-
-void cairo_image_surface_blur(cairo_surface_t* surface, double blur_h, double blur_v){
+void cairo_image_surface_blur(cairo_surface_t* surface, float blur_h, float blur_v){
     // Valid blur range?
     if(blur_h >= 0 && blur_v >= 0 && (blur_h > 0 || blur_v > 0)){
         // Get surface data
@@ -287,45 +239,55 @@ void cairo_image_surface_blur(cairo_surface_t* surface, double blur_h, double bl
         int stride = cairo_image_surface_get_stride(surface);
         cairo_surface_flush(surface);   // Flush pending operations on surface
         unsigned char* data = cairo_image_surface_get_data(surface);
-        // Create data in aligned float format for vector operations
-        aligned_memory<float,16> fdata(height * stride);
-        std::copy(data, data + fdata.size(), fdata.begin());
         // Create blur kernel
-        int kernel_radius_x = ceil(blur_h),
-            kernel_radius_y = ceil(blur_v),
-            kernel_width = (kernel_radius_x << 1) + 1,
-            kernel_height = (kernel_radius_y << 1) + 1;
-        std::vector<float> kernel_data(kernel_width * kernel_height);
-        // Fill blur kernel (box blur)
-        std::fill(kernel_data.begin(), kernel_data.end(), 1.0f);
-        float kernel_border_x = 1 - (kernel_radius_x - blur_h),
-                kernel_border_y = 1 - (kernel_radius_y - blur_v);
-        if(kernel_border_x > 0)
-            for(int kernel_y = 0; kernel_y < kernel_height; ++kernel_y){
-                kernel_data[kernel_y * kernel_width] *= kernel_border_x;
-                kernel_data[kernel_y * kernel_width + kernel_width-1] *= kernel_border_x;
-            }
-        if(kernel_border_y > 0)
-            for(int kernel_x = 0; kernel_x < kernel_width; ++kernel_x){
-                kernel_data[kernel_x] *= kernel_border_y;
-                kernel_data[(kernel_height-1) * kernel_width + kernel_x] *= kernel_border_y;
-            }
-        // Normalize blur kernel
-        float divisor = std::accumulate(kernel_data.begin(), kernel_data.end(), 0.0f);
-        std::for_each(kernel_data.begin(), kernel_data.end(), [&divisor](float& v){v /= divisor;});
+        int kernel_radius_h = ceil(blur_h),
+            kernel_radius_v = ceil(blur_v);
+        std::vector<float> kernel_h((kernel_radius_h << 1) + 1),
+                            kernel_v((kernel_radius_v << 1) + 1);
+        // Fill blur kernels
+        float kernel_border_h = 1 - (kernel_radius_h - blur_h),
+                kernel_border_v = 1 - (kernel_radius_v - blur_v);
+        if(kernel_border_h < 1){
+            float kernel_h_sum = kernel_border_h * 2 + (kernel_h.size() - 2);
+            kernel_h.front() = kernel_h.back() = kernel_border_h / kernel_h_sum;
+            std::fill(kernel_h.begin()+1, kernel_h.end()-1, 1.0f / kernel_h_sum);
+        }else
+            std::fill(kernel_h.begin(), kernel_h.end(), 1.0f / kernel_h.size());
+        if(kernel_border_v < 1){
+            float kernel_v_sum = kernel_border_v * 2 + (kernel_v.size() - 2);
+            kernel_v.front() = kernel_v.back() = kernel_border_v / kernel_v_sum;
+            std::fill(kernel_v.begin()+1, kernel_v.end()-1, 1.0f / kernel_v_sum);
+        }else
+            std::fill(kernel_v.begin(), kernel_v.end(), 1.0f / kernel_v.size());
+        // Create surface data in aligned float format for vector operations
+        aligned_memory<float,16> fdata(height * stride),
+                                fdata2(fdata.size());
+        std::copy(data, data + fdata.size(), fdata.begin());
         // Get logical processors number
         int max_threads = nthread_get_processors_num();
         // Create thread data
-        std::vector<ThreadData> threads_data(max_threads);
-        for(int i = 0; i < max_threads; ++i)
-            threads_data[i] = {width, height, format, stride, data, fdata, i, max_threads, kernel_radius_x, kernel_radius_y, kernel_width, kernel_height, kernel_data.data()};
-        // Run threads
+        std::vector<blur_h_thread_data> tdata_h(max_threads);
+        std::vector<blur_v_thread_data> tdata_v(max_threads);
+        for(int i = 0; i < max_threads; ++i){
+            tdata_h[i] = {&kernel_h, width, height, stride, i, max_threads, format, fdata, fdata2};
+            tdata_v[i] = {&kernel_v, width, height, stride, i, max_threads, format, fdata2, data};
+        }
         std::vector<nthread_t> threads(max_threads-1);
+        // Run threads for horizontal blur
         for(int i = 0; i < max_threads-1; ++i)
-            threads[i] = nthread_create(convolution_filter, &threads_data[i]);
-        convolution_filter(&threads_data[max_threads-1]);
-        // Wait for threads & close them
+            threads[i] = nthread_create(blur_h_filter, &tdata_h[i]);
+        blur_h_filter(&tdata_h[max_threads-1]);
         for(nthread_t& thread : threads){
+            // Wait for threads & close them
+            nthread_join(thread);
+            nthread_destroy(thread);
+        }
+        // Run threads for vertical blur
+        for(int i = 0; i < max_threads-1; ++i)
+            threads[i] = nthread_create(blur_v_filter, &tdata_v[i]);
+        blur_v_filter(&tdata_v[max_threads-1]);
+        for(nthread_t& thread : threads){
+            // Wait for threads & close them
             nthread_join(thread);
             nthread_destroy(thread);
         }
