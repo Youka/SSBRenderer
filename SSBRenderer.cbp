@@ -6,7 +6,7 @@
 		<Option platforms="Windows;Unix;" />
 		<Option pch_mode="2" />
 		<Option compiler="gcc" />
-		<Option virtualFolders="Meta\;Interfaces\;Filter\;Utils\;" />
+		<Option virtualFolders="Meta/;Interfaces/;Filter/;Utils/;" />
 		<Build>
 			<Target title="Release - Windows">
 				<Option platforms="Windows;" />
@@ -139,8 +139,7 @@
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
-					<Add library="fontconfig" />
-					<Add library="freetype" />
+					<Add library="pango" />
 					<Add library="cairo" />
 					<Add library="muparser" />
 				</Linker>

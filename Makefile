@@ -11,7 +11,7 @@ DEFINES += -D_WIN32 -DWIN32_LEAN_AND_MEAN -DWIN32_EXTRA_LEAN
 ADDITIONAL += -static
 else
 LDIR =
-LIBS += -lfontconfig -lfreetype
+LIBS += -lpango
 endif
 
 # Constant macros
@@ -71,3 +71,11 @@ resources.res:
 # Remove generated files
 clean:
 	rm -rf src/obj bin
+
+# Install
+install:
+	cp bin/SSBRenderer.so /usr/local/include/SSBRenderer.so
+	cp src/user.h /usr/local/include/ssb.h
+uninstall:
+	rm /usr/local/include/SSBRenderer.so
+	rm /usr/local/include/ssb.h
