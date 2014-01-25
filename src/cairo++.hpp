@@ -15,7 +15,12 @@ Permission is granted to anyone to use this software for any purpose, including 
 
 #pragma once
 
+#ifdef _WIN32
 #include <cairo.h>
+#include "textconv.hpp"
+#else
+#include <pango/pangocairo.h>
+#endif
 #include "FileReader.hpp"
 #include "Cache.hpp"
 #include <vector>
@@ -83,12 +88,6 @@ class CairoImage{
         }
 };
 
-#ifdef _WIN32
-#include "textconv.hpp"
-#else
-#error "Not implented"
-#endif
-
 class NativeFont{
     private:
 #ifdef _WIN32
@@ -99,7 +98,7 @@ class NativeFont{
         // Upscale / quality / precision
         constexpr static double UPSCALE = 64;
 #else
-#error "Not implented"
+        PangoLayout *layout;
 #endif
     public:
 #ifdef _WIN32
@@ -214,6 +213,13 @@ class NativeFont{
             this->text_path_to_cairo(textw, ctx);
         }
 #else
+        NativeFont(std::string& family, bool bold, bool italic, bool underline, bool strikeout, unsigned short int size, bool rtl = false){
+            this->layout = nullptr;
+            // TODO
+        }
+        ~NativeFont(){
+            g_object_unref(this->layout);
+        }
 #error "Not implented"
 #endif
 };

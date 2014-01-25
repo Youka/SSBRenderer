@@ -111,8 +111,10 @@ bool FileReader::getline(std::string& line){
 #else
 
 FileReader::FileReader(std::string& filename) : file(filename){
-    if(!file)
-        this->file = std::ifstream(FileReader::dir + filename);
+    if(!file){
+        file.clear();
+        file.open(FileReader::dir + filename);
+    }
 }
 
 FileReader::operator bool() const{
@@ -124,7 +126,7 @@ void FileReader::reset(){
 }
 
 unsigned long FileReader::read(unsigned long nbytes, unsigned char* bytes){
-    this->file.read(bytes, nbytes);
+    this->file.read(reinterpret_cast<char*>(bytes), nbytes);
     return this->file.gcount();
 }
 

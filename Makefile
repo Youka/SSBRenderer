@@ -10,6 +10,7 @@ LIBS += -lcomdlg32 -lgdi32 -lpixman-1 -lpng -lz
 DEFINES += -D_WIN32 -DWIN32_LEAN_AND_MEAN -DWIN32_EXTRA_LEAN
 ADDITIONAL += -static
 else
+IDIR += -I/usr/include/cairo
 LDIR =
 LIBS += -lpango
 endif

@@ -17,7 +17,12 @@ Permission is granted to anyone to use this software for any purpose, including 
 #include "file_info.h"
 #include <sstream>
 #define CSRI_OWN_HANDLES
+#ifdef _WIN32
 #define CSRIAPI extern "C" __declspec(dllexport)
+#else
+#define CSRIAPI extern "C" __attribute__((visibility("default")))
+#include <string.h> // strcmp
+#endif
 using csri_rend = const char*;
 struct csri_inst{
     int height;

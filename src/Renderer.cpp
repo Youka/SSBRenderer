@@ -14,9 +14,12 @@ Permission is granted to anyone to use this software for any purpose, including 
 */
 
 // Needed for POSIX path functions
-#undef __STRICT_ANSI__
 #ifdef _WIN32
+#undef __STRICT_ANSI__
 #define __MSVCRT__ 1
+#else
+#include <limits.h>
+#include <libgen.h>
 #endif
 #include <cstdlib>
 #include "Renderer.hpp"
@@ -36,12 +39,9 @@ Renderer::Renderer(int width, int height, Colorspace format, std::string& script
         FileReader::set_additional_directory(utf16_to_utf8(full_dir));
     }
 #else
-    char file_path[_MAX_PATH];
-    if(_fullpath(file_path, script.c_str(), _MAX_PATH)){
-        char drive[_MAX_DRIVE], dir[_MAX_DIR];
-        _splitpath(file_path, drive, dir, NULL, NULL); // Path, drive, directory, name, extension
-        FileReader::set_additional_directory(std::string(drive) + dir);
-    }
+    char file_path[PATH_MAX], *dir;
+    if(realpath(script.c_str(), file_path) && (dir = dirname(file_path)))
+        FileReader::set_additional_directory(std::string(dir) + '/');
 #endif
 }
 
