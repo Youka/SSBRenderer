@@ -134,6 +134,7 @@
 					<Add option="-Wall" />
 					<Add option="-msse2" />
 					<Add option="-DBUILD_DLL" />
+					<Add option="-D__unix__" />
 					<Add directory="src/include" />
 					<Add directory="/usr/include/cairo" />
 					<Add directory="/usr/include/pango-1.0" />

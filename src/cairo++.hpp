@@ -98,9 +98,18 @@ class NativeFont{
         // Upscale / quality / precision
         constexpr static double UPSCALE = 64;
 #else
-        PangoLayout *layout;
+        // Platform dependent font data
+        CairoImage dc;
+        PangoLayout* layout;
 #endif
     public:
+        // Font metrics structure
+        struct FontMetrics{
+            double height, ascent, descent, internal_lead, external_lead;
+        };
+        // No copy
+        NativeFont(const NativeFont&) = delete;
+        NativeFont& operator=(const NativeFont&) = delete;
 #ifdef _WIN32
         // Ctor & dtor
         NativeFont(std::wstring family, bool bold, bool italic, bool underline, bool strikeout, unsigned short int size, bool rtl = false){
@@ -132,13 +141,6 @@ class NativeFont{
             DeleteObject(this->font);
             DeleteDC(this->dc);
         }
-        // No copy
-        NativeFont(const NativeFont&) = delete;
-        NativeFont& operator=(const NativeFont&) = delete;
-        // Font metrics structure
-        struct FontMetrics{
-            double height, ascent, descent, internal_lead, external_lead;
-        };
         // Get font metrics
         FontMetrics get_metrics(){
             TEXTMETRICW metrics;
@@ -214,11 +216,27 @@ class NativeFont{
         }
 #else
         NativeFont(std::string& family, bool bold, bool italic, bool underline, bool strikeout, unsigned short int size, bool rtl = false){
-            this->layout = nullptr;
-            // TODO
+            this->layout = pango_cairo_create_layout(this->dc);
+            PangoFontDescription *font = pango_font_description_new();
+            pango_font_description_set_family(font, family.c_str());
+            pango_font_description_set_weight(font, bold ? PANGO_WEIGHT_BOLD : PANGO_WEIGHT_NORMAL);
+            pango_font_description_set_style(font, italic ? PANGO_STYLE_ITALIC : PANGO_STYLE_NORMAL);
+            pango_font_description_set_absolute_size(font, size * PANGO_SCALE);
+            pango_layout_set_font_description(this->layout, font);
+            pango_font_description_free(font);
+            PangoAttrList* attr_list = pango_attr_list_new();
+            pango_attr_list_insert(attr_list, pango_attr_underline_new(underline ? PANGO_UNDERLINE_SINGLE : PANGO_UNDERLINE_NONE));
+            pango_attr_list_insert(attr_list, pango_attr_strikethrough_new(strikeout));
+            pango_layout_set_attributes(this->layout, attr_list);
+            pango_attr_list_unref(attr_list);
+            pango_layout_set_auto_dir(this->layout, rtl);
         }
         ~NativeFont(){
             g_object_unref(this->layout);
+        }
+        // Get font metrics
+        FontMetrics get_metrics(){
+            // TODO
         }
 #error "Not implented"
 #endif
