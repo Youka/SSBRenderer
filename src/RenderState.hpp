@@ -530,7 +530,7 @@ namespace{
                                     }
                                     break;
                                 case SSBTag::Type::LINE_COLOR:
-                                    this->line_color += (dynamic_cast<SSBLineColor*>(tag)->color - this->line_color) * progress;
+                                    this->line_color += (dynamic_cast<SSBLineColor*>(animate_tag)->color - this->line_color) * progress;
                                     break;
                                 case SSBTag::Type::ALPHA:
                                     {
@@ -558,7 +558,7 @@ namespace{
                                     }
                                     break;
                                 case SSBTag::Type::LINE_ALPHA:
-                                    this->line_alpha += (dynamic_cast<SSBLineAlpha*>(tag)->alpha - this->line_alpha) * progress;
+                                    this->line_alpha += (dynamic_cast<SSBLineAlpha*>(animate_tag)->alpha - this->line_alpha) * progress;
                                     break;
                                 case SSBTag::Type::TEXTURE:
                                     {
@@ -609,7 +609,7 @@ namespace{
                                     break;
                                 case SSBTag::Type::FADE:
                                     {
-                                        SSBFade* fade = dynamic_cast<SSBFade*>(tag);
+                                        SSBFade* fade = dynamic_cast<SSBFade*>(animate_tag);
                                         switch(fade->type){
                                             case SSBFade::Type::INFADE: this->fade_in += progress * (fade->in - this->fade_in); break;
                                             case SSBFade::Type::OUTFADE: this->fade_out += progress * (fade->out - this->fade_out); break;
