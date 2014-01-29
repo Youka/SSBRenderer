@@ -617,7 +617,6 @@ namespace{
                                         }
                                     }
                                     break;
-                                    break;
                                 case SSBTag::Type::ANIMATE:
                                     // Doesn't exist in an animation
                                     break;

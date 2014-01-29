@@ -15,8 +15,8 @@ Permission is granted to anyone to use this software for any purpose, including 
 
 #pragma once
 
-#define FILTER_VERSION_NUMBER 0,0,1,0
-#define FILTER_VERSION_STRING "0.0.1"
+#define FILTER_VERSION_NUMBER 0,0,2,0
+#define FILTER_VERSION_STRING "0.0.2"
 #define FILTER_DESCRIPTION "Renderer for Substation Beta subtitle format"
 #define FILTER_AUTHOR "Youka"
 #define FILTER_NAME "SSBRenderer"
