@@ -12,7 +12,7 @@ ADDITIONAL += -static
 else
 IDIR += -I/usr/include/cairo -I/usr/include/pango-1.0  -I/usr/include/glib-2.0 -I/usr/lib/i386-linux-gnu/glib-2.0/include
 LDIR =
-LIBS += -lpango
+LIBS += -lpangocairo-1.0 -lpthread
 DEFINES += -D__unix__
 endif
 
@@ -23,13 +23,13 @@ WARNINGS = -Winit-self -Wredundant-decls -Wundef -Wfloat-equal -Wunreachable-cod
 OPTIMIZATION = -Os -O2
 RDIR = -Isrc/res
 CFLAGS = $(IDIR) $(WARNINGS) $(DEFINES) $(OPTIMIZATION) $(ADDITIONAL)
-LFLAGS = -shared -Wl,--dll $(LDIR) $(LIBS)
+LFLAGS = -shared $(LDIR) $(LIBS)
 RFLAGS = -J rc -O coff $(RDIR) $(DEFINES)
 
 # Macro overwrite by build type
 ifeq ($(BUILD),debug)
 CFLAGS += -g -pg -DDEBUG
-LFLAGS += -lgmon -pg
+LFLAGS += -pg
 RFLAGS += -DDEBUG
 else
 CFLAGS += -s
@@ -40,10 +40,10 @@ endif
 all: Dirs SSBRenderer
 ifeq ($(OS),Windows_NT)
 SSBRenderer: Renderer.o SSBParser.o aegisub.o avisynth.o user.o virtualdub.o cairo++.o module.o FileReader.o resources.res
-	$(CC) -Wl,--output-def=bin/SSBRenderer.def -Wl,--out-implib=bin/SSBRenderer.a src/obj/Renderer.o src/obj/SSBParser.o src/obj/aegisub.o src/obj/avisynth.o src/obj/user.o src/obj/virtualdub.o src/obj/cairo++.o src/obj/FileReader.o src/obj/module.o src/obj/resources.res $(LFLAGS) -o bin/SSBRenderer.dll
+	$(CC) -Wl,--dll -Wl,--output-def=bin/SSBRenderer.def -Wl,--out-implib=bin/SSBRenderer.a src/obj/Renderer.o src/obj/SSBParser.o src/obj/aegisub.o src/obj/avisynth.o src/obj/user.o src/obj/virtualdub.o src/obj/cairo++.o src/obj/FileReader.o src/obj/module.o src/obj/resources.res $(LFLAGS) -o bin/SSBRenderer.dll
 else
 SSBRenderer: Renderer.o SSBParser.o aegisub.o user.o cairo++.o FileReader.o
-	$(CC) -Wl,--output-def=bin/SSBRenderer.def -Wl,--out-implib=bin/SSBRenderer.a src/obj/Renderer.o src/obj/SSBParser.o src/obj/aegisub.o src/obj/user.o src/obj/cairo++.o src/obj/FileReader.o $(LFLAGS) -o bin/SSBRenderer.so
+	$(CC)  src/obj/Renderer.o src/obj/SSBParser.o src/obj/aegisub.o src/obj/user.o src/obj/cairo++.o src/obj/FileReader.o $(LFLAGS) -o bin/libSSBRenderer.so
 endif
 
 # Build single objects
@@ -75,9 +75,11 @@ clean:
 	rm -rf src/obj bin
 
 # Install
+ifneq ($(OS),Windows_NT)
 install:
-	cp bin/SSBRenderer.so /usr/local/include/SSBRenderer.so
+	cp bin/libSSBRenderer.so /usr/local/lib/libSSBRenderer.so
 	cp src/user.h /usr/local/include/ssb.h
 uninstall:
-	rm /usr/local/include/SSBRenderer.so
-	rm /usr/local/include/ssb.h
+	rm -f /usr/local/lib/libSSBRenderer.so
+	rm -f /usr/local/include/ssb.h
+endif

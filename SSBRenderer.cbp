@@ -112,7 +112,7 @@
 			</Target>
 			<Target title="Release - Unix">
 				<Option platforms="Unix;" />
-				<Option output="bin/SSBRenderer" prefix_auto="0" extension_auto="1" />
+				<Option output="bin/SSBRenderer" prefix_auto="1" extension_auto="1" />
 				<Option object_output="src/obj/" />
 				<Option type="3" />
 				<Option compiler="gcc" />
@@ -143,9 +143,10 @@
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
-					<Add library="pango" />
+					<Add library="pangocairo-1.0" />
 					<Add library="cairo" />
 					<Add library="muparser" />
+					<Add library="pthread" />
 				</Linker>
 			</Target>
 		</Build>

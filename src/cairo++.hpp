@@ -96,12 +96,12 @@ class NativeFont{
         HFONT font;
         HGDIOBJ old_font;
         // Upscale / quality / precision
-        constexpr static double UPSCALE = 64;
 #else
         // Platform dependent font data
         CairoImage dc;
         PangoLayout* layout;
 #endif
+        constexpr static double UPSCALE = 64;
     public:
         // Font metrics structure
         struct FontMetrics{
@@ -215,13 +215,14 @@ class NativeFont{
             this->text_path_to_cairo(textw, ctx);
         }
 #else
+        // Ctor & dtor
         NativeFont(std::string& family, bool bold, bool italic, bool underline, bool strikeout, unsigned short int size, bool rtl = false){
             this->layout = pango_cairo_create_layout(this->dc);
             PangoFontDescription *font = pango_font_description_new();
             pango_font_description_set_family(font, family.c_str());
             pango_font_description_set_weight(font, bold ? PANGO_WEIGHT_BOLD : PANGO_WEIGHT_NORMAL);
             pango_font_description_set_style(font, italic ? PANGO_STYLE_ITALIC : PANGO_STYLE_NORMAL);
-            pango_font_description_set_absolute_size(font, size * PANGO_SCALE);
+            pango_font_description_set_absolute_size(font, size * PANGO_SCALE * UPSCALE);
             pango_layout_set_font_description(this->layout, font);
             pango_font_description_free(font);
             PangoAttrList* attr_list = pango_attr_list_new();
@@ -236,9 +237,33 @@ class NativeFont{
         }
         // Get font metrics
         FontMetrics get_metrics(){
-            // TODO
+            FontMetrics result;
+            PangoContext* ctx = pango_layout_get_context(this->layout);
+            PangoFontMetrics* metrics = pango_context_get_metrics(ctx, NULL, NULL);
+            const PangoFontDescription* desc = pango_layout_get_font_description(this->layout);
+            result.height = static_cast<double>(pango_font_description_get_size(desc)) / PANGO_SCALE / UPSCALE;
+            result.ascent = static_cast<double>(pango_font_metrics_get_ascent(metrics)) / UPSCALE;
+            result.descent = static_cast<double>(pango_font_metrics_get_descent(metrics)) / UPSCALE;
+            result.internal_lead = result.height - result.ascent - result.descent;
+            result.external_lead = static_cast<double>(pango_layout_get_spacing(this->layout)) / UPSCALE;
+            pango_font_metrics_unref(metrics);
+            return result;
         }
-#error "Not implented"
+        // Get text width
+        double get_text_width(std::string& text){
+            pango_layout_set_text(this->layout, text.c_str(), -1);
+            PangoRectangle rect;
+            pango_layout_get_pixel_extents(this->layout, NULL, &rect);
+            return static_cast<double>(rect.width) / UPSCALE;
+        }
+        // Add text path to cairo context
+        void text_path_to_cairo(std::string& text, cairo_t* ctx){
+            pango_layout_set_text(this->layout, text.c_str(), -1);
+            cairo_save(ctx);
+            cairo_scale(ctx, 1 / UPSCALE, 1 / UPSCALE);
+            pango_cairo_layout_path(ctx, this->layout);
+            cairo_restore(ctx);
+        }
 #endif
 };
 

@@ -39,6 +39,7 @@ inline unsigned nthread_get_processors_num(){
 
 #else
 #include <pthread.h>
+#include <unistd.h>
 
 typedef pthread_t nthread_t;
 #define THREAD_FUNC_BEGIN(name) void* __attribute__((force_align_arg_pointer)) name(void* userdata){
@@ -46,17 +47,17 @@ typedef pthread_t nthread_t;
 
 inline nthread_t nthread_create(void* (*thread_func)(void*), void* userdata){
     pthread_t t;
-    pthread_create(&t, NULL, thread_func, &userdata);
+    pthread_create(&t, NULL, thread_func, userdata);
     return t;
 }
 inline void nthread_join(nthread_t t){
     pthread_join(t, NULL);
 }
-inline void nthread_destroy(nthread_t t){
+inline void nthread_destroy(nthread_t){
     // POSIX threads need no destroy
 }
 inline unsigned nthread_get_processors_num(){
-    return pthread_num_processors_np();
+    return sysconf(_SC_NPROCESSORS_ONLN);
 }
 
 #endif
