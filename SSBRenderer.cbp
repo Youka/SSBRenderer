@@ -140,11 +140,52 @@
 					<Add directory="/usr/include/pango-1.0" />
 					<Add directory="/usr/include/glib-2.0" />
 					<Add directory="/usr/lib/i386-linux-gnu/glib-2.0/include" />
+					<Add directory="/usr/lib/x86_64-linux-gnu/glib-2.0/include" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
 					<Add library="pangocairo-1.0" />
-					<Add library="cairo" />
+					<Add library="muparser" />
+					<Add library="pthread" />
+				</Linker>
+			</Target>
+			<Target title="Debug - Unix">
+				<Option platforms="Unix;" />
+				<Option output="bin/SSBRenderer" prefix_auto="1" extension_auto="1" />
+				<Option object_output="src/obj/" />
+				<Option type="3" />
+				<Option compiler="gcc" />
+				<Option createDefFile="1" />
+				<Option createStaticLib="1" />
+				<Compiler>
+					<Add option="-Os" />
+					<Add option="-O2" />
+					<Add option="-Winit-self" />
+					<Add option="-Wredundant-decls" />
+					<Add option="-Wundef" />
+					<Add option="-Wfloat-equal" />
+					<Add option="-Wunreachable-code" />
+					<Add option="-Wmissing-include-dirs" />
+					<Add option="-Wswitch-enum" />
+					<Add option="-pedantic" />
+					<Add option="-std=c++11" />
+					<Add option="-Wextra" />
+					<Add option="-Wall" />
+					<Add option="-pg" />
+					<Add option="-g" />
+					<Add option="-msse2" />
+					<Add option="-DBUILD_DLL" />
+					<Add option="-D__unix__" />
+					<Add directory="src/include" />
+					<Add directory="/usr/include/cairo" />
+					<Add directory="/usr/include/pango-1.0" />
+					<Add directory="/usr/include/glib-2.0" />
+					<Add directory="/usr/lib/i386-linux-gnu/glib-2.0/include" />
+					<Add directory="/usr/lib/x86_64-linux-gnu/glib-2.0/include" />
+				</Compiler>
+				<Linker>
+					<Add option="-pg" />
+					<Add library="pangocairo-1.0" />
 					<Add library="muparser" />
 					<Add library="pthread" />
 				</Linker>

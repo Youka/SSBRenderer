@@ -1,16 +1,16 @@
 # OS dependend macros
 IDIR = -Isrc/include
-LIBS = -lcairo -lmuparser
+LIBS = -lmuparser
 DEFINES = -DBUILD_DLL
 ADDITIONAL = -msse2 -std=c++11
 ifeq ($(OS),Windows_NT)
 IDIR += -Isrc/include/cairo -Isrc/include/muparser
 LDIR = -Lsrc/libs/win32 -Lsrc/libs/win64
-LIBS += -lcomdlg32 -lgdi32 -lpixman-1 -lpng -lz
+LIBS += -lcairo -lpixman-1 -lpng -lz -lcomdlg32 -lgdi32
 DEFINES += -D_WIN32 -DWIN32_LEAN_AND_MEAN -DWIN32_EXTRA_LEAN
 ADDITIONAL += -static
 else
-IDIR += -I/usr/include/cairo -I/usr/include/pango-1.0  -I/usr/include/glib-2.0 -I/usr/lib/i386-linux-gnu/glib-2.0/include
+IDIR += -I/usr/include/cairo -I/usr/include/pango-1.0  -I/usr/include/glib-2.0 -I/usr/lib/i386-linux-gnu/glib-2.0/include -I/usr/lib/x86_64-linux-gnu/glib-2.0/include
 LDIR =
 LIBS += -lpangocairo-1.0 -lpthread
 DEFINES += -D__unix__
@@ -30,6 +30,9 @@ RFLAGS = -J rc -O coff $(RDIR) $(DEFINES)
 ifeq ($(BUILD),debug)
 CFLAGS += -g -pg -DDEBUG
 LFLAGS += -pg
+ifeq ($(OS),Windows_NT)
+LFLAGS += -lgmon
+endif
 RFLAGS += -DDEBUG
 else
 CFLAGS += -s
