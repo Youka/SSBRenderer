@@ -239,26 +239,25 @@ void cairo_image_surface_blur(cairo_surface_t* surface, float blur_h, float blur
         int stride = cairo_image_surface_get_stride(surface);
         cairo_surface_flush(surface);   // Flush pending operations on surface
         unsigned char* data = cairo_image_surface_get_data(surface);
-        // Create blur kernel
+        // Create blur kernels
         int kernel_radius_h = ceil(blur_h),
             kernel_radius_v = ceil(blur_v);
         std::vector<float> kernel_h((kernel_radius_h << 1) + 1),
                             kernel_v((kernel_radius_v << 1) + 1);
         // Fill blur kernels
-        float kernel_border_h = 1 - (kernel_radius_h - blur_h),
-                kernel_border_v = 1 - (kernel_radius_v - blur_v);
-        if(kernel_border_h < 1){
-            float kernel_h_sum = kernel_border_h * 2 + (kernel_h.size() - 2);
-            kernel_h.front() = kernel_h.back() = kernel_border_h / kernel_h_sum;
-            std::fill(kernel_h.begin()+1, kernel_h.end()-1, 1.0f / kernel_h_sum);
-        }else
-            std::fill(kernel_h.begin(), kernel_h.end(), 1.0f / kernel_h.size());
-        if(kernel_border_v < 1){
-            float kernel_v_sum = kernel_border_v * 2 + (kernel_v.size() - 2);
-            kernel_v.front() = kernel_v.back() = kernel_border_v / kernel_v_sum;
-            std::fill(kernel_v.begin()+1, kernel_v.end()-1, 1.0f / kernel_v_sum);
-        }else
-            std::fill(kernel_v.begin(), kernel_v.end(), 1.0f / kernel_v.size());
+        float dec_h = 1.0f / (kernel_radius_h + 1), dec_v = 1.0f / (kernel_radius_v + 1);
+        for(int i = 0; i < static_cast<int>(kernel_h.size()); ++i)
+            kernel_h[i] = 1.0f - std::abs(i - kernel_radius_h) * dec_h;
+        for(int i = 0; i < static_cast<int>(kernel_v.size()); ++i)
+            kernel_v[i] = 1.0f - std::abs(i - kernel_radius_v) * dec_v;
+        // Smooth kernels edges
+        kernel_h.front() = kernel_h.back() *= 1.0f - (kernel_radius_h - blur_h);
+        kernel_v.front() = kernel_v.back() *= 1.0f - (kernel_radius_v - blur_v);
+        // Normalize kernels
+        float sum_h = std::accumulate(kernel_h.begin(), kernel_h.end(), 0.0f),
+                sum_v = std::accumulate(kernel_v.begin(), kernel_v.end(), 0.0f);
+        std::for_each(kernel_h.begin(), kernel_h.end(), [&sum_h](float& v){v /= sum_h;});
+        std::for_each(kernel_v.begin(), kernel_v.end(), [&sum_v](float& v){v /= sum_v;});
         // Create surface data in aligned float format for vector operations
         aligned_memory<float,16> fdata(height * stride),
                                 fdata2(fdata.size());
