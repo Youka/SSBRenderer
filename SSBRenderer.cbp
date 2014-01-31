@@ -6,7 +6,7 @@
 		<Option platforms="Windows;Unix;" />
 		<Option pch_mode="2" />
 		<Option compiler="gcc" />
-		<Option virtualFolders="Meta/;Interfaces/;Filter/;Utils/;" />
+		<Option virtualFolders="Meta\;Interfaces\;Filter\;Utils\;" />
 		<Build>
 			<Target title="Release - Windows">
 				<Option platforms="Windows;" />
@@ -274,6 +274,9 @@
 		</Unit>
 		<Unit filename="src/utf8.h">
 			<Option virtualFolder="Utils/" />
+		</Unit>
+		<Unit filename="src/vapoursynth.cpp">
+			<Option virtualFolder="Interfaces/" />
 		</Unit>
 		<Unit filename="src/virtualdub.cpp">
 			<Option virtualFolder="Interfaces/" />

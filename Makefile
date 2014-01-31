@@ -42,11 +42,11 @@ endif
 # Build binary
 all: Dirs SSBRenderer
 ifeq ($(OS),Windows_NT)
-SSBRenderer: Renderer.o SSBParser.o aegisub.o avisynth.o user.o virtualdub.o cairo++.o module.o FileReader.o resources.res
-	$(CC) -Wl,--dll -Wl,--output-def=bin/SSBRenderer.def -Wl,--out-implib=bin/SSBRenderer.a src/obj/Renderer.o src/obj/SSBParser.o src/obj/aegisub.o src/obj/avisynth.o src/obj/user.o src/obj/virtualdub.o src/obj/cairo++.o src/obj/FileReader.o src/obj/module.o src/obj/resources.res $(LFLAGS) -o bin/SSBRenderer.dll
+SSBRenderer: Renderer.o SSBParser.o aegisub.o avisynth.o user.o virtualdub.o vapoursynth.o cairo++.o module.o FileReader.o resources.res
+	$(CC) -Wl,--dll -Wl,--output-def=bin/SSBRenderer.def -Wl,--out-implib=bin/SSBRenderer.a src/obj/Renderer.o src/obj/SSBParser.o src/obj/aegisub.o src/obj/avisynth.o src/obj/user.o src/obj/vapoursynth.o src/obj/virtualdub.o src/obj/cairo++.o src/obj/FileReader.o src/obj/module.o src/obj/resources.res $(LFLAGS) -o bin/SSBRenderer.dll
 else
-SSBRenderer: Renderer.o SSBParser.o aegisub.o user.o cairo++.o FileReader.o
-	$(CC)  src/obj/Renderer.o src/obj/SSBParser.o src/obj/aegisub.o src/obj/user.o src/obj/cairo++.o src/obj/FileReader.o $(LFLAGS) -o bin/libSSBRenderer.so
+SSBRenderer: Renderer.o SSBParser.o aegisub.o user.o vapoursynth.o cairo++.o FileReader.o
+	$(CC)  src/obj/Renderer.o src/obj/SSBParser.o src/obj/aegisub.o src/obj/user.o src/obj/vapoursynth.o src/obj/cairo++.o src/obj/FileReader.o $(LFLAGS) -o bin/libSSBRenderer.so
 endif
 
 # Build single objects
@@ -62,6 +62,8 @@ avisynth.o:
 	$(CC) $(CFLAGS) -c src/avisynth.cpp -o src/obj/avisynth.o
 user.o:
 	$(CC) $(CFLAGS) -c src/user.cpp -o src/obj/user.o
+vapoursynth.o:
+	$(CC) $(CFLAGS) -c src/vapoursynth.cpp -o src/obj/vapoursynth.o
 virtualdub.o:
 	$(CC) $(CFLAGS) -c src/virtualdub.cpp -o src/obj/virtualdub.o
 cairo++.o:
