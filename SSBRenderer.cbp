@@ -6,7 +6,7 @@
 		<Option platforms="Windows;Unix;" />
 		<Option pch_mode="2" />
 		<Option compiler="gcc" />
-		<Option virtualFolders="Meta\;Interfaces\;Filter\;Utils\;" />
+		<Option virtualFolders="Meta/;Interfaces/;Filter/;Utils/;" />
 		<Build>
 			<Target title="Release - Windows">
 				<Option platforms="Windows;" />
@@ -133,14 +133,12 @@
 					<Add option="-Wextra" />
 					<Add option="-Wall" />
 					<Add option="-msse2" />
+					<Add option="`pkg-config --cflags glib-2.0`" />
 					<Add option="-DBUILD_DLL" />
 					<Add option="-D__unix__" />
 					<Add directory="src/include" />
 					<Add directory="/usr/include/cairo" />
 					<Add directory="/usr/include/pango-1.0" />
-					<Add directory="/usr/include/glib-2.0" />
-					<Add directory="/usr/lib/i386-linux-gnu/glib-2.0/include" />
-					<Add directory="/usr/lib/x86_64-linux-gnu/glib-2.0/include" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
@@ -174,14 +172,12 @@
 					<Add option="-pg" />
 					<Add option="-g" />
 					<Add option="-msse2" />
+					<Add option="`pkg-config --cflags glib-2.0`" />
 					<Add option="-DBUILD_DLL" />
 					<Add option="-D__unix__" />
 					<Add directory="src/include" />
 					<Add directory="/usr/include/cairo" />
 					<Add directory="/usr/include/pango-1.0" />
-					<Add directory="/usr/include/glib-2.0" />
-					<Add directory="/usr/lib/i386-linux-gnu/glib-2.0/include" />
-					<Add directory="/usr/lib/x86_64-linux-gnu/glib-2.0/include" />
 				</Compiler>
 				<Linker>
 					<Add option="-pg" />
