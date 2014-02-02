@@ -37,7 +37,7 @@ typedef void* ssb_renderer;
 /// Frame colorspaces
 enum {SSB_BGR = 0, SSB_BGRX, SSB_BGRA};
 
-/// Maximal length for output warning of ssb_create_renderer
+/// Maximal length for output warning of ssb_create_renderer and ssb_create_renderer_from_memory
 #define SSB_WARNING_LENGTH 256
 
 /**
@@ -90,3 +90,10 @@ Destroy renderer handle.
 @param renderer Renderer handle
 */
 DLL_EXPORT void ssb_free_renderer(ssb_renderer renderer);
+
+/**
+Get renderer version.
+
+@return Version string
+*/
+DLL_EXPORT const char* ssb_get_version(void);

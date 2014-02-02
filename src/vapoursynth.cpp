@@ -2,7 +2,7 @@
 Project: SSBRenderer
 File: vapoursynth.cpp
 
-Copyright (c) 2013, Christoph "Youka" Spanknebel
+Copyright (c) 2014, Christoph "Youka" Spanknebel
 
 This software is provided 'as-is', without any express or implied warranty. In no event will the authors be held liable for any damages arising from the use of this software.
 
@@ -80,21 +80,21 @@ namespace VS{
     void VS_CC apply_filter(const VSMap* in, VSMap* out, void*, VSCore* core, const VSAPI* vsapi){
         // Get filter arguments
         VSNode2 clip(vsapi->propGetNode(in, "clip", 0, NULL), vsapi);
-        std::string script = vsapi->propGetData(in, "script", 0, NULL);
+        std::string script(vsapi->propGetData(in, "script", 0, NULL), vsapi->propGetDataSize(in, "script", 0, NULL));
         bool warnings = vsapi->propGetType(in, "warnings") == ptUnset ? true : vsapi->propGetInt(in, "warnings", 0, NULL);
         // Check filter arguments
         const VSVideoInfo* info = clip.info();
         if(info->width < 1 || info->height < 1) // Clip must have a video stream
             vsapi->setError(out, "Video required!");
-        else if(info->format->colorFamily != cmRGB || info->format->bitsPerSample != 24)    // Video must store colors in RGB24 format
-            vsapi->setError(out, "Video colorspace must be RGB24!");
+        else if(info->format->id != pfRGB24 && info->format->id != pfCompatBGR32)    // Video must store colors in RGB24 or RGB32 format
+            vsapi->setError(out, "Video colorspace must be RGB24 or RGB32!");
         else if(script.empty()) // Empty script name not acceptable
             vsapi->setError(out, "Script name required!");
         else{
             // Allocate renderer
             Renderer* renderer;
             try{
-                renderer = new Renderer(info->width, info->height, Renderer::Colorspace::BGR, script, warnings);
+                renderer = new Renderer(info->width, info->height, info->format->id == pfRGB24 ? Renderer::Colorspace::BGR : Renderer::Colorspace::BGRA, script, warnings);
             }catch(std::string err){
                 vsapi->setError(out, err.c_str());
                 return;

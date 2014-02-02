@@ -16,6 +16,7 @@ Permission is granted to anyone to use this software for any purpose, including 
 #include "user.h"
 #include "Renderer.hpp"
 #include <sstream>
+#include "file_info.h"
 
 ssb_renderer ssb_create_renderer(int width, int height, char format, const char* script, char* warning){
     try{
@@ -52,4 +53,8 @@ void ssb_render(ssb_renderer renderer, unsigned char* image, int pitch, unsigned
 void ssb_free_renderer(ssb_renderer renderer){
     if(renderer)
         delete reinterpret_cast<Renderer*>(renderer);
+}
+
+const char* ssb_get_version(void){
+    return FILTER_VERSION_STRING;
 }
