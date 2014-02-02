@@ -1,11 +1,11 @@
 v0.0.3 (planned)
 ----------------
 * added GStreamer bridge for Unix
-* (change SSB format [v0 -> v1])
 * added support for more video colorspaces (YUV2, YV12)
 * added support for other subtitle formats (SRT, MicroDVD, ?)
 * rewrote text layout (for context-sensitive characters and right-to-left languages)
-* added wrapping mode
+* added wrapping modes
+* (change SSB format [v0 -> v1])
 
 ##########################################################################
 
@@ -18,4 +18,3 @@ v0.0.2 (planned)
 * fixed crashes on some animated tags	*DONE*
 * ported to Unix (C, Aegisub, Vapoursynth)	*DONE*
 * added SSB import macro for Aegisub
-* updated docs

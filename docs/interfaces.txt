@@ -1,25 +1,33 @@
-Avisynth
----------
-SSBRenderer.dll is as C Plugin loadable.
+WINDOWS
+=======================================================
+-Avisynth-
+SSBRenderer.dll is as C plugin loadable.
 Function "SSBRenderer" will be registered.
-	clip = SSBRenderer(clip, string, bool)
-The string is a SSB script filename. The bool enables warnings on parsing errors (on by default).
+	clip = SSBRenderer(clip, string, bool warnings)
+clip: input clip
+string: SSB script filename
+bool warnings: enable warnings on parsing errors? (on by default)
 
-########################################################
-
-VirtualDub
+-VirtualDub-
 ----------
-Just load SSBRenderer.dll as new filter and add it to your filter list.
-A dialog appears to configure the filter.
+Just load SSBRenderer.dll as new filter and add him to your filter list.
+A dialog appears to set input SSB script and warnings.
 
-########################################################
+UNIX
+=======================================================
+-Vapoursynth-
+Load libSSBRenderer.so as plugin.
+Namespace "ssb" with function "SSBRenderer" will be registered.
+	clip = SSBRenderer(clip clip, string script, int warnings)
+clip clip: input clip
+string script: SSB script filename
+int warnings: enable warnings on parsing errors? (on by default)
 
-Aegisub
--------
-Copy SSBRenderer.dll into the csri folder of Aegisub and set the renderer in Aegisub's options to CSRI/SSBRenderer.
+WINDOWS & UNIX
+=======================================================
+-Aegisub-
+Copy SSBRenderer.dll/libSSBRenderer.so into the csri folder of Aegisub and set the renderer in Aegisub's advanced video options.
 
-########################################################
-
-DLL
----
-See "src/user.h".
+-DLL-
+Windows: link "../bin/SSBRenderer.a" and include "../src/user.h"
+Unix: link "SSBRenderer" and include "ssb.h"

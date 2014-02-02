@@ -1,10 +1,10 @@
 # Builds
-/src/obj
 /bin
+/src/obj
 
 # Code::Blocks project files
 *.depend
 *.layout
 
 # Tests & backups
-/TODO
+/test
