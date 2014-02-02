@@ -122,6 +122,7 @@ struct ASS_to_SSB{
                                                                         ssb.append(";rotate-z=").append(style_field);
                                                                         // Border style
                                                                         if(std::getline(style_stream, style_field, ',')){
+                                                                            ssb.append(";mode=").append(style_field == "3" ? "boxed" : "fill");
                                                                             // Outline
                                                                             if(std::getline(style_stream, style_field, ',')){
                                                                                 ssb.append(";line-width=").append(style_field);

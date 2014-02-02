@@ -17,4 +17,4 @@ v0.0.2 (planned)
 * improved blurring quality & performance	*DONE*
 * fixed crashes on some animated tags	*DONE*
 * ported to Unix (C, Aegisub, Vapoursynth)	*DONE*
-* added SSB import macro for Aegisub
+* added SSB import macro for Aegisub	*DONE*
