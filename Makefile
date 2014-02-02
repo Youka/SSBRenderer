@@ -84,9 +84,13 @@ ifneq ($(OS),Windows_NT)
 install:
 	cp bin/libSSBRenderer.so /usr/local/lib/libSSBRenderer.so.0.0.2
 	ln -s /usr/local/lib/libSSBRenderer.so.0.0.2 /usr/local/lib/libSSBRenderer.so
+	mkdir -p /usr/local/lib/pkgconfig
+	cp src/pc/SSBRenderer.pc /usr/local/lib/pkgconfig/SSBRenderer.pc
 	cp src/user.h /usr/local/include/ssb.h
 uninstall:
 	rm -f /usr/local/lib/libSSBRenderer.so.0.0.2
 	rm -f /usr/local/lib/libSSBRenderer.so
+	rm -f /usr/local/lib/pkgconfig/SSBRenderer.pc
+	find /usr/local/lib/pkgconfig -type d -empty -delete
 	rm -f /usr/local/include/ssb.h
 endif
