@@ -1,5 +1,6 @@
 v0.0.3 (planned)
 ----------------
+* added GStreamer bridge for Unix
 * (change SSB format [v0 -> v1])
 * added support for more video colorspaces (YUV2, YV12)
 * added support for other subtitle formats (SRT, MicroDVD, ?)
@@ -15,6 +16,6 @@ v0.0.2 (planned)
 * sped up texturing		*DONE*
 * improved blurring quality & performance	*DONE*
 * fixed crashes on some animated tags	*DONE*
+* ported to Unix (C, Aegisub, Vapoursynth)	*DONE*
 * added SSB import macro for Aegisub
-* ported to Unix (Vapoursynth, GStreamer)
 * updated docs

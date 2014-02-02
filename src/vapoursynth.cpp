@@ -42,13 +42,8 @@ namespace VS{
         Renderer* renderer;
     };
 
-    // Filter initialization / set output video infomation(s)
-    void VS_CC init_filter(VSMap*, VSMap*, void** inst_data, VSNode* node, VSCore*, const VSAPI* vsapi){
-        vsapi->setVideoInfo(reinterpret_cast<FilterData*>(*inst_data)->clip.info(), 1, node);
-    }
-
     // Frame processing
-    const VSFrameRef* VS_CC get_frame(int n, int activationReason, void** inst_data, void** frameData, VSFrameContext* frame_ctx, VSCore* core, const VSAPI* vsapi){
+    const VSFrameRef* VS_CC get_frame(int n, int activationReason, void** inst_data, void**, VSFrameContext* frame_ctx, VSCore* core, const VSAPI* vsapi){
         FilterData* data = reinterpret_cast<FilterData*>(inst_data);
         // Frame creation
         if(activationReason == arInitial)
@@ -56,14 +51,21 @@ namespace VS{
             vsapi->requestFrameFilter(n, data->clip, frame_ctx);
         // Frame processing
         else if (activationReason == arAllFramesReady){
-            // Get frame data
-            const VSFrameRef* frame = vsapi->getFrameFilter(n, data->clip, frame_ctx);
-
-            // TODO
-
-            return frame;
+            // Create new frame
+            const VSFrameRef* src = vsapi->getFrameFilter(n, data->clip, frame_ctx);
+            VSFrameRef* dst = vsapi->copyFrame(src, core);
+            vsapi->freeFrame(src);
+            // Render on frame
+            data->renderer->render(vsapi->getWritePtr(dst, 0), vsapi->getStride(dst, 0), n * (data->clip.info()->fpsDen * 1000.0 / data->clip.info()->fpsNum));
+            // Return new frame
+            return dst;
         }
-        return 0;
+        return NULL;
+    }
+
+    // Filter initialization / set output video infomation(s)
+    void VS_CC init_filter(VSMap*, VSMap*, void** inst_data, VSNode* node, VSCore*, const VSAPI* vsapi){
+        vsapi->setVideoInfo(reinterpret_cast<FilterData*>(*inst_data)->clip.info(), 1, node);
     }
 
     // Filter destruction
@@ -79,14 +81,27 @@ namespace VS{
         // Get filter arguments
         VSNode2 clip(vsapi->propGetNode(in, "clip", 0, NULL), vsapi);
         std::string script = vsapi->propGetData(in, "script", 0, NULL);
-        int err;
-        bool warnings = vsapi->propGetInt(in, "warnings", 0, &err);
-        if(err == peUnset)
-            warnings = true;
+        bool warnings = vsapi->propGetType(in, "warnings") == ptUnset ? true : vsapi->propGetInt(in, "warnings", 0, NULL);
         // Check filter arguments
-
-        // Create new filter to Vapoursynth API
-        //vsapi->createFilter(in, out, FILTER_NAME, init_filter, get_frame, free_filter, fmParallel, 0, new FilterData{,}, core);
+        const VSVideoInfo* info = clip.info();
+        if(info->width < 1 || info->height < 1) // Clip must have a video stream
+            vsapi->setError(out, "Video required!");
+        else if(info->format->colorFamily != cmRGB || info->format->bitsPerSample != 24)    // Video must store colors in RGB24 format
+            vsapi->setError(out, "Video colorspace must be RGB24!");
+        else if(script.empty()) // Empty script name not acceptable
+            vsapi->setError(out, "Script name required!");
+        else{
+            // Allocate renderer
+            Renderer* renderer;
+            try{
+                renderer = new Renderer(info->width, info->height, Renderer::Colorspace::BGR, script, warnings);
+            }catch(std::string err){
+                vsapi->setError(out, err.c_str());
+                return;
+            }
+            // Create new filter to Vapoursynth API
+            vsapi->createFilter(in, out, FILTER_NAME, init_filter, get_frame, free_filter, fmParallel, 0, new FilterData{{vsapi->cloneNodeRef(clip), vsapi}, renderer}, core);
+        }
     }
 }
 
