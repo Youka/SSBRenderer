@@ -62,9 +62,6 @@
 				<Option object_output="src/obj/" />
 				<Option type="3" />
 				<Option compiler="gcc" />
-				<Option parameters='&quot;E:\PROJEKTE\SSBRenderer\TODO\test_debug.avs&quot;' />
-				<Option host_application="E:/Combined Community Codec Pack/MPC/mpc-hc.exe" />
-				<Option run_host_application_in_terminal="0" />
 				<Option createDefFile="1" />
 				<Option createStaticLib="1" />
 				<Compiler>

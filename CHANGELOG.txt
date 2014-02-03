@@ -11,10 +11,11 @@ v0.0.3 (planned)
 
 v0.0.2 (planned)
 ----------------
-* added mode value 'boxed'	*DONE*
-* added style tag kmode	*DONE*
-* sped up texturing		*DONE*
-* improved blurring quality & performance	*DONE*
-* fixed crashes on some animated tags	*DONE*
-* ported to Unix (C, Aegisub, Vapoursynth)	*DONE*
-* added SSB import macro for Aegisub	*DONE*
+* added mode value 'boxed'
+* added style tag kmode
+* sped up texturing
+* improved blurring quality & performance
+* fixed crashes on some animated tags
+* added version getter to C interface
+* ported to Unix (C, Aegisub, Vapoursynth)
+* added SSB import macro for Aegisub
