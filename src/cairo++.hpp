@@ -241,10 +241,10 @@ class NativeFont{
             PangoContext* ctx = pango_layout_get_context(this->layout);
             const PangoFontDescription* desc = pango_layout_get_font_description(this->layout);
             PangoFontMetrics* metrics = pango_context_get_metrics(ctx, desc, NULL);
-            result.height = static_cast<double>(pango_layout_get_baseline(this->layout)) / PANGO_SCALE / UPSCALE;
             result.ascent = static_cast<double>(pango_font_metrics_get_ascent(metrics)) / PANGO_SCALE / UPSCALE;
             result.descent = static_cast<double>(pango_font_metrics_get_descent(metrics)) / PANGO_SCALE / UPSCALE;
-            result.internal_lead = result.height - result.ascent;
+            result.height = result.ascent + result.descent;
+            result.internal_lead = result.height - result.ascent - result.descent;
             result.external_lead = static_cast<double>(pango_layout_get_spacing(this->layout)) / PANGO_SCALE / UPSCALE;
             pango_font_metrics_unref(metrics);
             return result;

@@ -334,7 +334,6 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                 for(Renderer::ImageData& idata : this->cache.get(&event))
                     this->blend(create_faded_image(idata.image, idata.fade_in, idata.fade_out, start_ms, event.start_ms, event.end_ms),
                                 idata.x, idata.y, frame, pitch, idata.blend_mode);
-
             // Draw new
             else{
                 // Buffer for cache entry
@@ -433,7 +432,7 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                                     std::string line;
                                     while(getlineex(text, line)){
                                         if(++line_i > 1){
-                                            render_sizes.back().lines.back().space = (rs.direction == SSBDirection::Mode::TTB) ? rs.font_space_h : metrics.external_lead + rs.font_space_v;
+                                            render_sizes.back().lines.back().space = (rs.direction == SSBDirection::Mode::TTB) ? rs.font_space_h : metrics.descent + metrics.external_lead + rs.font_space_v;
                                             render_sizes.back().lines.push_back({});
                                         }
                                         switch(rs.direction){
@@ -462,15 +461,15 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                                                         merged_word = word.prespace + word.text;
                                                         width = get_text_width(merged_word);
                                                         if(render_sizes.back().lines.back().geometries.size() > 0 && wrap_width > 0 && render_sizes.back().lines.back().width + width > wrap_width){
-                                                            render_sizes.back().lines.back().space = metrics.external_lead + rs.font_space_v;
+                                                            render_sizes.back().lines.back().space = metrics.descent + metrics.external_lead + rs.font_space_v;
                                                             render_sizes.back().lines.push_back({});
                                                             width = get_text_width(word.text);
                                                         }
                                                         render_sizes.back().lines.back().geometries.push_back({render_sizes.back().lines.back().width, std::accumulate(render_sizes.back().lines.begin(), render_sizes.back().lines.end()-1, 0.0, [](double init, LineSize& lsize){
                                                             return init + lsize.height + lsize.space;
-                                                        }), width, metrics.height});
+                                                        }), width, metrics.internal_lead + metrics.ascent});
                                                         render_sizes.back().lines.back().width += width;
-                                                        render_sizes.back().lines.back().height = std::max(render_sizes.back().lines.back().height, metrics.height);
+                                                        render_sizes.back().lines.back().height = std::max(render_sizes.back().lines.back().height, metrics.internal_lead + metrics.ascent);
                                                         render_sizes.back().width = std::max(render_sizes.back().width, render_sizes.back().lines.back().width);
                                                     }
                                                     // Update position render height
@@ -487,7 +486,7 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                                                         std::vector<std::string> chars = utf8_chars(text);
                                                         for(std::string& c : chars){
                                                             width = std::max(width, font.get_text_width(c));
-                                                            height += metrics.height + rs.font_space_v;
+                                                            height += metrics.internal_lead + metrics.ascent + rs.font_space_v;
                                                         }
                                                     };
                                                     // Words iteration
@@ -664,7 +663,7 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                                                                             0);
                                                             font.text_path_to_cairo(c, this->stencil_path_buffer);
                                                             cairo_restore(this->stencil_path_buffer);
-                                                            cairo_translate(this->stencil_path_buffer, 0, metrics.height + rs.font_space_v);
+                                                            cairo_translate(this->stencil_path_buffer, 0, metrics.internal_lead + metrics.ascent + rs.font_space_v);
                                                         }
                                                         cairo_restore(this->stencil_path_buffer);
                                                         // Increase geometry index

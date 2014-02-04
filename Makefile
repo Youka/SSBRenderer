@@ -1,3 +1,10 @@
+# Check OS
+ifneq ($(OS),Windows_NT)
+ifneq ($(shell uname -s),Linux)
+$(error Unsupported OS!)
+endif
+endif
+
 # OS dependend macros
 IDIR = -Isrc/include
 LIBS = -lmuparser
@@ -88,9 +95,6 @@ install:
 	cp src/pc/SSBRenderer.pc /usr/local/lib/pkgconfig/SSBRenderer.pc
 	cp src/user.h /usr/local/include/ssb.h
 uninstall:
-	rm -f /usr/local/lib/libSSBRenderer.so.0.0.2
-	rm -f /usr/local/lib/libSSBRenderer.so
-	rm -f /usr/local/lib/pkgconfig/SSBRenderer.pc
+	rm -f /usr/local/lib/libSSBRenderer.so.0.0.2 /usr/local/lib/libSSBRenderer.so /usr/local/lib/pkgconfig/SSBRenderer.pc /usr/local/include/ssb.h
 	find /usr/local/lib/pkgconfig -type d -empty -delete
-	rm -f /usr/local/include/ssb.h
 endif

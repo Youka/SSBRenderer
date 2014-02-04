@@ -328,7 +328,7 @@ CSRIAPI void* csri_query_ext(csri_rend*, csri_ext_id){
 }
 
 // Renderer informations
-static struct csri_info csri_ssbrenderer_info = {
+struct csri_info csri_ssbrenderer_info = {
     FILTER_NAME,
     FILTER_VERSION_STRING,
     FILTER_NAME,

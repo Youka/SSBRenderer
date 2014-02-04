@@ -11,11 +11,11 @@ v0.0.3 (planned)
 
 v0.0.2 (planned)
 ----------------
+* fixed crash on some animated tags
+* fixed wrong vertical text position on fontname/-size change
 * added mode value 'boxed'
 * added style tag kmode
 * sped up texturing
 * improved blurring quality & performance
-* fixed crashes on some animated tags
 * added version getter to C interface
 * ported to Unix (C, Aegisub, Vapoursynth)
-* added SSB import macro for Aegisub
