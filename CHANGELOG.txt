@@ -9,9 +9,9 @@ v0.0.3 (planned)
 
 ##########################################################################
 
-v0.0.2 (planned)
+v0.0.2
 ----------------
-* fixed crash on some animated tags
+* fixed crash on some blending modes & animated tags
 * fixed wrong vertical text position on fontname/-size change
 * added mode value 'boxed'
 * added style tag kmode
