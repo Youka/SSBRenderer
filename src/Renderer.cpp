@@ -771,7 +771,10 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                             // Anything visible?
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-equal"
-                            if(!std::all_of(rs.alphas.begin(), rs.alphas.end(), [](double& a){return a == 0.0;})){
+                            if(
+                                ((draw_type == DrawType::FILL_BLURRED || draw_type == DrawType::FILL_WITHOUT_BLUR) && !std::all_of(rs.alphas.begin(), rs.alphas.end(), [](double& a){return a == 0.0;})) ||
+                                ((draw_type != DrawType::FILL_BLURRED && draw_type != DrawType::FILL_WITHOUT_BLUR) && rs.line_alpha != 0)
+                            ){
 #pragma GCC diagnostic pop
                                 // Transfer shifted path & matrix from buffer to image
                                 cairo_translate(image, -x + border_h, -y + border_v);

@@ -746,6 +746,7 @@ namespace{
                     std::istringstream path_stream(geometry);
                     std::string path_token;
                     SSBPath::Segment segments[3];
+                    segments[0].type = SSBPath::SegmentType::MOVE_TO;
                     while(path_stream >> path_token)
                         // Set segment type
                         if(path_token == "m")
