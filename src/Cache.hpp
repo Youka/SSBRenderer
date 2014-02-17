@@ -24,7 +24,7 @@ class Cache{
         std::deque<std::pair<Key,Value>> data;
         const unsigned int max_size;
     public:
-        Cache() : max_size(32){}
+        Cache() : max_size(64){}
         Cache(unsigned int max_size) : max_size(max_size){}
         bool contains(Key key){
             return std::find_if(this->data.begin(), this->data.end(), [&key](std::pair<Key,Value>& entry){
