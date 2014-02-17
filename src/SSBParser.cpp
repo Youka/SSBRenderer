@@ -1001,6 +1001,10 @@ void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
     FileReader file(script);
     // File valid?
     if(file){
+        // Skip UTF-8 BOM
+        unsigned char BOM[3];
+        if(!(file.read(3, BOM) == 3 && BOM[0] == 0xef && BOM[1] == 0xbb && BOM[2] == 0xbf))
+            file.reset();
         // Current SSB section
         SSBSection section = SSBSection::NONE;
         // File line number (needed for warnings)
@@ -1020,6 +1024,11 @@ void SSBParser::parse(std::string& script, bool warnings) throw(std::string){
 }
 
 void SSBParser::parse(std::istream& script, bool warnings) throw(std::string){
+    // Skip UTF-8 BOM
+    unsigned char BOM[3];
+    script.read(reinterpret_cast<char*>(BOM), 3);
+    if(!(script.gcount() == 3 && BOM[0] == 0xef && BOM[1] == 0xbb && BOM[2] == 0xbf))
+        script.seekg(0);
     // Current SSB section
     SSBSection section = SSBSection::NONE;
     // File line number (needed for warnings)

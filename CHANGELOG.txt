@@ -11,7 +11,7 @@ TODO
 v0.0.3 (planned)
 ----------------
 * added GStreamer bridge for Unix
-* added UTF-8 BOM ignore
+* added UTF-8 BOM ignore	*DONE*
 * changed font size to floating point
 * fixed no line drawing by zero alpha	*DONE*
 * fixed hang bug on wrong path begin	*DONE*
