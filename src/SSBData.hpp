@@ -310,7 +310,8 @@ struct RGB{
 class SSBColor : public SSBTag{
     public:
         RGB colors[4];
-        SSBColor(double r, double g, double b) : SSBTag(SSBTag::Type::COLOR), colors({{r, g, b}, {-1, -1, -1}, {-1, -1, -1}, {-1, -1, -1}}){}
+        SSBColor(double r, double g, double b) : SSBTag(SSBTag::Type::COLOR), colors({{r, g, b}, {r, g, b}, {r, g, b}, {r, g, b}}){}
+        SSBColor(double r0, double g0, double b0, double r1, double g1, double b1) : SSBTag(SSBTag::Type::COLOR), colors({{r0, g0, b0}, {r1, g1, b1}, {r1, g1, b1}, {r0, g0, b0}}){}
         SSBColor(double r0, double g0, double b0, double r1, double g1, double b1, double r2, double g2, double b2, double r3, double g3, double b3) : SSBTag(SSBTag::Type::COLOR), colors({{r0, g0, b0}, {r1, g1, b1}, {r2, g2, b2}, {r3, g3, b3}}){}
 };
 class SSBLineColor : public SSBTag{
@@ -323,7 +324,8 @@ class SSBLineColor : public SSBTag{
 class SSBAlpha : public SSBTag{
     public:
         double alphas[4];
-        SSBAlpha(double a) : SSBTag(SSBTag::Type::ALPHA), alphas{a, -1, -1, -1}{}
+        SSBAlpha(double a) : SSBTag(SSBTag::Type::ALPHA), alphas{a, a, a, a}{}
+        SSBAlpha(double a0, double a1) : SSBTag(SSBTag::Type::ALPHA), alphas{a0, a1, a1, a0}{}
         SSBAlpha(double a0, double a1, double a2, double a3) : SSBTag(SSBTag::Type::ALPHA), alphas{a0, a1, a2, a3}{}
 };
 class SSBLineAlpha : public SSBTag{

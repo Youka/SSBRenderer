@@ -16,7 +16,7 @@ v0.0.3 (planned)
 * added UTF-8 BOM ignore	*DONE*
 * increased cache size to 64	*DONE*
 * changed font size to floating point	*DONE*
-* added 2-color/alpha gradients
+* added 2-color/alpha gradients	*DONE*
 * updated documentation
 
 ##########################################################################

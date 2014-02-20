@@ -772,7 +772,7 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-equal"
                             if(
-                                ((draw_type == DrawType::FILL_BLURRED || draw_type == DrawType::FILL_WITHOUT_BLUR) && !std::all_of(rs.alphas.begin(), rs.alphas.end(), [](double& a){return a == 0.0;})) ||
+                                ((draw_type == DrawType::FILL_BLURRED || draw_type == DrawType::FILL_WITHOUT_BLUR) && !std::all_of(rs.alphas, rs.alphas+4, [](double& a){return a == 0.0;})) ||
                                 ((draw_type != DrawType::FILL_BLURRED && draw_type != DrawType::FILL_WITHOUT_BLUR) && rs.line_alpha != 0)
                             ){
 #pragma GCC diagnostic pop
@@ -794,34 +794,22 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                                     // Draw color
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-equal"
-                                    if(std::all_of(rs.colors.begin(), rs.colors.end(), [&rs](RGB& color){return color == rs.colors.front();}) &&
-                                       std::all_of(rs.alphas.begin(), rs.alphas.end(), [&rs](double& alpha){return alpha == rs.alphas.front();}))
-#pragma GCC diagnostic pop
-                                        cairo_set_source_rgba(image, rs.colors[0].r, rs.colors[0].g, rs.colors[0].b, rs.alphas[0]);
-                                    else{
-#pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wnarrowing"
-                                        cairo_rectangle_t color_rect = {fill_x, fill_y, fill_width, fill_height};
+                                    if(std::all_of(rs.colors, rs.colors+4, [&rs](RGB& color){return color == rs.colors[0];}) &&
+                                       std::all_of(rs.alphas, rs.alphas+4, [&rs](double& alpha){return alpha == rs.alphas[0];}))
+                                        cairo_set_source_rgba(image, rs.colors[0].r, rs.colors[0].g, rs.colors[0].b, rs.alphas[0]);
+                                    else if(rs.colors[0] == rs.colors[3] && rs.colors[1] == rs.colors[2] &&
+                                            rs.alphas[0] == rs.alphas[3] && rs.alphas[1] == rs.alphas[2])
+                                        cairo_set_source(image, cairo_pattern_create_linear_color(fill_x, 0, fill_x + fill_width, 0,
+                                                                                                rs.colors[0].r, rs.colors[0].g, rs.colors[0].b, rs.alphas[0],
+                                                                                                rs.colors[1].r, rs.colors[1].g, rs.colors[1].b, rs.alphas[1]));
+                                    else
+                                        cairo_set_source(image, cairo_pattern_create_rect_color({fill_x, fill_y, fill_width, fill_height},
+                                                                                                rs.colors[0].r, rs.colors[0].g, rs.colors[0].b, rs.alphas[0],
+                                                                                                rs.colors[1].r, rs.colors[1].g, rs.colors[1].b, rs.alphas[1],
+                                                                                                rs.colors[2].r, rs.colors[2].g, rs.colors[2].b, rs.alphas[2],
+                                                                                                rs.colors[3].r, rs.colors[3].g, rs.colors[3].b, rs.alphas[3]));
 #pragma GCC diagnostic pop
-                                        if(rs.colors.size() == 4 && rs.alphas.size() == 4)
-                                            cairo_set_source(image, cairo_pattern_create_rect_color(color_rect,
-                                                                                                    rs.colors[0].r, rs.colors[0].g, rs.colors[0].b, rs.alphas[0],
-                                                                                                    rs.colors[1].r, rs.colors[1].g, rs.colors[1].b, rs.alphas[1],
-                                                                                                    rs.colors[2].r, rs.colors[2].g, rs.colors[2].b, rs.alphas[2],
-                                                                                                    rs.colors[3].r, rs.colors[3].g, rs.colors[3].b, rs.alphas[3]));
-                                        else if(rs.colors.size() == 4 && rs.alphas.size() == 1)
-                                            cairo_set_source(image, cairo_pattern_create_rect_color(color_rect,
-                                                                                                    rs.colors[0].r, rs.colors[0].g, rs.colors[0].b, rs.alphas[0],
-                                                                                                    rs.colors[1].r, rs.colors[1].g, rs.colors[1].b, rs.alphas[0],
-                                                                                                    rs.colors[2].r, rs.colors[2].g, rs.colors[2].b, rs.alphas[0],
-                                                                                                    rs.colors[3].r, rs.colors[3].g, rs.colors[3].b, rs.alphas[0]));
-                                        else    // rs.colors.size() == 1 && rs.alphas.size() == 4
-                                            cairo_set_source(image, cairo_pattern_create_rect_color(color_rect,
-                                                                                                    rs.colors[0].r, rs.colors[0].g, rs.colors[0].b, rs.alphas[0],
-                                                                                                    rs.colors[0].r, rs.colors[0].g, rs.colors[0].b, rs.alphas[1],
-                                                                                                    rs.colors[0].r, rs.colors[0].g, rs.colors[0].b, rs.alphas[2],
-                                                                                                    rs.colors[0].r, rs.colors[0].g, rs.colors[0].b, rs.alphas[3]));
-                                    }
                                     cairo_fill_preserve(image);
                                     // Draw texture
                                     if(!rs.texture.empty()){

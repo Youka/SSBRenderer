@@ -269,6 +269,10 @@ class NativeFont{
 
 void cairo_path_filter(cairo_t* ctx, std::function<void(double&, double&)> filter);
 
+cairo_pattern_t* cairo_pattern_create_linear_color(double x0, double y0, double x1, double y1,
+                                                    double r0, double g0, double b0, double a0,
+                                                    double r1, double g1, double b1, double a1);
+
 cairo_pattern_t* cairo_pattern_create_rect_color(cairo_rectangle_t rect,
                                                         double r0, double g0, double b0, double a0,
                                                         double r1, double g1, double b1, double a1,

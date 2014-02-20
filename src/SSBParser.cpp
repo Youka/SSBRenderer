@@ -51,7 +51,7 @@ namespace{
     }
     // Converts string to number pair
     template<typename T>
-    inline bool string_to_number_pair(std::string src, T& dst1, T& dst2){
+    inline bool string_to_number(std::string src, T& dst1, T& dst2){
         std::string::size_type pos;
         return (pos = src.find(',')) != std::string::npos &&
                 string_to_number(src.substr(0, pos), dst1) &&
@@ -65,9 +65,17 @@ namespace{
             return false;
         return true;
     }
-    // Converts hex string to three numbers
+    // Converts hex string to number pair
     template<typename T>
-    inline bool hex_string_to_number_quadruple(std::string src, T& dst1, T& dst2, T& dst3, T& dst4){
+    inline bool hex_string_to_number(std::string src, T& dst1, T& dst2){
+        std::string::size_type pos;
+        return (pos = src.find(',')) != std::string::npos &&
+                hex_string_to_number(src.substr(0, pos), dst1) &&
+                hex_string_to_number(src.substr(pos+1), dst2);
+    }
+    // Converts hex string to four numbers
+    template<typename T>
+    inline bool hex_string_to_number(std::string src, T& dst1, T& dst2, T& dst3, T& dst4){
         std::string::size_type pos1, pos2;
         return (pos1 = src.find(',')) != std::string::npos &&
                 hex_string_to_number(src.substr(0, pos1), dst1) &&
@@ -226,7 +234,7 @@ namespace{
                     throw_parse_error(line_i, "Invalid font size");
             }else if(tags_token.compare(0, 11, "font-space=") == 0){
                 decltype(SSBFontSpace::x) x, y;
-                if(string_to_number_pair(tags_token.substr(11), x, y))
+                if(string_to_number(tags_token.substr(11), x, y))
                     ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBFontSpace(x, y)));
                 else if(warnings)
                     throw_parse_error(line_i, "Invalid font spaces");
@@ -321,7 +329,7 @@ namespace{
                 constexpr decltype(x) max_pos = std::numeric_limits<decltype(x)>::max();
                 if(tag_value.empty())
                     ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBPosition(max_pos, max_pos)));
-                else if(string_to_number_pair(tags_token.substr(9), x, y))
+                else if(string_to_number(tags_token.substr(9), x, y))
                     ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBPosition(x, y)));
                 else if(warnings)
                     throw_parse_error(line_i, "Invalid position");
@@ -336,7 +344,7 @@ namespace{
                 decltype(SSBMargin::x) x, y;
                 if(string_to_number(tag_value, x))
                     ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBMargin(SSBMargin::Type::BOTH, x)));
-                else if(string_to_number_pair(tag_value, x, y))
+                else if(string_to_number(tag_value, x, y))
                     ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBMargin(x, y)));
                 else if(warnings)
                     throw_parse_error(line_i, "Invalid margin");
@@ -366,7 +374,7 @@ namespace{
                 ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBIdentity()));
             else if(tags_token.compare(0, 10, "translate=") == 0){
                 decltype(SSBTranslate::x) x, y;
-                if(string_to_number_pair(tags_token.substr(10), x, y))
+                if(string_to_number(tags_token.substr(10), x, y))
                     ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBTranslate(x, y)));
                 else if(warnings)
                     throw_parse_error(line_i, "Invalid translation");
@@ -387,7 +395,7 @@ namespace{
                 decltype(SSBScale::x) x, y;
                 if(string_to_number(tag_value, x))
                     ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBScale(SSBScale::Type::BOTH, x)));
-                else if(string_to_number_pair(tag_value, x, y))
+                else if(string_to_number(tag_value, x, y))
                     ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBScale(x, y)));
                 else if(warnings)
                     throw_parse_error(line_i, "Invalid scale");
@@ -405,13 +413,13 @@ namespace{
                     throw_parse_error(line_i, "Invalid vertical scale");
             }else if(tags_token.compare(0, 10, "rotate-xy=") == 0){
                 decltype(SSBRotate::angle1) angle1, angle2;
-                if(string_to_number_pair(tags_token.substr(10), angle1, angle2))
+                if(string_to_number(tags_token.substr(10), angle1, angle2))
                     ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBRotate(SSBRotate::Axis::XY, angle1, angle2)));
                 else if(warnings)
                     throw_parse_error(line_i, "Invalid rotation on x axis");
             }else if(tags_token.compare(0, 10, "rotate-yx=") == 0){
                 decltype(SSBRotate::angle1) angle1, angle2;
-                if(string_to_number_pair(tags_token.substr(10), angle1, angle2))
+                if(string_to_number(tags_token.substr(10), angle1, angle2))
                     ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBRotate(SSBRotate::Axis::YX, angle1, angle2)));
                 else if(warnings)
                     throw_parse_error(line_i, "Invalid rotation on y axis");
@@ -423,7 +431,7 @@ namespace{
                     throw_parse_error(line_i, "Invalid rotation on z axis");
             }else if(tags_token.compare(0, 6, "shear=") == 0){
                 decltype(SSBShear::x) x, y;
-                if(string_to_number_pair(tags_token.substr(6), x, y))
+                if(string_to_number(tags_token.substr(6), x, y))
                     ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBShear(x, y)));
                 else if(warnings)
                     throw_parse_error(line_i, "Invalid shear");
@@ -464,7 +472,17 @@ namespace{
                                                 static_cast<decltype(RGB::g)>(rgb[0] >> 8 & 0xff) / 0xff,
                                                 static_cast<decltype(RGB::b)>(rgb[0] & 0xff) / 0xff
                                                                                        )));
-                else if(hex_string_to_number_quadruple(tag_value, rgb[0], rgb[1], rgb[2], rgb[3]) &&
+                else if(hex_string_to_number(tag_value, rgb[0], rgb[1]) &&
+                        rgb[0] <= 0xffffff && rgb[1] <= 0xffffff)
+                    ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBColor(
+                                                static_cast<decltype(RGB::r)>(rgb[0] >> 16) / 0xff,
+                                                static_cast<decltype(RGB::g)>(rgb[0] >> 8 & 0xff) / 0xff,
+                                                static_cast<decltype(RGB::b)>(rgb[0] & 0xff) / 0xff,
+                                                static_cast<decltype(RGB::r)>(rgb[1] >> 16) / 0xff,
+                                                static_cast<decltype(RGB::g)>(rgb[1] >> 8 & 0xff) / 0xff,
+                                                static_cast<decltype(RGB::b)>(rgb[1] & 0xff) / 0xff
+                                                                                       )));
+                else if(hex_string_to_number(tag_value, rgb[0], rgb[1], rgb[2], rgb[3]) &&
                         rgb[0] <= 0xffffff && rgb[1] <= 0xffffff && rgb[2] <= 0xffffff && rgb[3] <= 0xffffff)
                     ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBColor(
                                                 static_cast<decltype(RGB::r)>(rgb[0] >> 16) / 0xff,
@@ -499,7 +517,13 @@ namespace{
                 if(hex_string_to_number(tag_value, a[0]) &&
                         a[0] <= 0xff)
                     ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBAlpha(static_cast<decltype(RGB::r)>(a[0]) / 0xff)));
-                else if(hex_string_to_number_quadruple(tag_value, a[0], a[1], a[2], a[3]) &&
+                else if(hex_string_to_number(tag_value, a[0], a[1]) &&
+                        a[0] <= 0xff && a[1] <= 0xff)
+                    ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBAlpha(
+                                                static_cast<decltype(RGB::r)>(a[0]) / 0xff,
+                                                static_cast<decltype(RGB::r)>(a[1]) / 0xff
+                                                                                       )));
+                else if(hex_string_to_number(tag_value, a[0], a[1], a[2], a[3]) &&
                         a[0] <= 0xff && a[1] <= 0xff && a[2] <= 0xff && a[3] <= 0xff)
                     ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBAlpha(
                                                 static_cast<decltype(RGB::r)>(a[0]) / 0xff,
@@ -560,7 +584,7 @@ namespace{
                 decltype(SSBBlur::x) x, y;
                 if(string_to_number(tag_value, x) && x >= 0)
                     ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBBlur(SSBBlur::Type::BOTH, x)));
-                else if(string_to_number_pair(tag_value, x, y) && x >= 0 && y >= 0)
+                else if(string_to_number(tag_value, x, y) && x >= 0 && y >= 0)
                     ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBBlur(x, y)));
                 else if(warnings)
                     throw_parse_error(line_i, "Invalid blur");
@@ -595,7 +619,7 @@ namespace{
                 decltype(SSBFade::in) in, out;
                 if(string_to_number(tag_value, in))
                     ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBFade(SSBFade::Type::BOTH, in)));
-                else if(string_to_number_pair(tag_value, in, out))
+                else if(string_to_number(tag_value, in, out))
                     ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBFade(in, out)));
                 else if(warnings)
                     throw_parse_error(line_i, "Invalid fade");

@@ -84,6 +84,15 @@ void cairo_path_filter(cairo_t* ctx, std::function<void(double&, double&)> filte
     cairo_path_destroy(path);
 }
 
+cairo_pattern_t* cairo_pattern_create_linear_color(double x0, double y0, double x1, double y1,
+                                                    double r0, double g0, double b0, double a0,
+                                                    double r1, double g1, double b1, double a1){
+    cairo_pattern_t* gradient = cairo_pattern_create_linear(x0, y0, x1, y1);
+    cairo_pattern_add_color_stop_rgba(gradient, 0.0, r0, g0, b0, a0);
+    cairo_pattern_add_color_stop_rgba(gradient, 1.0, r1, g1, b1, a1);
+    return gradient;
+}
+
 cairo_pattern_t* cairo_pattern_create_rect_color(cairo_rectangle_t rect,
                                                         double r0, double g0, double b0, double a0,
                                                         double r1, double g1, double b1, double a1,
