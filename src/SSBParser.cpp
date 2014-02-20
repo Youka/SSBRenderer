@@ -220,7 +220,7 @@ namespace{
                 ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBFontStyle(bold, italic, underline, strikeout)));
             }else if(tags_token.compare(0, 10, "font-size=") == 0){
                 decltype(SSBFontSize::size) size;
-                if(string_to_number(tags_token.substr(10), size))
+                if(string_to_number(tags_token.substr(10), size) && size >= 0)
                     ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBFontSize(size)));
                 else if(warnings)
                     throw_parse_error(line_i, "Invalid font size");

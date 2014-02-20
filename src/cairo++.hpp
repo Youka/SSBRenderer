@@ -112,7 +112,7 @@ class NativeFont{
         NativeFont& operator=(const NativeFont&) = delete;
 #ifdef _WIN32
         // Ctor & dtor
-        NativeFont(std::wstring family, bool bold, bool italic, bool underline, bool strikeout, unsigned short int size, bool rtl = false){
+        NativeFont(std::wstring family, bool bold, bool italic, bool underline, bool strikeout, float size, bool rtl = false){
             this->dc = CreateCompatibleDC(NULL);
             SetMapMode(this->dc, MM_TEXT);
             SetBkMode(this->dc, TRANSPARENT);
@@ -134,7 +134,7 @@ class NativeFont{
             this->font = CreateFontIndirectW(&lf);
             this->old_font = SelectObject(this->dc, this->font);
         }
-        NativeFont(std::string& family, bool bold, bool italic, bool underline, bool strikeout, unsigned short int size, bool rtl = false)
+        NativeFont(std::string& family, bool bold, bool italic, bool underline, bool strikeout, float size, bool rtl = false)
         : NativeFont(utf8_to_utf16(family), bold, italic, underline, strikeout, size, rtl){}
         ~NativeFont(){
             SelectObject(this->dc, this->old_font);
@@ -216,7 +216,7 @@ class NativeFont{
         }
 #else
         // Ctor & dtor
-        NativeFont(std::string& family, bool bold, bool italic, bool underline, bool strikeout, unsigned short int size, bool rtl = false){
+        NativeFont(std::string& family, bool bold, bool italic, bool underline, bool strikeout, float size, bool rtl = false){
             this->layout = pango_cairo_create_layout(this->dc);
             PangoFontDescription *font = pango_font_description_new();
             pango_font_description_set_family(font, family.c_str());

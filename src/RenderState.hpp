@@ -28,7 +28,7 @@ namespace{
         // Font
         std::string font_family = "Arial";
         bool bold = false, italic = false, underline = false, strikeout = false;
-        unsigned short int font_size = 30;
+        float font_size = 30;
         double font_space_h = 0, font_space_v = 0;
         // Line
         double line_width = 2;

@@ -114,8 +114,8 @@ class SSBFontStyle : public SSBTag{
 // Font size state
 class SSBFontSize : public SSBTag{
     public:
-        unsigned short int size;
-        SSBFontSize(unsigned int size) : SSBTag(SSBTag::Type::FONT_SIZE), size(size){}
+        float size;
+        SSBFontSize(float size) : SSBTag(SSBTag::Type::FONT_SIZE), size(size){}
 };
 
 // Font space state

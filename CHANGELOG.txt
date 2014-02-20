@@ -1,5 +1,6 @@
 TODO
 ----------------
+* added GStreamer bridge for Unix
 * added support for more video colorspaces (YUV2, YV12)
 * added support for other subtitle formats (SRT, MicroDVD, ?)
 * rewrote text layout (for context-sensitive characters and right-to-left languages)
@@ -14,8 +15,8 @@ v0.0.3 (planned)
 * fixed hang bug on wrong path begin	*DONE*
 * added UTF-8 BOM ignore	*DONE*
 * increased cache size to 64	*DONE*
-* changed font size to floating point
-* added GStreamer bridge for Unix
+* changed font size to floating point	*DONE*
+* added 2-color/alpha gradients
 * updated documentation
 
 ##########################################################################
