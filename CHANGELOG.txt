@@ -1,23 +1,23 @@
 TODO
 ----------------
+* added embeddable resources (fonts, textures)
 * added GStreamer bridge for Unix
 * added support for more video colorspaces (YUV2, YV12)
 * added support for other subtitle formats (SRT, MicroDVD, ?)
-* rewrote text layout (for context-sensitive characters and right-to-left languages)
+* rewrote text layout (for context-sensitive characters, right-to-left languages, draw outlines->fill)
 * added wrapping modes
 * (change SSB format [v0 -> v1])
 
 ##########################################################################
 
-v0.0.3 (planned)
+v0.0.3
 ----------------
-* fixed no line drawing by zero alpha	*DONE*
-* fixed hang bug on wrong path begin	*DONE*
-* added UTF-8 BOM ignore	*DONE*
-* increased cache size to 64	*DONE*
-* changed font size to floating point	*DONE*
-* added 2-color/alpha gradients	*DONE*
-* updated documentation
+* fixed no line drawing by zero alpha
+* fixed hang bug on wrong path begin
+* added UTF-8 BOM ignore
+* increased cache size to 64
+* changed font size to floating point
+* added 2-color/alpha gradients
 
 ##########################################################################
 

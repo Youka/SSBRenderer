@@ -11,7 +11,7 @@ bool warnings: enable warnings on parsing errors? (on by default)
 -VirtualDub-
 ----------
 Just load SSBRenderer.dll as new filter and add him to your filter list.
-A dialog appears to set input SSB script and warnings.
+A dialog appears to set the input SSB script and enable warnings.
 
 UNIX
 =======================================================

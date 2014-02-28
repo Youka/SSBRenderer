@@ -89,12 +89,12 @@ clean:
 # Install
 ifneq ($(OS),Windows_NT)
 install:
-	cp bin/libSSBRenderer.so /usr/local/lib/libSSBRenderer.so.0.0.2
-	ln -s /usr/local/lib/libSSBRenderer.so.0.0.2 /usr/local/lib/libSSBRenderer.so
+	cp bin/libSSBRenderer.so /usr/local/lib/libSSBRenderer.so.0.0.3
+	ln -s /usr/local/lib/libSSBRenderer.so.0.0.3 /usr/local/lib/libSSBRenderer.so
 	mkdir -p /usr/local/lib/pkgconfig
 	cp src/pc/SSBRenderer.pc /usr/local/lib/pkgconfig/SSBRenderer.pc
 	cp src/user.h /usr/local/include/ssb.h
 uninstall:
-	rm -f /usr/local/lib/libSSBRenderer.so.0.0.2 /usr/local/lib/libSSBRenderer.so /usr/local/lib/pkgconfig/SSBRenderer.pc /usr/local/include/ssb.h
+	rm -f /usr/local/lib/libSSBRenderer.so.0.0.3 /usr/local/lib/libSSBRenderer.so /usr/local/lib/pkgconfig/SSBRenderer.pc /usr/local/include/ssb.h
 	find /usr/local/lib/pkgconfig -type d -empty -delete
 endif
