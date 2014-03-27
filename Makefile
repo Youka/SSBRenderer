@@ -21,6 +21,7 @@ IDIR += -I/usr/include/cairo -I/usr/include/pango-1.0 `pkg-config --cflags glib-
 LDIR =
 LIBS += -lpangocairo-1.0 -lpthread
 DEFINES += -D__unix__
+ADDITIONAL += -fPIC
 endif
 
 # Constant macros

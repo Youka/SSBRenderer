@@ -1,12 +1,19 @@
 TODO
 ----------------
-* added embeddable resources (fonts, textures)
-* added GStreamer bridge for Unix
 * added support for more video colorspaces (YUV2, YV12)
 * added support for other subtitle formats (SRT, MicroDVD, ?)
-* rewrote text layout (for context-sensitive characters, right-to-left languages, draw outlines->fill)
+* rewrote text layout (for context-sensitive characters, right-to-left languages, ruby text, draw outlines->fill)
 * added wrapping modes
-* (change SSB format [v0 -> v1])
+
+##########################################################################
+
+v0.0.4
+----------------
+* added aa style tag
+* changed SSB format [v0 -> v1]
+	- added embeddable resources (fonts, textures)
+	- shortened style tag names
+* added GStreamer bridge for Unix
 
 ##########################################################################
 
