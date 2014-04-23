@@ -177,8 +177,10 @@ class NativeFont{
                 GetPath(this->dc, points.data(), types.data(), points_n);
                 // Transfers windows path to cairo context
                 POINT last_point = {-1,-1};
-                for(int point_i = 0; point_i < points_n;)
-                    switch(types[point_i]){
+                BYTE cur_type;
+                for(int point_i = 0; point_i < points_n;){
+                    cur_type = types[point_i];
+                    switch(cur_type){
                         case PT_MOVETO:
                             cairo_close_path(ctx);
                             cairo_move_to(ctx, static_cast<double>(points[point_i].x) / UPSCALE, static_cast<double>(points[point_i].y) / UPSCALE);
@@ -205,6 +207,9 @@ class NativeFont{
                             point_i += 3;
                             break;
                     }
+                    if(cur_type&PT_CLOSEFIGURE)
+                        cairo_close_path(ctx);
+                }
                 cairo_close_path(ctx);
             }
             // Remove path from windows context
