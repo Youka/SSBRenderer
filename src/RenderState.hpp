@@ -59,6 +59,7 @@ namespace{
         SSBBlend::Mode blend_mode = SSBBlend::Mode::OVER;
         double blur_h = 0, blur_v = 0;
         SSBStencil::Mode stencil_mode = SSBStencil::Mode::OFF;
+        cairo_antialias_t aa = CAIRO_ANTIALIAS_DEFAULT;
         // Fade
         double fade_in = 0, fade_out = 0;
         // Karaoke
@@ -287,6 +288,9 @@ namespace{
                     break;
                 case SSBTag::Type::STENCIL:
                     this->stencil_mode = dynamic_cast<SSBStencil*>(tag)->mode;
+                    break;
+                case SSBTag::Type::AA:
+                    this->aa = dynamic_cast<SSBAntiAliasing*>(tag)->on ? CAIRO_ANTIALIAS_DEFAULT : CAIRO_ANTIALIAS_NONE;
                     break;
                 case SSBTag::Type::FADE:
                     {
@@ -562,6 +566,10 @@ namespace{
                                 case SSBTag::Type::STENCIL:
                                     if(progress >= threshold)
                                         this->stencil_mode = dynamic_cast<SSBStencil*>(animate_tag)->mode;
+                                    break;
+                                case SSBTag::Type::AA:
+                                    if(progress >= threshold)
+                                        this->aa = dynamic_cast<SSBAntiAliasing*>(animate_tag)->on ? CAIRO_ANTIALIAS_DEFAULT : CAIRO_ANTIALIAS_NONE;
                                     break;
                                 case SSBTag::Type::FADE:
                                     {

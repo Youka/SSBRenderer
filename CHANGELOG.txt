@@ -10,9 +10,9 @@ TODO
 
 v0.0.4
 ----------------
-* fixed gaps in text paths *DONE*
+* fixed gaps in text paths	*DONE*
 * fixed wrong transform progress
-* added aa style tag
+* added aa style tag	*DONE*
 * changed SSB format [v0 -> v1]
 	- added embeddable resources (fonts, textures)
 	- shortened style tag names

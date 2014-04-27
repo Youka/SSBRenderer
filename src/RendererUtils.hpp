@@ -63,7 +63,7 @@ namespace{
     // Creates new image with applied fade
     CairoImage create_faded_image(CairoImage image, double fade_in, double fade_out,
                                   unsigned long int cur_ms, unsigned long int start_ms, unsigned long int end_ms){
-        if(cur_ms  >= start_ms && cur_ms < end_ms &&
+        if(cur_ms >= start_ms && cur_ms < end_ms &&
            fade_in >= 0 && fade_out >= 0){
             decltype(cur_ms) inner_ms = cur_ms - start_ms;
             decltype(cur_ms) inv_inner_ms = end_ms - start_ms - inner_ms;

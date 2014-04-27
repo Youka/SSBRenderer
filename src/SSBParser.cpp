@@ -614,6 +614,14 @@ namespace{
                     ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBStencil(SSBStencil::Mode::OUTSIDE)));
                 else if(warnings)
                     throw_parse_error(line_i, "Invalid stencil mode");
+            }else if(tags_token.compare(0, 3, "aa=") == 0){
+                std::string tag_value = tags_token.substr(3);
+                if(tag_value == "on")
+                    ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBAntiAliasing(true)));
+                else if(tag_value == "off")
+                    ssb_event.objects.push_back(std::shared_ptr<SSBObject>(new SSBAntiAliasing(false)));
+                else if(warnings)
+                    throw_parse_error(line_i, "Invalid anti-aliasing mode");
             }else if(tags_token.compare(0, 5, "fade=") == 0){
                 std::string tag_value = tags_token.substr(5);
                 decltype(SSBFade::in) in, out;

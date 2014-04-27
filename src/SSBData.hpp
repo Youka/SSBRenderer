@@ -69,6 +69,7 @@ class SSBTag : public SSBObject{
             BLEND,
             BLUR,
             STENCIL,
+            AA,
             FADE,
             ANIMATE,
             KARAOKE,
@@ -376,6 +377,13 @@ class SSBStencil : public SSBTag{
     public:
         enum class Mode{OFF, SET, UNSET, INSIDE, OUTSIDE} mode;
         SSBStencil(Mode mode) : SSBTag(SSBTag::Type::STENCIL), mode(mode){}
+};
+
+// Antialiasing state
+class SSBAntiAliasing : public SSBTag{
+    public:
+        bool on;
+        SSBAntiAliasing(bool on) : SSBTag(SSBTag::Type::AA), on(on){}
 };
 
 // Fade state

@@ -768,6 +768,7 @@ void Renderer::render(unsigned char* frame, int pitch, unsigned long int start_m
                                     break;
                             }
                             CairoImage image(width + (border_h << 1), height + (border_v << 1), CAIRO_FORMAT_ARGB32);
+                            cairo_set_antialias(image, rs.aa);
                             // Anything visible?
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-equal"
