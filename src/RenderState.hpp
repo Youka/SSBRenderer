@@ -316,7 +316,7 @@ namespace{
                             animate_end = animate->end > 0 ? animate->end : inner_duration + animate->end;
                         }
                         // Calculate progress
-                        double progress = inner_ms < animate_start ? 0 : (inner_ms > animate_end ? 1 : static_cast<double>(inner_ms - animate_start) / (animate_end - animate_start));
+                        double progress = inner_ms <= animate_start ? 0 : (inner_ms > animate_end ? 1 : static_cast<double>(inner_ms - animate_start) / (animate_end - animate_start));
                         // Recalulate progress by formula
                         if(!animate->progress_formula.empty()){
                             mu::Parser parser;
@@ -450,7 +450,7 @@ namespace{
                                         SSBScale* scale = dynamic_cast<SSBScale*>(animate_tag);
                                         switch(scale->type){
                                             case SSBScale::Type::HORIZONTAL: cairo_matrix_scale(&this->matrix, 1 + progress * (scale->x - 1), 1); break;
-                                            case SSBScale::Type::VERTICAL: cairo_matrix_scale(&this->matrix, 1, 1 + progress * (scale->y-1)); break;
+                                            case SSBScale::Type::VERTICAL: cairo_matrix_scale(&this->matrix, 1, 1 + progress * (scale->y - 1)); break;
                                             case SSBScale::Type::BOTH: cairo_matrix_scale(&this->matrix, 1 + progress * (scale->x - 1), 1 + progress * (scale->y - 1)); break;
                                         }
                                     }
