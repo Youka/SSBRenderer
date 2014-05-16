@@ -17,6 +17,7 @@ Permission is granted to anyone to use this software for any purpose, including 
 #ifdef _WIN32
 #undef __STRICT_ANSI__
 #define __MSVCRT__ 1
+#include "textconv.hpp"
 #else
 #include <limits.h>
 #include <libgen.h>
@@ -26,6 +27,7 @@ Permission is granted to anyone to use this software for any purpose, including 
 #include "SSBParser.hpp"
 #include "RendererUtils.hpp"
 #include "utf8.h"
+#include "FileReader.hpp"
 
 Renderer::Renderer(int width, int height, Colorspace format, std::string& script, bool warnings)
 : width(width), height(height), format(format), ssb(SSBParser(script, warnings).data()), stencil_path_buffer(width, height, CAIRO_FORMAT_A8){

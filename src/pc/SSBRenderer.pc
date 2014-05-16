@@ -5,7 +5,7 @@ includedir=${prefix}/include
 
 Name: SSBRenderer
 Description: Renderer for Substation Beta subtitle format
-Version: 0.0.3
+Version: 0.0.4
 Requires: 
 Libs: -L${libdir} -lSSBRenderer
 Cflags: -I${includedir}

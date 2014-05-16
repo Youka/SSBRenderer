@@ -16,6 +16,7 @@ Permission is granted to anyone to use this software for any purpose, including 
 #include "Renderer.hpp"
 #include "file_info.h"
 #include <sstream>
+#include "FileReader.hpp"
 #define CSRI_OWN_HANDLES
 #ifdef _WIN32
 #define CSRIAPI extern "C" __declspec(dllexport)
