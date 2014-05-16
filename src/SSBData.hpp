@@ -69,7 +69,7 @@ class SSBTag : public SSBObject{
             BLEND,
             BLUR,
             STENCIL,
-            AA,
+            ANTI_ALIASING,
             FADE,
             ANIMATE,
             KARAOKE,
@@ -383,7 +383,7 @@ class SSBStencil : public SSBTag{
 class SSBAntiAliasing : public SSBTag{
     public:
         bool on;
-        SSBAntiAliasing(bool on) : SSBTag(SSBTag::Type::AA), on(on){}
+        SSBAntiAliasing(bool on) : SSBTag(SSBTag::Type::ANTI_ALIASING), on(on){}
 };
 
 // Fade state

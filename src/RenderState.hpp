@@ -289,7 +289,7 @@ namespace{
                 case SSBTag::Type::STENCIL:
                     this->stencil_mode = dynamic_cast<SSBStencil*>(tag)->mode;
                     break;
-                case SSBTag::Type::AA:
+                case SSBTag::Type::ANTI_ALIASING:
                     this->aa = dynamic_cast<SSBAntiAliasing*>(tag)->on ? CAIRO_ANTIALIAS_DEFAULT : CAIRO_ANTIALIAS_NONE;
                     break;
                 case SSBTag::Type::FADE:
@@ -567,7 +567,7 @@ namespace{
                                     if(progress >= threshold)
                                         this->stencil_mode = dynamic_cast<SSBStencil*>(animate_tag)->mode;
                                     break;
-                                case SSBTag::Type::AA:
+                                case SSBTag::Type::ANTI_ALIASING:
                                     if(progress >= threshold)
                                         this->aa = dynamic_cast<SSBAntiAliasing*>(animate_tag)->on ? CAIRO_ANTIALIAS_DEFAULT : CAIRO_ANTIALIAS_NONE;
                                     break;

@@ -9,7 +9,7 @@ Width: 1280
 Height: 720
 
 #STYLES
-Default: {align=5;font-size=40;font-style=b;fade=250}
+Default: {an=5;fs=40;fst=b;fad=250}
 Header: \\Default\\************************************\n
 Footer: \n************************************
 

@@ -1,2 +1,2 @@
 #EVENTS
-0-10.0|||{align=5;line-width=10;line-dash=0,10,5;line-style=bevel,flat;line-color=ff0000;geometry=path;mode=wire}m 0 50 a 50 50 180 l 50 100 c
+0-10.0|||{an=5;lw=10;ld=0,10,5;lst=b,f;lcl=ff0000;gm=p;md=w}m 0 50 a 50 50 180 l 50 100 c

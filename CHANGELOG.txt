@@ -14,8 +14,8 @@ v0.0.4
 * fixed wrong animation progress	*DONE*
 * added aa style tag	*DONE*
 * changed SSB format [v0 -> v1]
+	- shortened style tag names	*DONE*
 	- added embeddable resources (fonts, textures)
-	- shortened style tag names
 
 ##########################################################################
 

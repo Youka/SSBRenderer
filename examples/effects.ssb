@@ -1,2 +1,2 @@
 #EVENTS
-0-10.0|||{align=5;position=300,200;font-size=80;font-style=b;line-width=0;blur-h=8;blend=differ;animate=0,5000,sin(t*_pi*4),(translate-y=100)}Yandere
+0-10.0|||{an=5;pos=300,200;fs=80;fst=b;lw=0;blh=8;bld=diff;ani=0,5000,sin(t*_pi*4),(tly=100)}Yandere

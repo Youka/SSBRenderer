@@ -1,2 +1,2 @@
 #EVENTS
-0-10.0|||{align=5;font-size=80;line-width=0;animate=sin(t*_pi),(rotate-xy=90,180;deform=x+sin(y/3+t*10)*3,y+sin(x/3+t*12)*3)}Test
+0-10.0|||{an=5;fs=80;lw=0;ani=sin(t*_pi),(rxy=90,180;df=x+sin(y/3+t*10)*3,y+sin(x/3+t*12)*3)}Test
