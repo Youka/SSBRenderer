@@ -215,7 +215,7 @@ NativeFont::NativeFont(std::string& family, bool bold, bool italic, bool underli
     pango_layout_set_auto_dir(this->layout, rtl);
 }
 
-~NativeFont::NativeFont(){
+NativeFont::~NativeFont(){
     g_object_unref(this->layout);
 }
 
