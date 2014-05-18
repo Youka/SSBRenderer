@@ -81,24 +81,24 @@ struct ASS_to_SSB{
                 ssb.append(style_field).append(": ");
                 // Fontname
                 if(std::getline(style_stream, style_field, ',')){
-                    ssb.append("{font-family=").append(style_field);
+                    ssb.append("{ff=").append(style_field);
                     // Font size
                     if(std::getline(style_stream, style_field, ',')){
-                        ssb.append(";font-size=").append(style_field);
+                        ssb.append(";fs=").append(style_field);
                         // Primary color
                         if(std::getline(style_stream, style_field, ',') && style_field.length() == 10){
-                            ssb.append(";color=").append(style_field.substr(8,2) + style_field.substr(6,2) + style_field.substr(4,2)).append(";alpha=").append(style_field.substr(2,2));
+                            ssb.append(";cl=").append(style_field.substr(8,2) + style_field.substr(6,2) + style_field.substr(4,2)).append(";al=").append(style_field.substr(2,2));
                             // Secondary color
                             if(std::getline(style_stream, style_field, ',') && style_field.length() == 10){
-                                ssb.append(";kcolor=").append(style_field.substr(8,2) + style_field.substr(6,2) + style_field.substr(4,2));
+                                ssb.append(";kc=").append(style_field.substr(8,2) + style_field.substr(6,2) + style_field.substr(4,2));
                                 // Border color
                                 if(std::getline(style_stream, style_field, ',') && style_field.length() == 10){
-                                    ssb.append(";line-color=").append(style_field.substr(8,2) + style_field.substr(6,2) + style_field.substr(4,2)).append(";line-alpha=").append(style_field.substr(2,2));
+                                    ssb.append(";lcl=").append(style_field.substr(8,2) + style_field.substr(6,2) + style_field.substr(4,2)).append(";lal=").append(style_field.substr(2,2));
                                     // Shadow color
                                     if(std::getline(style_stream, style_field, ',') && style_field.length() == 10){
                                         // Bold
                                         if(std::getline(style_stream, style_field, ',')){
-                                            ssb.append(";font-style=");
+                                            ssb.append(";fst=");
                                             if(style_field == "-1") ssb.push_back('b');
                                             // Italic
                                             if(std::getline(style_stream, style_field, ',')){
@@ -111,35 +111,35 @@ struct ASS_to_SSB{
                                                         if(style_field == "-1") ssb.push_back('s');
                                                         // ScaleX
                                                         if(std::getline(style_stream, style_field, ',')){
-                                                            ssb.append(";scale-x=").append(style_field);
+                                                            ssb.append(";scx=").append(style_field);
                                                             // ScaleY
                                                             if(std::getline(style_stream, style_field, ',')){
-                                                                ssb.append(";scale-y=").append(style_field);
+                                                                ssb.append(";scy=").append(style_field);
                                                                 // Spacing
                                                                 if(std::getline(style_stream, style_field, ',')){
-                                                                    ssb.append(";font-space-h=").append(style_field);
+                                                                    ssb.append(";fsph=").append(style_field);
                                                                     // Angle
                                                                     if(std::getline(style_stream, style_field, ',')){
-                                                                        ssb.append(";rotate-z=").append(style_field);
+                                                                        ssb.append(";rz=").append(style_field);
                                                                         // Border style
                                                                         if(std::getline(style_stream, style_field, ',')){
-                                                                            ssb.append(";mode=").append(style_field == "3" ? "boxed" : "fill");
+                                                                            ssb.append(";md=").append(style_field == "3" ? "b" : "f");
                                                                             // Outline
                                                                             if(std::getline(style_stream, style_field, ',')){
-                                                                                ssb.append(";line-width=").append(style_field);
+                                                                                ssb.append(";lw=").append(style_field);
                                                                                 // Shadow
                                                                                 if(std::getline(style_stream, style_field, ',')){
                                                                                     // Alignment
                                                                                     if(std::getline(style_stream, style_field, ',')){
-                                                                                        ssb.append(";align=").append(style_field);
+                                                                                        ssb.append(";an=").append(style_field);
                                                                                         // MarginL
                                                                                         if(std::getline(style_stream, style_field, ',')){
-                                                                                            ssb.append(";margin-h=").append(style_field);
+                                                                                            ssb.append(";mgh=").append(style_field);
                                                                                             // MarginR
                                                                                             if(std::getline(style_stream, style_field, ',')){
                                                                                                 // MarginV
                                                                                                 if(std::getline(style_stream, style_field, ',')){
-                                                                                                    ssb.append(";margin-v=").append(style_field);
+                                                                                                    ssb.append(";mgv=").append(style_field);
                                                                                                     // Encoding
                                                                                                     if(std::getline(style_stream, style_field, ',')){
                                                                                                         ssb.push_back('}');
