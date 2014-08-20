@@ -1,0 +1,159 @@
+#!/bin/bash
+
+if test x"$1" = x"-h" -o x"$1" = x"--help" ; then
+cat << EOF
+Usage: ./configure [options]
+
+options:
+  -h, --help               print this message
+
+  --prefix=PREFIX          install architecture-independent files into PREFIX
+                           [/usr/local]
+  --exec-prefix=EPREFIX    install architecture-dependent files into EPREFIX
+                           [PREFIX]
+  --libdir=DIR             install libs in DIR [EPREFIX/lib]
+  --includedir=DIR         install headers in DIR [PREFIX/include]
+  --pkgconfigdir=DIR       install pc files in DIR [libdir/pkgconfig]
+
+  --enable-static          build static library
+  --disable-shared         don't build shared library
+  --disable-fpic           disable picture independend code
+
+  --enable-debug           compile with debug symbols and never strip
+EOF
+exit 1
+fi
+
+error_exit()
+{
+    echo error: $1
+    exit 1
+}
+
+rm -f config.mak SSBRenderer.pc
+
+
+echo
+echo generating config.mak ...
+echo
+
+
+SRCDIR="$(cd $(dirname $0); pwd)"
+test "$SRCDIR" = "$(pwd)" && SRCDIR=.
+test -n "$(echo $SRCDIR | grep ' ')" && \
+    error_exit "out-of-tree builds are impossible with whitespace in source path"
+
+prefix=""
+exec_prefix=""
+libdir=""
+includedir=""
+pkgconfigdir=""
+DESTDIR=""
+SHAREDLIB="libSSBRenderer.so"
+STATICLIB=""
+with_fPIC="yes"
+DEBUG=""
+
+for opt; do
+    optarg="${opt#*=}"
+    case "$opt" in
+        --prefix=*)
+            prefix="$optarg"
+            ;;
+        --exec-prefix=*)
+            exec_prefix="$optarg"
+            ;;
+        --libdir=*)
+            libdir="$optarg"
+            ;;
+        --includedir=*)
+            includedir="$optarg"
+            ;;
+        --pkgconfigdir=*)
+            pkgconfigdir="$optarg"
+            ;;
+        --destdir=*)
+            DESTDIR="$optarg"
+            ;;
+        --enable-static)
+            STATICLIB="libSSBRenderer.a"
+            ;;
+        --disable-shared)
+            SHAREDLIB=""
+            ;;
+        --disable-fpic)
+            with_fPIC="no"
+            ;;
+        --enable-debug)
+            BUILD="debug"
+            ;;
+        *)
+            echo "unknown option $opt"
+            ;;
+    esac
+done
+
+if [ -z "$STATICLIB" ] && [ -z "$SHAREDLIB" ]; then
+    echo static and shared libraries both disabled
+    echo nothing to build!
+    exit 1
+fi
+
+test -n "$prefix" || prefix="/usr/local"
+test -n "$exec_prefix" || exec_prefix='${prefix}'
+test -n "$libdir" || libdir='${exec_prefix}/lib'
+test -n "$includedir" || includedir='${prefix}/include'
+test -n "$pkgconfigdir" || pkgconfigdir='${libdir}/pkgconfig'
+
+VERSION=$(grep -e FILTER_VERSION_STRING src/file_info.h | cut -d' ' -f3 | tr -d \")
+
+cat > config.mak << EOF
+VERSION = $VERSION
+DESTDIR = $DESTDIR
+prefix = $prefix
+exec_prefix = $exec_prefix
+libdir = $libdir
+includedir = $includedir
+pkgconfigdir = $pkgconfigdir
+STATICLIB = $STATICLIB
+SHAREDLIB = $SHAREDLIB
+with_fPIC = $with_fPIC
+BUILD = $DEBUG
+EOF
+
+cat config.mak
+
+
+echo
+echo
+echo generating SSBRenderer.pc ...
+echo
+
+cat > SSBRenderer.pc << EOF
+prefix=$prefix
+exec_prefix=$exec_prefix
+libdir=$libdir
+includedir=$includedir
+
+Name: SSBRenderer
+Description: Renderer for Substation Beta subtitle format
+Version: $VERSION
+Requires: 
+Libs: -L${libdir} -lSSBRenderer
+Cflags: -I${includedir}
+EOF
+
+cat SSBRenderer.pc
+
+
+cat << EOF
+
+
+configure finished
+
+  type 'make'             : compile library and tools
+  type 'make install'     : install all into system
+
+EOF
+
+exit 0
