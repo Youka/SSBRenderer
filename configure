@@ -93,11 +93,8 @@ for opt; do
     esac
 done
 
-if test -z "$STATICLIB" -a -z "$SHAREDLIB"; then
-    echo static and shared libraries both disabled
-    echo nothing to build!
-    exit 1
-fi
+test -z "$STATICLIB" -a -z "$SHAREDLIB" && \
+    error_exit "static and shared libraries both disabled"
 
 test -n "$prefix" || prefix="/usr/local"
 test -n "$exec_prefix" || exec_prefix='${prefix}'
