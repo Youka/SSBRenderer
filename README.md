@@ -12,8 +12,7 @@ Dependencies:
 
 Currently there're 2 building ways:
 * Use Code::Blocks to open project file <b>SSBRenderer.cbp</b>. Select your build and compile.
-* Execute <b>Makefile</b> with options (BUILD=debug | clean | install | uninstall).
-* Unix: Run <b>./configure</b> first, before you start the Makefile.
+* Execute <b>Makefile</b> with options (BUILD=debug | clean | install | uninstall). On Unix run <b>./configure</b> first, before you start the Makefile.
 
 ### Example
 See [examples](examples) or seach online for user videos & scripts.

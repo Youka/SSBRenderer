@@ -6,7 +6,9 @@ endif
 endif
 
 # configs
-ifneq ($(OS),Windows_NT)
+ifeq ($(OS),Windows_NT)
+SHAREDLIB = SSBRenderer.dll
+else
 ifneq ($(wildcard config.mak),)
 include config.mak
 endif
@@ -61,17 +63,15 @@ LFLAGS += -s
 endif
 
 
-all: SSBRenderer $(SHAREDLIB) $(STATICLIB)
+all: $(SHAREDLIB) $(STATICLIB)
 
 # Build binaries
 ifeq ($(OS),Windows_NT)
-SSBRenderer: Dirs Renderer.o SSBParser.o aegisub.o avisynth.o user.o virtualdub.o vapoursynth.o cairo++.o module.o FileReader.o resources.res
-	$(CXX) -Wl,--dll -Wl,--output-def=bin/SSBRenderer.def -Wl,--out-implib=bin/SSBRenderer.a src/obj/Renderer.o src/obj/SSBParser.o src/obj/aegisub.o src/obj/avisynth.o src/obj/user.o src/obj/vapoursynth.o src/obj/virtualdub.o src/obj/cairo++.o src/obj/FileReader.o src/obj/module.o src/obj/resources.res $(LFLAGS) -o bin/SSBRenderer.dll
+$(SHAREDLIB): Dirs Renderer.o SSBParser.o aegisub.o avisynth.o user.o virtualdub.o vapoursynth.o cairo++.o module.o FileReader.o resources.res
+	$(CXX) -Wl,--dll -Wl,--output-def=bin/SSBRenderer.def -Wl,--out-implib=bin/SSBRenderer.a src/obj/Renderer.o src/obj/SSBParser.o src/obj/aegisub.o src/obj/avisynth.o src/obj/user.o src/obj/vapoursynth.o src/obj/virtualdub.o src/obj/cairo++.o src/obj/FileReader.o src/obj/module.o src/obj/resources.res $(LFLAGS) -o bin/$@
 else
 OBJFILES = src/obj/Renderer.o src/obj/SSBParser.o src/obj/aegisub.o src/obj/user.o src/obj/vapoursynth.o src/obj/cairo++.o src/obj/FileReader.o
 OBJS = Renderer.o SSBParser.o aegisub.o user.o vapoursynth.o cairo++.o FileReader.o
-
-SSBRenderer:
 
 $(SHAREDLIB): Dirs $(OBJS)
 	$(CXX) -Wl,-soname,$@.$(VERSION) $(OBJFILES) $(LFLAGS) -o bin/$@
@@ -113,24 +113,28 @@ clean:
 	rm -rf src/obj bin
 
 distclean: clean
-	rm -rf config.mak SSBRenderer.pc
+	rm -f config.mak SSBRenderer.pc
 
 
 # Install
 ifneq ($(OS),Windows_NT)
 install:
-	install -d $(DESTDIR)$(libdir)/pkgconfig
-	install -d $(DESTDIR)$(includedir)
-	install -m644 src/user.h $(DESTDIR)$(includedir)/ssb.h
-	install -m644 SSBRenderer.pc $(DESTDIR)$(pkgconfigdir)/SSBRenderer.pc
+	install -D -m644 src/user.h $(DESTDIR)$(includedir)/ssb.h
+	install -D -m644 SSBRenderer.pc $(DESTDIR)$(pkgconfigdir)/SSBRenderer.pc
 ifneq ($(SHAREDLIB),)
-	install -m644 bin/$(SHAREDLIB) $(DESTDIR)$(libdir)/$(SHAREDLIB).$(VERSION)
+	install -D -m644 bin/$(SHAREDLIB) $(DESTDIR)$(libdir)/$(SHAREDLIB).$(VERSION)
 	ln -s $(SHAREDLIB).$(VERSION) $(DESTDIR)$(libdir)/$(SHAREDLIB)
 endif
 ifneq ($(STATICLIB),)
-	install -m644 bin/$(STATICLIB) $(DESTDIR)$(libdir)/$(STATICLIB)
+	install -D -m644 bin/$(STATICLIB) $(DESTDIR)$(libdir)/$(STATICLIB)
 endif
 
 uninstall:
-	rm -f $(DESTDIR)$(libdir)/$(SHAREDLIB).$(VERSION) $(DESTDIR)$(libdir)/$(STATICLIB) $(DESTDIR)$(libdir)/$(SHAREDLIB) $(DESTDIR)$(pkgconfigdir)/SSBRenderer.pc $(DESTDIR)$(includedir)/ssb.h
+	rm -f $(DESTDIR)$(pkgconfigdir)/SSBRenderer.pc $(DESTDIR)$(includedir)/ssb.h
+ifneq ($(SHAREDLIB),)
+	rm -f $(DESTDIR)$(libdir)/$(SHAREDLIB).$(VERSION) $(DESTDIR)$(libdir)/$(SHAREDLIB)
+endif
+ifneq ($(STATICLIB),)
+	rm -f $(DESTDIR)$(libdir)/$(STATICLIB)
+endif
 endif
