@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 if test x"$1" = x"-h" -o x"$1" = x"--help" ; then
 cat << EOF
@@ -93,7 +93,7 @@ for opt; do
     esac
 done
 
-if [ -z "$STATICLIB" ] && [ -z "$SHAREDLIB" ]; then
+if test -z "$STATICLIB" -a -z "$SHAREDLIB"; then
     echo static and shared libraries both disabled
     echo nothing to build!
     exit 1
