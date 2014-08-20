@@ -5,7 +5,7 @@ $(error Unsupported OS!)
 endif
 endif
 
-# configs
+# Load configuration
 ifeq ($(OS),Windows_NT)
 SHAREDLIB = SSBRenderer.dll
 else
@@ -78,6 +78,7 @@ $(SHAREDLIB): Dirs $(OBJS)
 
 $(STATICLIB): Dirs $(OBJS)
 	$(AR) rc bin/$@ $(OBJFILES)
+	$(RANLIB) bin/$@
 endif
 
 
