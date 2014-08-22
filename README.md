@@ -8,10 +8,11 @@
 Dependencies:
 * Windows: already precompiled static libraries in "src/libs/win32" & "src/libs/win64"
 * Unix: <a href=http://muparser.beltoforion.de/>muParser</a> <a href=http://www.pango.org/>pango</a> <a href=http://cairographics.org/>cairo</a>
+* Debian/Ubuntu: libmuparser-dev libpango1.0-dev libcairo2-dev
 
 Currently there're 2 building ways:
 * Use Code::Blocks to open project file <b>SSBRenderer.cbp</b>. Select your build and compile.
-* Execute <b>Makefile</b> with options (BUILD=debug | clean | install | uninstall).
+* Execute <b>Makefile</b> with options (BUILD=debug | clean | install | uninstall). On Unix run <b>./configure</b> first, before you start the Makefile.
 
 ### Example
 See [examples](examples) or seach online for user videos & scripts.
